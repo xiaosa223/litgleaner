@@ -1,0 +1,15 @@
+{
+ "paperId": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+ "externalIds": {
+  "MAG": "2963403868",
+  "DBLP": "journals/corr/VaswaniSPUJGKP17",
+  "ArXiv": "1706.03762",
+  "DOI": "10.48550/arXiv.1706.03762",
+  "CorpusId": 13756489
+ },
+ "openAccessPdf": {
+  "url": "https://arxiv.org/pdf/1706.03762",
+  "status": "CLOSED",
+  "license": null
+ }
+}

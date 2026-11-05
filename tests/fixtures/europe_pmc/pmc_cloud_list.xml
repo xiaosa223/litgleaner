@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>pmc-oa-opendata</Name><Prefix>metadata/PMC3158090.</Prefix><KeyCount>1</KeyCount><MaxKeys>5</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>metadata/PMC3158090.1.json</Key><LastModified>2026-07-04T06:01:02.000Z</LastModified><ETag>&quot;7713c3c9c0a0844770dbe14441a8c674&quot;</ETag><ChecksumAlgorithm>CRC32</ChecksumAlgorithm><ChecksumType>FULL_OBJECT</ChecksumType><Size>2049</Size><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>

@@ -1,0 +1,96 @@
+{
+ "totalHits": 1,
+ "limit": 3,
+ "offset": 0,
+ "results": [
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Baum, Dario David"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/748655335"
+   ],
+   "createdDate": "2026-07-08T04:19:58+01:00",
+   "dataProviders": [
+    {
+     "id": 11074,
+     "name": "VU Research Portal",
+     "url": "https://api.core.ac.uk/v3/data-providers/11074",
+     "logo": "https://api.core.ac.uk/data-providers/11074/logo"
+    }
+   ],
+   "depositedDate": "2026-07-01T22:19:09+01:00",
+   "abstract": "The development of quantum chemistry has long been shaped by a central tension: while the laws governing electronic structure are known, their exact application quickly becomes computationally prohibitive for realistic molecular systems. Over decades, this challenge has driven the design of increasingly sophisticated approximations that balance predictive accuracy with computational affordability. More recently, machine learning (ML) has emerged as a new addition to this methodological landscape, offering the possibility of reproducing high-level quantum chemical results at a fraction of the c",
+   "documentType": "other",
+   "doi": "10.5463/thesis.1850",
+   "downloadUrl": "https://core.ac.uk/download/748655335.pdf",
+   "fieldOfStudy": null,
+   "id": 365417733,
+   "identifiers": [
+    {
+     "identifier": "748655335",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.5463/thesis.1850",
+     "type": "doi"
+    },
+    {
+     "identifier": "oai:research.vu.nl:publications/ff8258b2-bf81-4b19-98a4-b4796b8f6b16",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "oai:research.vu.nl:publications/ff8258b2-bf81-4b19-98a4-b4796b8f6b16",
+     "type": "oai"
+    }
+   ],
+   "title": "Machine Learning for the Acceleration of Quantum Chemical Simulations",
+   "language": {
+    "code": "en",
+    "name": "English"
+   },
+   "magId": null,
+   "oaiIds": [
+    "oai:research.vu.nl:publications/ff8258b2-bf81-4b19-98a4-b4796b8f6b16"
+   ],
+   "publishedDate": "2026-11-16T00:00:00+00:00",
+   "publisher": "",
+   "pubmedId": null,
+   "sourceFulltextUrls": [
+    "https://core.ac.uk/download/748655335.pdf"
+   ],
+   "updatedDate": "2026-09-01T16:37:39+01:00",
+   "yearPublished": 2026,
+   "journals": [],
+   "links": [
+    {
+     "type": "download",
+     "url": "https://core.ac.uk/download/748655335.pdf"
+    },
+    {
+     "type": "reader",
+     "url": "https://core.ac.uk/reader/748655335"
+    },
+    {
+     "type": "thumbnail_m",
+     "url": "https://core.ac.uk/image/748655335/large"
+    },
+    {
+     "type": "thumbnail_l",
+     "url": "https://core.ac.uk/image/748655335/large"
+    },
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/365417733"
+    }
+   ]
+  }
+ ],
+ "searchId": "1c4b5d607b73f02d5df0898b3453d58b"
+}

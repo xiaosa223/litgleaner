@@ -2,7 +2,7 @@
 
 每天从多个信号源发现文献，按研究主题筛选和评分，把值得读的归档并推送。设计依据见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
-> 当前处于“行走骨架”阶段：流程和存储都是真实的，但信号源、全文、解析、大模型和推送都是假适配器，`config/` 里的内容只用于演示。
+> 当前阶段：流程、存储、解析器，以及 9 个信号源和 8 个全文来源已经是真实实现；大模型和推送仍是假适配器。`config/` 默认是演示配置，真实来源都已列出但默认关闭，启用方法见 [docs/SOURCES.md](docs/SOURCES.md)。
 
 ## 快速开始
 
@@ -20,7 +20,9 @@ ls -R data/demo/archive        # 查看 JSON 归档
 | 想做什么 | 怎么做 |
 |---|---|
 | 检查配置和密钥 | `litfactory doctor` |
-| 增减信号源 | 改 `config/sources.yaml` |
+| 增减信号源 | 改 `config/sources.yaml`，各来源的能力和限制见 [docs/SOURCES.md](docs/SOURCES.md) |
+| 调整全文来源和顺序 | 改 `config/app.yaml` 的 `fulltext` |
+| 真实网络联调 | `uv run python scripts/probe_sources.py`（不写数据库） |
 | 切换研究主题 | 新建 `config/topics/<id>.yaml`，执行 `topic activate`、`topic pause` |
 | 让新主题处理历史论文 | `topic backfill <id>` 预览，加 `--execute` 执行 |
 | 改权重或等级线 | 改 `config/rubrics/default.json`，执行 `rubric rescore`（不花钱） |

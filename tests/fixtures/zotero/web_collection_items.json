@@ -1,0 +1,320 @@
+[
+ {
+  "key": "L7NH9VSH",
+  "version": 15095,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2025-10-01",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "L7NH9VSH",
+   "version": 15095,
+   "itemType": "journalArticle",
+   "title": "Root mucilage enhances plant water use under combined soil and atmospheric drought",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Asegidew",
+     "lastName": "Akale"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Mohanned",
+     "lastName": "Abdalla"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Tina",
+     "lastName": "Koehler"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Anna M.",
+     "lastName": "Sauer"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Efstathios",
+     "lastName": "Diamantopoulos"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Mutez A.",
+     "lastName": "Ahmed"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Hannah M.",
+     "lastName": "Schneider"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Doris",
+     "lastName": "Vetterlein"
+    }
+   ],
+   "abstractNote": "Plants have evolved various root adaptive traits to enhance their ability to access soil water in stressful conditions. Although root mucilage has been suggested to facilitate root water uptake in drying soils, its impact during combined edaphic and atmospheric stress remains unknown. We hypothesize",
+   "publicationTitle": "Annals of Botany",
+   "publisher": "Oxford University Press",
+   "date": "2025-10-01",
+   "volume": "136",
+   "issue": "5-6",
+   "pages": "1131-1142",
+   "journalAbbreviation": "Ann. Bot.",
+   "DOI": "10.1093/aob/mcaf182",
+   "citationKey": "akaleRootMucilageEnhances2025",
+   "url": "https://doi.org/10.1093/aob/mcaf182",
+   "accessDate": "2026-01-05",
+   "PMID": "40798946",
+   "PMCID": "PMC12682819",
+   "ISSN": "0305-7364",
+   "shortTitle": "Root mucilage",
+   "language": "en",
+   "libraryCatalog": "Oxford Academic",
+   "extra": "volume-title: Stress physiology of root systems",
+   "collections": [
+    "ECHCPXZN"
+   ],
+   "dateAdded": "2026-02-05T12:11:54Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ },
+ {
+  "key": "U98ZRCY7",
+  "version": 15095,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2000",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "U98ZRCY7",
+   "version": 15095,
+   "itemType": "book",
+   "title": "Veiled women",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Sarah R. I.",
+     "lastName": "Foot"
+    }
+   ],
+   "series": "Studies in early medieval Britain",
+   "seriesNumber": "1",
+   "volume": "2",
+   "numberOfVolumes": "2",
+   "date": "2000",
+   "publisher": "Ashgate",
+   "place": "Aldershot",
+   "ISBN": "978-0-7546-0043-5 978-0-7546-0044-2",
+   "DOI": "10.4324/9781315264202",
+   "citationKey": "footVeiledWomen2000",
+   "url": "https://www.taylorfrancis.com/books/mono/10.4324/9781315264202/",
+   "accessDate": "2024-10-19",
+   "language": "en",
+   "libraryCatalog": "Taylor and Francis",
+   "extra": "volume-title: Female religious communities in England, 871–1066",
+   "collections": [
+    "ECHCPXZN"
+   ],
+   "dateAdded": "2026-02-05T12:00:38Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ },
+ {
+  "key": "6XC4LHKK",
+  "version": 15095,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2025-11-11",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "6XC4LHKK",
+   "version": 15095,
+   "itemType": "webpage",
+   "title": "Workers and temporary workers: guidance for sponsors",
+   "creators": [
+    {
+     "creatorType": "author",
+     "name": "UK Visas and Immigration"
+    }
+   ],
+   "abstractNote": "Guidance for sponsors on sponsoring a worker.",
+   "websiteTitle": "GOV.UK",
+   "date": "2025-11-11",
+   "DOI": "",
+   "citationKey": "ukvisasandimmigrationWorkersTemporaryWorkers2025",
+   "url": "https://www.gov.uk/government/publications/workers-and-temporary-workers-guidance-for-sponsors-part-2-sponsor-a-worker",
+   "accessDate": "2026-02-05T11:43:52Z",
+   "shortTitle": "Workers and temporary workers",
+   "language": "en",
+   "extra": "part-number: 2\npart-title: Sponsor a worker\noriginal-date: 2020-12-09\noriginal-publisher: HM Government\nstatus: updated",
+   "collections": [
+    "ECHCPXZN"
+   ],
+   "dateAdded": "2026-02-05T11:43:51Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ },
+ {
+  "key": "P334CCUU",
+  "version": 15094,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "1978-08-10",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "P334CCUU",
+   "version": 15094,
+   "itemType": "bookSection",
+   "title": "Capital formation in Japan",
+   "creators": [
+    {
+     "creatorType": "editor",
+     "firstName": "Peter",
+     "lastName": "Mathias"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "M. M.",
+     "lastName": "Postan"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Kazushi",
+     "lastName": "Ohkawa"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Henry",
+     "lastName": "Rosovsky"
+    },
+    {
+     "creatorType": "seriesEditor",
+     "firstName": "M. M.",
+     "lastName": "Postan"
+    },
+    {
+     "creatorType": "seriesEditor",
+     "firstName": "D. C.",
+     "lastName": "Coleman"
+    },
+    {
+     "creatorType": "seriesEditor",
+     "firstName": "Peter",
+     "lastName": "Mathias"
+    }
+   ],
+   "bookTitle": "The Cambridge economic history of Europe",
+   "volume": "7",
+   "numberOfVolumes": "7",
+   "date": "1978-08-10",
+   "publisher": "Cambridge University Press",
+   "place": "Cambridge",
+   "pages": "134-165",
+   "ISBN": "978-1-139-05449-2",
+   "DOI": "10.1017/CHOL9780521215916.004",
+   "citationKey": "ohkawaCapitalFormationJapan1978",
+   "url": "https://www.cambridge.org/core/product/identifier/CBO9781139054492A009/type/book_part",
+   "accessDate": "2020-10-17",
+   "language": "en",
+   "libraryCatalog": "Cambridge Core",
+   "extra": "volume-title: The industrial economies: capital, labour and enterprise\npart-number: 2\npart-title: The United States, Japan and Russia",
+   "collections": [
+    "ECHCPXZN"
+   ],
+   "dateAdded": "2026-02-05T10:17:09Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ },
+ {
+  "key": "V55IX2PN",
+  "version": 14986,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2019-04-16",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "V55IX2PN",
+   "version": 14986,
+   "itemType": "preprint",
+   "title": "The intuitive cooperation hypothesis revisited: a meta-analytic examination of effect-size and between-study heterogeneity",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Amanda",
+     "lastName": "Kvarven"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Eirik",
+     "lastName": "Strømland"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Conny Ernst-Peter",
+     "lastName": "Wollbrant"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "David",
+     "lastName": "Andersson"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Magnus",
+     "lastName": "Johannesson"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Gustav",
+     "lastName": "Tinghög"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Daniel",
+     "lastName": "Västfjäll"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Kristian Ove R.",
+     "lastName": "Myrseth"
+    }
+   ],
+   "abstractNote": "The hypothesis that intuition promotes cooperation has attracted considerable attention. We address the question with a meta-analysis of 82 cooperation experiments, spanning four different types of intuition manipulations—time pressure, cognitive load, depletion, and induction—including 29,087 parti",
+   "repository": "MetaArXiv",
+   "date": "2019-04-16",
+   "DOI": "10.31222/osf.io/kvzg3",
+   "citationKey": "kvarvenIntuitiveCooperationHypothesis2019",
+   "url": "https://osf.io/kvzg3",
+   "accessDate": "2019-10-19T17:55:49Z",
+   "shortTitle": "Intuitive cooperation hypothesis",
+   "language": "en",
+   "libraryCatalog": "DOI.org (Crossref)",
+   "collections": [
+    "ECHCPXZN"
+   ],
+   "dateAdded": "2019-10-19T17:55:49Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ }
+]

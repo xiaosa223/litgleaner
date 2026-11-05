@@ -1,0 +1,139 @@
+{
+ "id": "https://openalex.org/W2919115771",
+ "doi": "https://doi.org/10.1038/nature14539",
+ "title": "Deep learning",
+ "publication_date": "2015-05-26",
+ "ids": {
+  "openalex": "https://openalex.org/W2919115771",
+  "doi": "https://doi.org/10.1038/nature14539",
+  "mag": "2919115771",
+  "pmid": "https://pubmed.ncbi.nlm.nih.gov/26017442"
+ },
+ "authorships": [
+  {
+   "author_position": "first",
+   "author": {
+    "id": "https://openalex.org/A5001226970",
+    "display_name": "Yann LeCun",
+    "orcid": "https://orcid.org/0000-0002-1992-2684"
+   },
+   "raw_author_name": "Yann LeCun"
+  },
+  {
+   "author_position": "middle",
+   "author": {
+    "id": "https://openalex.org/A5086198262",
+    "display_name": "Yoshua Bengio",
+    "orcid": "https://orcid.org/0000-0002-9322-3515"
+   },
+   "raw_author_name": "Yoshua Bengio"
+  },
+  {
+   "author_position": "last",
+   "author": {
+    "id": "https://openalex.org/A5108093963",
+    "display_name": "Geoffrey E. Hinton",
+    "orcid": null
+   },
+   "raw_author_name": "Geoffrey Hinton"
+  }
+ ],
+ "primary_location": {
+  "id": "doi:10.1038/nature14539",
+  "doi": "https://doi.org/10.1038/nature14539",
+  "is_oa": false,
+  "landing_page_url": "https://doi.org/10.1038/nature14539",
+  "pdf_url": null,
+  "source": {
+   "id": "https://openalex.org/S137773608",
+   "display_name": "Nature",
+   "issn_l": "0028-0836",
+   "issn": [
+    "0028-0836",
+    "1476-4687"
+   ]
+  },
+  "license": null,
+  "version": "publishedVersion"
+ },
+ "locations": [
+  {
+   "id": "doi:10.1038/nature14539",
+   "doi": "https://doi.org/10.1038/nature14539",
+   "is_oa": false,
+   "landing_page_url": "https://doi.org/10.1038/nature14539",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S137773608",
+    "display_name": "Nature",
+    "issn_l": "0028-0836",
+    "issn": [
+     "0028-0836",
+     "1476-4687"
+    ]
+   },
+   "license": null,
+   "version": "publishedVersion"
+  },
+  {
+   "id": "pmid:26017442",
+   "doi": null,
+   "is_oa": false,
+   "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/26017442",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306525036",
+    "display_name": "PubMed",
+    "issn_l": null,
+    "issn": null
+   },
+   "license": null,
+   "version": "publishedVersion"
+  },
+  {
+   "id": "pmh:oai:HAL:hal-04206682v1",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://hal.science/hal-04206682",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306402512",
+    "display_name": "HAL",
+    "issn_l": null,
+    "issn": null
+   },
+   "license": "other-oa",
+   "version": "submittedVersion"
+  },
+  {
+   "id": "pmh:oai:RePEc:nat:nature:v:521:y:2015:i:7553:d:10.1038_nature14539",
+   "doi": null,
+   "is_oa": false,
+   "landing_page_url": "https://www.nature.com/articles/nature14539",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306401271",
+    "display_name": "RePEc: Research Papers in Economics",
+    "issn_l": null,
+    "issn": null
+   },
+   "license": null,
+   "version": "submittedVersion"
+  }
+ ],
+ "best_oa_location": {
+  "id": "pmh:oai:HAL:hal-04206682v1",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "https://hal.science/hal-04206682",
+  "pdf_url": null,
+  "source": {
+   "id": "https://openalex.org/S4306402512",
+   "display_name": "HAL",
+   "issn_l": null,
+   "issn": null
+  },
+  "license": "other-oa",
+  "version": "submittedVersion"
+ }
+}

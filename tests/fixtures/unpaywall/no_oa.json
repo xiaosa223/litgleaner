@@ -1,0 +1,43 @@
+{
+ "best_oa_location": null,
+ "data_standard": 2,
+ "doi": "10.1126/science.aaa8415",
+ "doi_url": "https://doi.org/10.1126/science.aaa8415",
+ "first_oa_location": null,
+ "genre": "journal-article",
+ "has_repository_copy": false,
+ "is_oa": false,
+ "is_paratext": false,
+ "journal_is_in_doaj": false,
+ "journal_is_oa": false,
+ "journal_issn_l": "0036-8075",
+ "journal_issns": "0036-8075,0193-4511,1095-9203",
+ "journal_name": "Science",
+ "oa_locations": [],
+ "oa_locations_embargoed": [],
+ "oa_status": "closed",
+ "published_date": "2015-07-16",
+ "publisher": "American Association for the Advancement of Science (AAAS)",
+ "title": "Machine learning: Trends, perspectives, and prospects",
+ "updated": "2026-07-23T14:29:04Z",
+ "year": 2015,
+ "z_authors": [
+  {
+   "author_position": "first",
+   "is_corresponding": true,
+   "raw_affiliation_strings": [
+    "Department of Electrical Engineering and Computer Sciences, Department of Statistics, University of California, Berkeley, CA, USA"
+   ],
+   "raw_author_name": "M. I. Jordan"
+  },
+  {
+   "author_position": "last",
+   "is_corresponding": true,
+   "raw_affiliation_strings": [
+    "Machine Learning Department, Carnegie Mellon University, Pittsburgh, PA, USA",
+    "Machine Learning Department, Carnegie Mellon University, Pittsburgh, PA, USA#TAB#"
+   ],
+   "raw_author_name": "T. M. Mitchell"
+  }
+ ]
+}

@@ -1,0 +1,109 @@
+{
+ "total": 4,
+ "token": "PCOKWVSKJJGM4TWNJNI3EUSQJIWVNUSRKBFEYK2JFUBHFI4VBRGJHTOMRTGM2E6NRUGY2TJNSOGS2EYTFUJA2DEMSIWIZESSBRJZGLOMSOGVGE6TSRRGWAPFTMKFY",
+ "data": [
+  {
+   "paperId": "0bea0bb0edb99b5d1f4d79409233f1041f41daa4",
+   "externalIds": {
+    "PubMedCentral": "13718767",
+    "DOI": "10.1016/j.ijpt.2026.101967",
+    "CorpusId": 292816037,
+    "PubMed": "42959910"
+   },
+   "title": "Differentiable Autoplanning Algorithm for Proton Therapy Based on Deep Learning: A Proof-of-Concept",
+   "venue": "International Journal of Particle Therapy",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "https://www.sciencedirect.com/science/article/pii/S2331518026006700/pdf",
+    "status": "GOLD",
+    "license": "CCBYNCND",
+    "disclaimer": "Notice: Paper or abstract available at https://pmc.ncbi.nlm.nih.gov/articles/PMC13718767, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-10-01",
+   "journal": {
+    "name": "International Journal of Particle Therapy",
+    "volume": "22"
+   },
+   "authors": [
+    {
+     "authorId": "2315684494",
+     "name": "L. Arsini"
+    },
+    {
+     "authorId": "2315686283",
+     "name": "B. Caccia"
+    },
+    {
+     "authorId": "2211041043",
+     "name": "A. Ciardiello"
+    },
+    {
+     "authorId": "2476688663",
+     "name": "R. Faccini"
+    },
+    {
+     "authorId": "2470762673",
+     "name": "S. Giagu"
+    },
+    {
+     "authorId": "2333070745",
+     "name": "Francesca Nicolanti"
+    },
+    {
+     "authorId": "1387889838",
+     "name": "C. Mancini-Terracciano"
+    }
+   ],
+   "abstract": "Purpose This study presents the proof-of-concept of a novel framework for fully automated proton therapy treatment planning that enables the simultaneous optimization of all major beam parameters, including fluences, energies, and field orientations, within a single differentiable programming approach. The objective is to overcome current limitations of conventional treatment planning systems, which restrict optimization to fluence alone. Materials and Methods A differentiable deep-learning (DL) dose engine based on Graph Neural Networks was employed to emulate Monte Carlo (MC) dose deposition of proton pencil beams with millisecond inference time and high accuracy. The model predicts energy deposition within a cylindrical scoring volume around each beam, which is subsequently mapped to the CT reference frame using differentiable geometric transformations and interpolation. Exploiting end-to-end differentiability, exact gradients of dose with respect to beam energies, orientations, and fluences were computed and used for plan optimization. A hybrid strategy combining Covariance Matrix Adaptation Evolution Strategy (CMA) for global exploration and the Adam gradient-based optimizer for local refinement was implemented. Proof-of-concept evaluations were conducted in homogeneous water phantom geometries and in a head-and-neck phantom CT featuring single- and dual-field configurations targeting a defined planning target volume while sparing organs at risk. Results The DL dose engine reproduced high-statistics MC simulated dose distributions with mean relative errors of the order of percent, with a computational efficiency compatible with iterative optimization. The joint optimization procedure reliably converged from random initial conditions to reproducible solutions in both single- and dual-field setups, generating clinically meaningful Spread-Out Bragg peaks with homogeneous planning target volume coverage and effective organs at risk sparing. Conclusion This work demonstrates the feasibility of fully joint, gradient-based optimization of all key proton therapy beam parameters using a differentiable DL dose engine. The proposed framework provides a foundation for next-generation automated treatment planning systems and motivates future extension to patient-specific, clinically realistic scenarios."
+  },
+  {
+   "paperId": "0144d3b626c220f9bb1a7af3ae5360202f68477f",
+   "externalIds": {
+    "ArXiv": "2610.38993",
+    "CorpusId": 295374110
+   },
+   "title": "Open-World Object Motion Anticipation via Meta-Learned Semantic Adaptation",
+   "venue": "",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "",
+    "status": null,
+    "license": null,
+    "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2610.38993, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-10-28",
+   "journal": null,
+   "authors": [
+    {
+     "authorId": "2171740944",
+     "name": "Mason B. Peterson"
+    },
+    {
+     "authorId": "2279834804",
+     "name": "Gage MacLin"
+    },
+    {
+     "authorId": "1729283296",
+     "name": "Camilla Tabasso"
+    },
+    {
+     "authorId": "2264754352",
+     "name": "Jonathan P. How"
+    },
+    {
+     "authorId": "2093081515",
+     "name": "Joshua Migdal"
+    },
+    {
+     "authorId": "2105978130",
+     "name": "T. Brady"
+    },
+    {
+     "authorId": "1709510",
+     "name": "T. Padır"
+    }
+   ],
+   "abstract": "Anticipating the motion of nearby objects is critical for safe and efficient robot navigation. Without a proper understanding of what may move, a robot may plan overly conservative, inefficient trajectories to guarantee safety, or it may be overly risky, resulting in unacceptable collisions. While tracking and predicting the motion of known objects has seen significant progress, little research addresses how a robot should adapt online to novel objects, including anticipating how one object may move another (e.g., a person operating a forklift to move a pallet). To enable this capability, we propose a meta-learned graph neural network that leverages a semantic, geometric, and relational history of objects to accurately predict, from a few online observations, when objects will begin to move in new environments. We demonstrate that our method, which is trained only in simulation, accurately anticipates the motion of objects unseen at training time, transfers to hardware without any fine-tuning, and outperforms a vision-language model and a class-frequency baseline in both simulation and hardware experiments. Our method's accurate prediction enables collision-free traversals in a closed-loop navigation simulation, while remaining within four seconds of the fastest, collision-prone planner."
+  }
+ ]
+}

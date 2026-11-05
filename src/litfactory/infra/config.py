@@ -21,6 +21,7 @@ class AdapterConfig(FrozenModel):
     adapter: str
     enabled: bool = True
     credentials_env: tuple[str, ...] = ()
+    optional_env: tuple[str, ...] = ()
     options: Mapping[str, Any] = Field(default_factory=dict)
 
 

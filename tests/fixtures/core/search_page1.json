@@ -1,0 +1,823 @@
+{
+ "totalHits": 2709,
+ "limit": 10,
+ "offset": 0,
+ "results": [
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Bilal, Muhammad"
+    },
+    {
+     "name": "Yao, Bin"
+    },
+    {
+     "name": "Wang, Tie"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/741624096"
+   ],
+   "createdDate": "2026-06-07T11:46:43+01:00",
+   "dataProviders": [
+    {
+     "id": 59,
+     "name": "Lancaster E-Prints",
+     "url": "https://api.core.ac.uk/v3/data-providers/59",
+     "logo": "https://api.core.ac.uk/data-providers/59/logo"
+    }
+   ],
+   "depositedDate": "2026-05-26T23:25:02+01:00",
+   "abstract": "Accurate prediction of solar radiation energy can precisely assess the power generation capacity of photovoltaic systems, thereby optimizing grid dispatch and ensuring the stability of power supply. The prevailing methodology employs temporal models or spatiotemporal graph neural networks, which are used to extract the meteorological dependencies for solar radiation or conduct site-specific modeling. However, these studies overlearn the geographical features of the training domain, and lack the extrapolation continuity of unknown coordinates in space. To resolve these problems, this study cons",
+   "documentType": "review",
+   "doi": null,
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 406241723,
+   "identifiers": [
+    {
+     "identifier": "741624096",
+     "type": "core_id"
+    },
+    {
+     "identifier": "oai:eprints.lancs.ac.uk:237591",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "oai:eprints.lancs.ac.uk:237591",
+     "type": "oai"
+    }
+   ],
+   "title": "DRCNet : Decoupled residual correction network for multivariate time series forecasting",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "oai:eprints.lancs.ac.uk:237591"
+   ],
+   "publishedDate": "2026-12-31T00:00:00+00:00",
+   "publisher": "",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-31T14:17:54+01:00",
+   "yearPublished": 2026,
+   "journals": [],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/406241723"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Bilal, Muhammad"
+    },
+    {
+     "name": "Yao, Bin"
+    },
+    {
+     "name": "Wang, Tie"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/741624096"
+   ],
+   "createdDate": "2026-06-07T11:46:43+01:00",
+   "dataProviders": [
+    {
+     "id": 59,
+     "name": "Lancaster E-Prints",
+     "url": "https://api.core.ac.uk/v3/data-providers/59",
+     "logo": "https://api.core.ac.uk/data-providers/59/logo"
+    }
+   ],
+   "depositedDate": "2026-05-26T23:25:02+01:00",
+   "abstract": "Accurate prediction of solar radiation energy can precisely assess the power generation capacity of photovoltaic systems, thereby optimizing grid dispatch and ensuring the stability of power supply. The prevailing methodology employs temporal models or spatiotemporal graph neural networks, which are used to extract the meteorological dependencies for solar radiation or conduct site-specific modeling. However, these studies overlearn the geographical features of the training domain, and lack the extrapolation continuity of unknown coordinates in space. To resolve these problems, this study cons",
+   "documentType": "review",
+   "doi": null,
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 361506853,
+   "identifiers": [
+    {
+     "identifier": "741624096",
+     "type": "core_id"
+    },
+    {
+     "identifier": "oai:eprints.lancs.ac.uk:237591",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "oai:eprints.lancs.ac.uk:237591",
+     "type": "oai"
+    }
+   ],
+   "title": "DRCNet : Decoupled residual correction network for multivariate time series forecasting",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "oai:eprints.lancs.ac.uk:237591"
+   ],
+   "publishedDate": "2026-12-31T00:00:00+00:00",
+   "publisher": "",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-07-30T08:45:48+01:00",
+   "yearPublished": 2026,
+   "journals": [],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/361506853"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Bilal, Muhammad"
+    },
+    {
+     "name": "Yao, Bin"
+    },
+    {
+     "name": "Wang, Tie"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/741624096"
+   ],
+   "createdDate": "2026-06-07T11:46:43+01:00",
+   "dataProviders": [
+    {
+     "id": 59,
+     "name": "Lancaster E-Prints",
+     "url": "https://api.core.ac.uk/v3/data-providers/59",
+     "logo": "https://api.core.ac.uk/data-providers/59/logo"
+    }
+   ],
+   "depositedDate": "2026-05-26T23:25:02+01:00",
+   "abstract": "Accurate prediction of solar radiation energy can precisely assess the power generation capacity of photovoltaic systems, thereby optimizing grid dispatch and ensuring the stability of power supply. The prevailing methodology employs temporal models or spatiotemporal graph neural networks, which are used to extract the meteorological dependencies for solar radiation or conduct site-specific modeling. However, these studies overlearn the geographical features of the training domain, and lack the extrapolation continuity of unknown coordinates in space. To resolve these problems, this study cons",
+   "documentType": "review",
+   "doi": null,
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 384434084,
+   "identifiers": [
+    {
+     "identifier": "741624096",
+     "type": "core_id"
+    },
+    {
+     "identifier": "oai:eprints.lancs.ac.uk:237591",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "oai:eprints.lancs.ac.uk:237591",
+     "type": "oai"
+    }
+   ],
+   "title": "DRCNet : Decoupled residual correction network for multivariate time series forecasting",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "oai:eprints.lancs.ac.uk:237591"
+   ],
+   "publishedDate": "2026-12-31T00:00:00+00:00",
+   "publisher": "",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-13T12:28:48+01:00",
+   "yearPublished": 2026,
+   "journals": [],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/384434084"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Yueju Shen"
+    },
+    {
+     "name": "Jing Chen"
+    },
+    {
+     "name": "Yiming Lu"
+    },
+    {
+     "name": "Yongjing Hao"
+    },
+    {
+     "name": "Yixin Xu"
+    },
+    {
+     "name": "Hongjie Wu"
+    },
+    {
+     "name": "Weizhong Lu"
+    },
+    {
+     "name": "Yiyi Xia"
+    },
+    {
+     "name": "Zhiqiang Hui"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/751434695"
+   ],
+   "createdDate": "2026-08-06T01:08:28+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-04T07:51:35+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.compbiolchem.2026.109286",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 379039263,
+   "identifiers": [
+    {
+     "identifier": "751434695",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.compbiolchem.2026.109286",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.compbiolchem.2026.109286",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.compbiolchem.2026.109286",
+     "type": "unknown"
+    }
+   ],
+   "title": "ARF-GNN: Adaptive receptive field graph neural network for protein function prediction",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.compbiolchem.2026.109286"
+   ],
+   "publishedDate": "2026-12-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-06T01:08:28+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/379039263"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Tiezhu Zhou"
+    },
+    {
+     "name": "Chunsheng Hua"
+    },
+    {
+     "name": "Zheng Fang"
+    },
+    {
+     "name": "Xiaoheng Zhao"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/752514259"
+   ],
+   "createdDate": "2026-08-21T01:24:45+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-19T13:43:40+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.bspc.2026.111297",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 391829847,
+   "identifiers": [
+    {
+     "identifier": "752514259",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.bspc.2026.111297",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.bspc.2026.111297",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.bspc.2026.111297",
+     "type": "unknown"
+    }
+   ],
+   "title": "PhysGaitNet: A physics-informed Graph Neural Network framework for multi-muscle compensation analysis in pathological gait",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.bspc.2026.111297"
+   ],
+   "publishedDate": "2026-12-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-21T01:24:45+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/391829847"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "S.M. Li"
+    },
+    {
+     "name": "S.J. Jiang"
+    },
+    {
+     "name": "Y.L. Xu"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/756302614"
+   ],
+   "createdDate": "2026-09-12T01:01:34+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-09-10T02:48:34+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.engstruct.2026.123702",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 418406060,
+   "identifiers": [
+    {
+     "identifier": "756302614",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.engstruct.2026.123702",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.engstruct.2026.123702",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.engstruct.2026.123702",
+     "type": "unknown"
+    }
+   ],
+   "title": "Digital twin-informed spatiotemporal graph neural network for buffeting response prediction of a long-span bridge",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.engstruct.2026.123702"
+   ],
+   "publishedDate": "2026-12-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-09-12T01:01:34+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/418406060"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Taewan Kim"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/752073514"
+   ],
+   "createdDate": "2026-08-15T01:16:09+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-13T17:14:42+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.enconman.2026.122029",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 385986569,
+   "identifiers": [
+    {
+     "identifier": "752073514",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.enconman.2026.122029",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.enconman.2026.122029",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.enconman.2026.122029",
+     "type": "unknown"
+    }
+   ],
+   "title": "A physics-aware surrogate model based on a graph neural network for mitigating directional discretization bias in wind farm layout optimization",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.enconman.2026.122029"
+   ],
+   "publishedDate": "2026-12-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-15T01:16:09+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/385986569"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Baum, Dario David"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/748655335"
+   ],
+   "createdDate": "2026-07-08T04:19:58+01:00",
+   "dataProviders": [
+    {
+     "id": 11074,
+     "name": "VU Research Portal",
+     "url": "https://api.core.ac.uk/v3/data-providers/11074",
+     "logo": "https://api.core.ac.uk/data-providers/11074/logo"
+    }
+   ],
+   "depositedDate": "2026-07-01T22:19:09+01:00",
+   "abstract": "The development of quantum chemistry has long been shaped by a central tension: while the laws governing electronic structure are known, their exact application quickly becomes computationally prohibitive for realistic molecular systems. Over decades, this challenge has driven the design of increasingly sophisticated approximations that balance predictive accuracy with computational affordability. More recently, machine learning (ML) has emerged as a new addition to this methodological landscape, offering the possibility of reproducing high-level quantum chemical results at a fraction of the c",
+   "documentType": "other",
+   "doi": "10.5463/thesis.1850",
+   "downloadUrl": "https://core.ac.uk/download/748655335.pdf",
+   "fieldOfStudy": null,
+   "id": 365417733,
+   "identifiers": [
+    {
+     "identifier": "748655335",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.5463/thesis.1850",
+     "type": "doi"
+    },
+    {
+     "identifier": "oai:research.vu.nl:publications/ff8258b2-bf81-4b19-98a4-b4796b8f6b16",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "oai:research.vu.nl:publications/ff8258b2-bf81-4b19-98a4-b4796b8f6b16",
+     "type": "oai"
+    }
+   ],
+   "title": "Machine Learning for the Acceleration of Quantum Chemical Simulations",
+   "language": {
+    "code": "en",
+    "name": "English"
+   },
+   "magId": null,
+   "oaiIds": [
+    "oai:research.vu.nl:publications/ff8258b2-bf81-4b19-98a4-b4796b8f6b16"
+   ],
+   "publishedDate": "2026-11-16T00:00:00+00:00",
+   "publisher": "",
+   "pubmedId": null,
+   "sourceFulltextUrls": [
+    "https://core.ac.uk/download/748655335.pdf"
+   ],
+   "updatedDate": "2026-09-01T16:37:39+01:00",
+   "yearPublished": 2026,
+   "journals": [],
+   "links": [
+    {
+     "type": "download",
+     "url": "https://core.ac.uk/download/748655335.pdf"
+    },
+    {
+     "type": "reader",
+     "url": "https://core.ac.uk/reader/748655335"
+    },
+    {
+     "type": "thumbnail_m",
+     "url": "https://core.ac.uk/image/748655335/large"
+    },
+    {
+     "type": "thumbnail_l",
+     "url": "https://core.ac.uk/image/748655335/large"
+    },
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/365417733"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Rossi, Aurora"
+    },
+    {
+     "name": "Kumar Maurya, Sunil"
+    },
+    {
+     "name": "Mallman-Trenn, Frederik"
+    },
+    {
+     "name": "Murata, Tsuyoshi"
+    },
+    {
+     "name": "Liu, Xin"
+    },
+    {
+     "name": "Giroire, Frédéric"
+    },
+    {
+     "name": "Dachille, Justin"
+    },
+    {
+     "name": "Natale, Emanuele"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [
+    "The University of Tokyo (UTokyo)",
+    "Universität Bonn = University of Bonn",
+    "ANR-15-IDEX-0001,UCA JEDI,Idex UCA JEDI(2015)",
+    "Centre National de la Recherche Scientifique (CNRS)",
+    "Université Côte d'Azur (UniCA)",
+    "King‘s College London",
+    "Institute of Science Tokyo [Tokyo]",
+    "Grid'5000",
+    "Laboratoire d'Informatique, Signaux, et Systèmes de Sophia Antipolis (I3S) ; Université Nice Sophia Antipolis (1965 - 2019) (UNS)-Centre National de la Recherche Scientifique (CNRS)-Université Côte d'Azur (UniCA)",
+    "National Institute of Advanced Industrial Science and Technology (AIST)",
+    "Lamarr Institute",
+    "Combinatorics, Optimization and Algorithms for Telecommunications (COATI) ; Centre Inria d'Université Côte d'Azur ; Institut National de Recherche en Informatique et en Automatique (Inria)-Institut National de Recherche en Informatique et en Automatique (Inria)-COMmunications, Réseaux, systèmes Embarqués et Distribués (Laboratoire I3S - COMRED) ; Laboratoire d'Informatique, Signaux, et Systèmes de Sophia Antipolis (I3S) ; Université Nice Sophia Antipolis (1965 - 2019) (UNS)-Centre National de la Recherche Scientifique (CNRS)-Université Côte d'Azur (UniCA)-Université Nice Sophia Antipolis (1965 - 2019) (UNS)-Centre National de la Recherche Scientifique (CNRS)-Université Côte d'Azur (UniCA)-Laboratoire d'Informatique, Signaux, et Systèmes de Sophia Antipolis (I3S) ; Université Nice Sophia Antipolis (1965 - 2019) (UNS)-Centre National de la Recherche Scientifique (CNRS)-Université Côte d'Azur (UniCA)-Université Nice Sophia Antipolis (1965 - 2019) (UNS)-Centre National de la Recherche Scientifique (CNRS)-Universi",
+    "ANR-23-PECL-0003,CARECloud,Comprendre, Améliorer, Réduire les impacts Environnementaux du Cloud computing(2023)",
+    "ANR-17-EURE-0004,UCA DS4H,UCA Systèmes Numériques pour l'Homme(2017)",
+    "European Project: 101120726,HORIZON-CL4-2022-HUMAN-02,HORIZON-CL4-2022-HUMAN-02,dAIEDGE(2023)",
+    "ANR-23-IACL-0001,3IA Côte d'Azur 2030,3IA Côte d'Azur 2030(2023)"
+   ],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/753513313",
+    "https://api.core.ac.uk/v3/outputs/755809284",
+    "https://api.core.ac.uk/v3/outputs/762365455"
+   ],
+   "createdDate": "2026-08-29T19:15:31+01:00",
+   "dataProviders": [
+    {
+     "id": 1589,
+     "name": "INRIA a CCSD electronic archive server",
+     "url": "https://api.core.ac.uk/v3/data-providers/1589",
+     "logo": "https://api.core.ac.uk/data-providers/1589/logo"
+    },
+    {
+     "id": 24558,
+     "name": "HAL Portal Univ-Côtedazur",
+     "url": "https://api.core.ac.uk/v3/data-providers/24558",
+     "logo": "https://api.core.ac.uk/data-providers/24558/logo"
+    }
+   ],
+   "depositedDate": "2026-08-23T01:00:00+01:00",
+   "abstract": "International audienceComputing the importance of nodes in networks is a long-standing fundamental problem that has driven extensive study of various centrality measures.A particularly well-known centrality measure is betweenness centrality, whose exact computation becomes prohibitive on large-scale networks.Graph Neural Network (GNN) models have thus been proposed to predict the ranking of nodes by betweenness centrality. However, existing GNN-based methods either have graph-size-dependent parameter counts or are limited to undirected graphs.We propose a lightweight GNN architecture that expl",
+   "documentType": "conference paper",
+   "doi": "10.1145/3799682.3840622",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 402857899,
+   "identifiers": [
+    {
+     "identifier": "753513313",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1145/3799682.3840622",
+     "type": "doi"
+    },
+    {
+     "identifier": "oai:hal:hal-05502800v2",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "oai:hal:hal-05502800v2",
+     "type": "oai"
+    },
+    {
+     "identifier": "755809284",
+     "type": "core_id"
+    },
+    {
+     "identifier": "762365455",
+     "type": "core_id"
+    }
+   ],
+   "title": "Degree-Mass Message Passing for Betweenness Ranking in Directed and Undirected Networks",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "oai:hal:hal-05502800v2"
+   ],
+   "publishedDate": "2026-11-07T00:00:00+00:00",
+   "publisher": "CCSD",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-10-11T22:21:37+01:00",
+   "yearPublished": 2026,
+   "journals": [],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/402857899"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Junyi Yang"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/750331099"
+   ],
+   "createdDate": "2026-07-21T01:02:58+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-07-19T16:34:44+01:00",
+   "abstract": "The customer-centric transformation of e-commerce makes it difficult for traditional customer relationship management to meet the needs of enterprises to accurately tap into customer value. Therefore, the research aims to build an intelligent model that integrates multi-source data, accurately predicts customer needs, and guides personalized marketing. The study utilizes the Alibaba Tianchi dataset, comprising 100,000 user interaction logs, to validate the proposed Dual-Layer Attention Graph Neural Network (DLAGNN) framework. Distinct labels were constructed for multi-task learning: customer c",
+   "documentType": "journal article",
+   "doi": "10.32738/jeppm-2025-309",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 344493920,
+   "identifiers": [
+    {
+     "identifier": "750331099",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.32738/jeppm-2025-309",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.32738%2fjeppm-2025-309",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.32738%2fjeppm-2025-309",
+     "type": "unknown"
+    }
+   ],
+   "title": "DLAGNN: A Dual-Layer Attention Graph Neural Network Framework with Dynamic Feature Fusion and Multi-Task Learning for Customer Relationship Management in E-Commerce",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.32738%2fjeppm-2025-309"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Engineering, Project, and Production Management (EPPM)",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-07-21T01:02:58+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/344493920"
+    }
+   ]
+  }
+ ],
+ "searchId": "a7f18dbeba25f847ed44fd372f1da73f"
+}

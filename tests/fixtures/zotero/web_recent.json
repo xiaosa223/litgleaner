@@ -1,0 +1,332 @@
+[
+ {
+  "key": "CMK4ZNS6",
+  "version": 15185,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2024",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "CMK4ZNS6",
+   "version": 15185,
+   "itemType": "journalArticle",
+   "title": "",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Angus",
+     "lastName": "Fraser"
+    }
+   ],
+   "publicationTitle": "Bodleian Library Record",
+   "date": "03/2024",
+   "volume": "37",
+   "issue": "1-2",
+   "pages": "23-26",
+   "journalAbbreviation": "The Bodleian Library Record",
+   "DOI": "10.3828/blr.2024.37.1-2.23",
+   "citationKey": "fraser2024",
+   "url": "http://www.liverpooluniversitypress.co.uk/doi/10.3828/blr.2024.37.1-2.23",
+   "accessDate": "2026-05-16T21:50:10Z",
+   "ISSN": "0067-9488, 3029-0465",
+   "language": "en",
+   "libraryCatalog": "DOI.org (Crossref)",
+   "extra": "reviewed-title: Write, cut, rewrite\nevent-date: 2024-02-26/2025-01-05\nevent-place: The Treasury, Weston Library",
+   "dateAdded": "2026-05-17T06:46:30Z",
+   "dateModified": "2026-05-17T06:46:30Z"
+  }
+ },
+ {
+  "key": "4PUL57BD",
+  "version": 15118,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "1957",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "4PUL57BD",
+   "version": 15118,
+   "itemType": "book",
+   "title": "The scapegoat",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Daphne",
+     "lastName": "\"du Maurier\""
+    }
+   ],
+   "abstractNote": "Two men--one English, the other French--meet by chance in a provincial railway station and are astounded that they are so much alike that they could easily pass for each other. Over the course of a long evening, they talk and drink. It is not until he awakes the next day that John, the Englishman, r",
+   "date": "1957",
+   "publisher": "Doubleday",
+   "place": "Garden City, NY",
+   "numPages": "362",
+   "DOI": "",
+   "citationKey": "dumaurierScapegoat1957",
+   "url": "http://archive.org/details/scapegoat00duma",
+   "accessDate": "2026-04-03T08:08:14Z",
+   "language": "en",
+   "libraryCatalog": "Internet Archive",
+   "tags": [
+    {
+     "tag": "Aristocracy (Social class)",
+     "type": 1
+    }
+   ],
+   "dateAdded": "2026-04-03T08:08:15Z",
+   "dateModified": "2026-04-03T12:24:07Z"
+  }
+ },
+ {
+  "key": "ZD5CZHEH",
+  "version": 15101,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2025-07-17",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "ZD5CZHEH",
+   "version": 15101,
+   "itemType": "journalArticle",
+   "title": "Urban segregation even on holiday: income differences in the choice of destinations",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Ana",
+     "lastName": "Condeço-Melhorado"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Juan Carlos",
+     "lastName": "García-Palomares"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Javier",
+     "lastName": "Gutiérrez"
+    }
+   ],
+   "abstractNote": "Urban income segregation manifests in tourist destination choices. We analyze the relationship between residential income levels and travel patterns from Madrid to the Spanish coastal destinations of Marbella and Torremolinos using mobile phone data from August 2021. By employing spatial analysis te",
+   "publicationTitle": "Findings",
+   "date": "2025-07-17",
+   "section": "Urban Findings",
+   "journalAbbreviation": "Findings",
+   "DOI": "10.32866/001c.141932",
+   "citationKey": "condeco-melhoradoUrbanSegregationEven2025",
+   "url": "https://findingspress.org/article/141932-urban-segregation-even-on-holiday-income-differences-in-the-choice-of-destinations",
+   "accessDate": "2026-03-11T20:16:21Z",
+   "ISSN": "2652-8800",
+   "shortTitle": "Urban segregation even on holiday",
+   "language": "en",
+   "libraryCatalog": "DOI.org (Crossref)",
+   "rights": "https://creativecommons.org/licenses/by-sa/4.0",
+   "extra": "number: 141932",
+   "dateAdded": "2026-03-11T20:16:21Z",
+   "dateModified": "2026-03-11T20:39:48Z"
+  }
+ },
+ {
+  "key": "TYG29UFR",
+  "version": 15095,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2007-03",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "TYG29UFR",
+   "version": 15095,
+   "itemType": "journalArticle",
+   "title": "The varieties of capitalism and hybrid success: Denmark in the global economy",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "John L.",
+     "lastName": "Campbell"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Ove K.",
+     "lastName": "Pedersen"
+    }
+   ],
+   "abstractNote": "The varieties of capitalism literature maintains that advanced capitalist countries whose institutions best fit either the liberal or coordinated market economy types will perform better than countries whose institutions are mixed. This is because hybrids are less likely to yield functionally benefi",
+   "publicationTitle": "Comparative Political Studies",
+   "date": "2007-03",
+   "volume": "40",
+   "issue": "3",
+   "pages": "307-332",
+   "journalAbbreviation": "Comp. Polit. Stud.",
+   "DOI": "10.1177/0010414006286542",
+   "citationKey": "campbellVarietiesCapitalismHybrid2007",
+   "url": "https://journals.sagepub.com/doi/10.1177/0010414006286542",
+   "accessDate": "2026-02-08T08:57:21Z",
+   "ISSN": "0010-4140, 1552-3829",
+   "shortTitle": "Denmark in the global economy",
+   "language": "en",
+   "libraryCatalog": "SAGE Journals",
+   "rights": "https://journals.sagepub.com/page/policies/text-and-data-mining-license",
+   "dateAdded": "2026-02-08T08:57:21Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ },
+ {
+  "key": "L7NH9VSH",
+  "version": 15095,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2025-10-01",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "L7NH9VSH",
+   "version": 15095,
+   "itemType": "journalArticle",
+   "title": "Root mucilage enhances plant water use under combined soil and atmospheric drought",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Asegidew",
+     "lastName": "Akale"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Mohanned",
+     "lastName": "Abdalla"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Tina",
+     "lastName": "Koehler"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Anna M.",
+     "lastName": "Sauer"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Efstathios",
+     "lastName": "Diamantopoulos"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Mutez A.",
+     "lastName": "Ahmed"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Hannah M.",
+     "lastName": "Schneider"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Doris",
+     "lastName": "Vetterlein"
+    }
+   ],
+   "abstractNote": "Plants have evolved various root adaptive traits to enhance their ability to access soil water in stressful conditions. Although root mucilage has been suggested to facilitate root water uptake in drying soils, its impact during combined edaphic and atmospheric stress remains unknown. We hypothesize",
+   "publicationTitle": "Annals of Botany",
+   "publisher": "Oxford University Press",
+   "date": "2025-10-01",
+   "volume": "136",
+   "issue": "5-6",
+   "pages": "1131-1142",
+   "journalAbbreviation": "Ann. Bot.",
+   "DOI": "10.1093/aob/mcaf182",
+   "citationKey": "akaleRootMucilageEnhances2025",
+   "url": "https://doi.org/10.1093/aob/mcaf182",
+   "accessDate": "2026-01-05",
+   "PMID": "40798946",
+   "PMCID": "PMC12682819",
+   "ISSN": "0305-7364",
+   "shortTitle": "Root mucilage",
+   "language": "en",
+   "libraryCatalog": "Oxford Academic",
+   "extra": "volume-title: Stress physiology of root systems",
+   "collections": [
+    "ECHCPXZN"
+   ],
+   "dateAdded": "2026-02-05T12:11:54Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ },
+ {
+  "key": "G3M6JE35",
+  "version": 15095,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2025-10-01",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "G3M6JE35",
+   "version": 15095,
+   "itemType": "journalArticle",
+   "title": "Modern wheat has deeper roots than ancient wheats: is this an adaptation to higher productivity?",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Arnesta",
+     "lastName": "Odone"
+    },
+    {
+     "creatorType": "author",
+     "firstName": "Kristian",
+     "lastName": "Thorup-Kristensen"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Hannah M.",
+     "lastName": "Schneider"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Doris",
+     "lastName": "Vetterlein"
+    }
+   ],
+   "abstractNote": "There is growing interest in the production of ancient grains including emmer, einkorn and spelt, particularly in low-input systems. Differences in their root systems and how these affect water and nitrogen uptake are not well known, but can offer important insights into the effects of plant breedin",
+   "publicationTitle": "Annals of Botany",
+   "publisher": "Oxford University Press",
+   "date": "2025-10-01",
+   "volume": "136",
+   "issue": "5-6",
+   "pages": "1193-1201",
+   "journalAbbreviation": "Ann. Bot.",
+   "DOI": "10.1093/aob/mcaf065",
+   "citationKey": "odoneModernWheatHas2025",
+   "url": "https://doi.org/10.1093/aob/mcaf065",
+   "accessDate": "2026-02-05T12:03:46Z",
+   "PMID": "40374529",
+   "PMCID": "PMC12682843",
+   "ISSN": "0305-7364",
+   "shortTitle": "Modern wheat has deeper roots than ancient wheats",
+   "language": "en",
+   "libraryCatalog": "Oxford Academic",
+   "extra": "volume-title: Stress physiology of root systems",
+   "dateAdded": "2026-02-05T12:03:47Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ }
+]

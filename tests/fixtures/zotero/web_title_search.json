@@ -1,0 +1,45 @@
+[
+ {
+  "key": "B9XBDFVB",
+  "version": 15093,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2025",
+   "numChildren": 1
+  },
+  "data": {
+   "key": "B9XBDFVB",
+   "version": 15093,
+   "itemType": "journalArticle",
+   "title": "The quantitative bias: how to look at lots of books in context",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Julia",
+     "lastName": "King"
+    }
+   ],
+   "abstractNote": "This article discusses the phenomenon of “quantitative bias,” or the tendency to believe that numbers and data are more trustworthy due to their inherent empiricism, in the context of the quantitative turn in manuscript studies. It argues that all data is inherently constructed by the contexts and c",
+   "publicationTitle": "Digital Philology: A Journal of Medieval Cultures",
+   "publisher": "Johns Hopkins University Press",
+   "date": "2025",
+   "volume": "14",
+   "issue": "1",
+   "pages": "47-61",
+   "journalAbbreviation": "Digit. Philol.: J. Mediev. Cult.",
+   "DOI": "10.1353/dph.2025.a959164",
+   "citationKey": "kingQuantitativeBiasHow2025",
+   "url": "https://muse.jhu.edu/pub/1/article/959164",
+   "accessDate": "2026-01-24T06:46:18Z",
+   "ISSN": "2162-9552",
+   "shortTitle": "The Quantitative Bias",
+   "language": "en",
+   "libraryCatalog": "Project MUSE",
+   "dateAdded": "2026-01-24T06:46:18Z",
+   "dateModified": "2026-02-16T17:49:34Z"
+  }
+ }
+]

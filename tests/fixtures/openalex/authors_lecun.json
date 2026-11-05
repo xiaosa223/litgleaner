@@ -1,0 +1,145 @@
+{
+ "meta": {
+  "count": 6,
+  "db_response_time_ms": 28,
+  "page": 1,
+  "per_page": 10,
+  "groups_count": null,
+  "cost_usd": 0.001
+ },
+ "results": [
+  {
+   "id": "https://openalex.org/A5001226970",
+   "display_name": "Yann LeCun",
+   "display_name_alternatives": [
+    "Le Cun, Yann",
+    "LeCun Yann",
+    "LeCun, Y",
+    "LeCun, Y.",
+    "LeCun, Yann",
+    "LeCun, Yann André",
+    "Lecun Y.",
+    "Lecun, Yann",
+    "Y. LECUN",
+    "Y. Le Cun",
+    "Y. LeCUN",
+    "Y. LeCun",
+    "Y. Lecun",
+    "Y. leCun",
+    "Y.A. LeCun",
+    "Y.L. Cun",
+    "YANN LECUN",
+    "Yann A. Le Cun",
+    "Yann A. LeCun",
+    "Yann Le Cun",
+    "Yann Le-Cun",
+    "Yann LeCun",
+    "Yann Lecun",
+    "Yann le Cun"
+   ],
+   "works_count": 527,
+   "cited_by_count": 274368,
+   "orcid": "https://orcid.org/0000-0002-1992-2684"
+  },
+  {
+   "id": "https://openalex.org/A5086198262",
+   "display_name": "Yoshua Bengio",
+   "display_name_alternatives": [
+    "BENGIO Y.",
+    "Bengio Y",
+    "Bengio Y.",
+    "Bengio Yoshua",
+    "Bengio, Y",
+    "Bengio, Y.",
+    "Bengio, Yoshua",
+    "Bengio, Yoshua,    author.",
+    "Y Bengio",
+    "Y. Bengio",
+    "Y. Bengioa",
+    "YOSHUA BENGIO",
+    "Yann LeCun, Yoshua Bengio, Geoffrey Hinton",
+    "Yoshua",
+    "Yoshua BENGIO",
+    "Yoshua Bengio",
+    "Yoshua Bengio Aar",
+    "Yoshua Bengio Dept",
+    "Yoshua Bengio Lawzero",
+    "Yoshua Bengio Samy",
+    "Yoshua Bengio Y",
+    "Yoshua Bengioa"
+   ],
+   "works_count": 1482,
+   "cited_by_count": 553656,
+   "orcid": "https://orcid.org/0000-0002-9322-3515"
+  },
+  {
+   "id": "https://openalex.org/A5019206666",
+   "display_name": "Léon Bottou",
+   "display_name_alternatives": [
+    "Bottou L&eacute;on",
+    "Bottou, L",
+    "Bottou, L.",
+    "Bottou, Leon",
+    "Bottou, LÃ©on",
+    "Bottou, Léon",
+    "L Bottou",
+    "L. Bottou",
+    "Leon Bottou",
+    "Leon Bottou Ivan Laptev",
+    "Léon Bottou",
+    "LÉON BOTTOU",
+    "Léon BOTTOU",
+    "Léon Bottou",
+    "Yann LeCun, Léon Bottou, Yoshua Bengio, Patrick Haffner"
+   ],
+   "works_count": 250,
+   "cited_by_count": 136392,
+   "orcid": "https://orcid.org/0000-0002-9894-8128"
+  },
+  {
+   "id": "https://openalex.org/A5052368829",
+   "display_name": "Laurent Alain Najman",
+   "display_name_alternatives": [
+    "L Najman",
+    "L. Najman",
+    "Laurent A. Najman",
+    "Laurent Alain Najman",
+    "Laurent Najman",
+    "Laurent Najman (a",
+    "Laurent Najman Olivier",
+    "Laurent Najman Yann Lecun",
+    "NAJMAN Laurent",
+    "Najman Laurent",
+    "Najman, L.",
+    "Najman, Laurent",
+    "Najman, Laurent"
+   ],
+   "works_count": 376,
+   "cited_by_count": 9782,
+   "orcid": "https://orcid.org/0000-0002-6190-0235"
+  },
+  {
+   "id": "https://openalex.org/A5006698096",
+   "display_name": "LeCunYann",
+   "display_name_alternatives": [
+    "LeCun, Yann",
+    "LeCunYann"
+   ],
+   "works_count": 1,
+   "cited_by_count": 1009,
+   "orcid": null
+  },
+  {
+   "id": "https://openalex.org/A5153612811",
+   "display_name": "Yann LeCun",
+   "display_name_alternatives": [
+    "LeCun, Yann",
+    "Yann LeCun"
+   ],
+   "works_count": 4,
+   "cited_by_count": 3,
+   "orcid": null
+  }
+ ],
+ "group_by": []
+}

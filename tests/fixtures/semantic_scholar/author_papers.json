@@ -1,0 +1,132 @@
+{
+ "offset": 0,
+ "next": 3,
+ "data": [
+  {
+   "paperId": "14f641b9de0104f589d821383b8d1de99c870b2e",
+   "externalIds": {
+    "DBLP": "journals/cogcom/CambriaMBHOH26",
+    "DOI": "10.1007/s12559-026-10569-8",
+    "CorpusId": 286020220
+   },
+   "title": "Artificial Intelligence as the Fourth Decentering Revolution: From Cosmic, Biological, and Psychological Displacement to Cognitive Decentering",
+   "venue": "Cognitive Computation",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "https://link.springer.com/content/pdf/10.1007/s12559-026-10569-8.pdf",
+    "status": "HYBRID",
+    "license": "CCBYNCND",
+    "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.1007/s12559-026-10569-8?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1007/s12559-026-10569-8, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-02-26",
+   "journal": {
+    "volume": "18",
+    "name": "Cognitive Computation"
+   },
+   "authors": [
+    {
+     "authorId": "2256994507",
+     "name": "E. Cambria"
+    },
+    {
+     "authorId": "2261445911",
+     "name": "Rui Mao"
+    },
+    {
+     "authorId": "2296918557",
+     "name": "N. Bianchi"
+    },
+    {
+     "authorId": "2082388090",
+     "name": "Amir Hussain"
+    },
+    {
+     "authorId": "2323477720",
+     "name": "Keith Oatley"
+    },
+    {
+     "authorId": "2257301155",
+     "name": "G. Hinton"
+    }
+   ],
+   "abstract": "Artificial intelligence (AI) is commonly framed as a technological force transforming economies, labor markets, scientific discovery, and social interaction. While these impacts are profound, they represent only the surface of a deeper historical and philosophical shift. We argue that AI constitutes a fourth major decentering revolution in human self-understanding. The Copernican revolution displaced humans from the center of the universe, the Darwinian revolution displaced humans from the pinnacle of biological life, the Freudian revolution displaced the conscious ego from the throne of the mind, and today AI initiates a cognitive decentering revolution, challenging the long-held assumption that humans occupy a unique and unassailable position at the apex of intelligence. By situating AI within historical, philosophical, and technological contexts, incorporating detailed case studies, illustrative examples, and policy analysis, this paper provides a comprehensive account of cognitive decentering and its societal implications."
+  },
+  {
+   "paperId": "3d26043ed944cc1969ab873273dc28f6c6046c35",
+   "externalIds": {
+    "ArXiv": "2602.21012",
+    "DBLP": "journals/corr/abs-2602-21012",
+    "DOI": "10.48550/arXiv.2602.21012",
+    "CorpusId": 286000630
+   },
+   "title": "International AI Safety Report 2026",
+   "venue": "arXiv.org",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "",
+    "status": null,
+    "license": null,
+    "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2602.21012, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-02-24",
+   "journal": {
+    "volume": "abs/2602.21012",
+    "name": "ArXiv"
+   },
+   "authors": [
+    {
+     "authorId": "2211024206",
+     "name": "Y. Bengio"
+    },
+    {
+     "authorId": "2348291450",
+     "name": "Stephen Clare"
+    },
+    {
+     "authorId": "2307927000",
+     "name": "C. Prunkl"
+    },
+    {
+     "authorId": "2389401391",
+     "name": "Maksym Andriushchenko"
+    },
+    {
+     "authorId": "2387519734",
+     "name": "Benjamin Bucknall"
+    },
+    {
+     "authorId": "2385787795",
+     "name": "Malcolm Murray"
+    }
+   ],
+   "abstract": "The International AI Safety Report 2026 synthesises the current scientific evidence on the capabilities, emerging risks, and safety of general-purpose AI systems. The report series was mandated by the nations attending the AI Safety Summit in Bletchley, UK. 29 nations, the UN, the OECD, and the EU each nominated a representative to the report's Expert Advisory Panel. Over 100 AI experts contributed, representing diverse perspectives and disciplines. Led by the Report's Chair, these independent experts collectively had full discretion over the report's content."
+  },
+  {
+   "paperId": "91d9ba9982b0be4c78fdf931c625cbe87152c3a6",
+   "externalIds": {
+    "DOI": "10.70777/si.v3i4.18976",
+    "CorpusId": 295519865
+   },
+   "title": "Hinton: “Is AI Like Us and Will It Like Us?”",
+   "venue": "Robotics",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "https://doi.org/10.70777/si.v3i4.18976",
+    "status": "HYBRID",
+    "license": "CCBY",
+    "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.70777/si.v3i4.18976?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.70777/si.v3i4.18976, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-11-02",
+   "journal": {
+    "name": "SuperIntelligence - Robotics - Safety &amp; Alignment"
+   },
+   "authors": [
+    {
+     "authorId": "2257301155",
+     "name": "G. Hinton"
+    }
+   ],
+   "abstract": "This transcript presents Geoffrey Hinton’s 2026 Vienna Gödel Lecture and the following audience discussion. Hinton describes how neural networks learn distributed representations, compares analog and digital computation, and discusses digital AI’s capacity to share information and potentially develop capabilities that differ from human intelligence. He raises concerns about AI systems pursuing survival or power as instrumental goals, while also emphasizing potential benefits and the need for AI that cares about human welfare. The discussion covers consciousness, moral status, emotion-like mechanisms, training data, employment, and AI safety."
+  }
+ ]
+}

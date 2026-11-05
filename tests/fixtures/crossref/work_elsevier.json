@@ -1,0 +1,140 @@
+{
+ "status": "ok",
+ "message-type": "work",
+ "message-version": "1.0.0",
+ "message": {
+  "DOI": "10.1016/j.patcog.2023.109437",
+  "title": [
+   "Exploring the diversity and invariance in yourself for visual pre-training task"
+  ],
+  "link": [
+   {
+    "URL": "https://api.elsevier.com/content/article/PII:S0031320323001383?httpAccept=text/xml",
+    "content-type": "text/xml",
+    "content-version": "vor",
+    "intended-application": "text-mining"
+   },
+   {
+    "URL": "https://api.elsevier.com/content/article/PII:S0031320323001383?httpAccept=text/plain",
+    "content-type": "text/plain",
+    "content-version": "vor",
+    "intended-application": "text-mining"
+   }
+  ],
+  "license": [
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "tdm",
+    "delay-in-days": 0,
+    "URL": "https://www.elsevier.com/tdm/userlicense/1.0/"
+   },
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "tdm",
+    "delay-in-days": 0,
+    "URL": "https://www.elsevier.com/legal/tdmrep-license"
+   },
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "stm-asf",
+    "delay-in-days": 0,
+    "URL": "https://doi.org/10.15223/policy-017"
+   },
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "stm-asf",
+    "delay-in-days": 0,
+    "URL": "https://doi.org/10.15223/policy-037"
+   },
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "stm-asf",
+    "delay-in-days": 0,
+    "URL": "https://doi.org/10.15223/policy-012"
+   },
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "stm-asf",
+    "delay-in-days": 0,
+    "URL": "https://doi.org/10.15223/policy-029"
+   },
+   {
+    "start": {
+     "date-parts": [
+      [
+       2023,
+       7,
+       1
+      ]
+     ],
+     "date-time": "2023-07-01T00:00:00Z",
+     "timestamp": 1688169600000
+    },
+    "content-version": "stm-asf",
+    "delay-in-days": 0,
+    "URL": "https://doi.org/10.15223/policy-004"
+   }
+  ],
+  "type": "journal-article"
+ }
+}

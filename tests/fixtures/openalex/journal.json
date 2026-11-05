@@ -1,0 +1,378 @@
+{
+ "meta": {
+  "count": 38,
+  "db_response_time_ms": 58,
+  "page": 1,
+  "per_page": 100,
+  "groups_count": null,
+  "cost_usd": 0.0001
+ },
+ "results": [
+  {
+   "id": "https://openalex.org/W7225073634",
+   "doi": "https://doi.org/10.1038/s41586-026-11350-5",
+   "title": "Author Correction: mTORC1 drives cell-autonomous astrocyte reactivity in tuberous sclerosis",
+   "publication_date": "2026-11-02",
+   "ids": {
+    "openalex": "https://openalex.org/W7225073634",
+    "doi": "https://doi.org/10.1038/s41586-026-11350-5",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/42972127"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5024879980",
+      "display_name": "Thomas L. Li",
+      "orcid": "https://orcid.org/0000-0002-8656-0679"
+     },
+     "raw_author_name": "Thomas L. Li"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5055812454",
+      "display_name": "John D. Blair",
+      "orcid": "https://orcid.org/0000-0001-7517-6148"
+     },
+     "raw_author_name": "John D. Blair"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5021113518",
+      "display_name": "Taesun Yoo",
+      "orcid": "https://orcid.org/0000-0002-7315-0785"
+     },
+     "raw_author_name": "Taesun Yoo"
+    }
+   ],
+   "abstract_inverted_index": {
+    "In": [
+     0,
+     28
+    ],
+    "the": [
+     1,
+     16,
+     23,
+     29,
+     35
+    ],
+    "version": [
+     2
+    ],
+    "of": [
+     3,
+     22
+    ],
+    "this": [
+     4
+    ],
+    "article": [
+     5
+    ],
+    "initially": [
+     6
+    ],
+    "published,": [
+     7
+    ],
+    "there": [
+     8
+    ],
+    "was": [
+     9,
+     19
+    ],
+    "an": [
+     10
+    ],
+    "error": [
+     11
+    ],
+    "in": [
+     12
+    ],
+    "Fig.": [
+     13,
+     32
+    ],
+    "3n,": [
+     14
+    ],
+    "where": [
+     15
+    ],
+    "bottom-right": [
+     17
+    ],
+    "panel": [
+     18,
+     24
+    ],
+    "a": [
+     20
+    ],
+    "duplicate": [
+     21
+    ],
+    "to": [
+     25
+    ],
+    "its": [
+     26
+    ],
+    "left.": [
+     27
+    ],
+    "Extended": [
+     30
+    ],
+    "Data": [
+     31
+    ],
+    "3": [
+     33
+    ],
+    "caption,": [
+     34
+    ],
+    "“cluster": [
+     36,
+     39
+    ],
+    "1”": [
+     37
+    ],
+    "and": [
+     38
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1038/s41586-026-11350-5",
+    "doi": "https://doi.org/10.1038/s41586-026-11350-5",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1038/s41586-026-11350-5",
+    "pdf_url": "https://www.nature.com/articles/s41586-026-11350-5.pdf",
+    "source": {
+     "id": "https://openalex.org/S137773608",
+     "display_name": "Nature",
+     "issn_l": "0028-0836",
+     "issn": [
+      "0028-0836",
+      "1476-4687"
+     ]
+    },
+    "license": "cc-by",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1038/s41586-026-11350-5",
+     "doi": "https://doi.org/10.1038/s41586-026-11350-5",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1038/s41586-026-11350-5",
+     "pdf_url": "https://www.nature.com/articles/s41586-026-11350-5.pdf",
+     "source": {
+      "id": "https://openalex.org/S137773608",
+      "display_name": "Nature",
+      "issn_l": "0028-0836",
+      "issn": [
+       "0028-0836",
+       "1476-4687"
+      ]
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmid:42972127",
+     "doi": null,
+     "is_oa": false,
+     "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/42972127",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306525036",
+      "display_name": "PubMed",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": null,
+     "version": "publishedVersion"
+    }
+   ]
+  },
+  {
+   "id": "https://openalex.org/W7224918325",
+   "doi": "https://doi.org/10.1038/s41586-026-11337-2",
+   "title": "Author Correction: Rh3+ stabilized in KRh@MFI catalyses regioselective hydroformylation",
+   "publication_date": "2026-10-30",
+   "ids": {
+    "openalex": "https://openalex.org/W7224918325",
+    "doi": "https://doi.org/10.1038/s41586-026-11337-2",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/42963445"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5125410111",
+      "display_name": "Minjie Zhao",
+      "orcid": "https://orcid.org/0009-0004-2198-1570"
+     },
+     "raw_author_name": "Minjie Zhao"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5039870418",
+      "display_name": "Reisel Millán",
+      "orcid": "https://orcid.org/0000-0002-4489-5411"
+     },
+     "raw_author_name": "Reisel Millán"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5038742958",
+      "display_name": "Alina A. Skorynina",
+      "orcid": "https://orcid.org/0000-0001-9844-0220"
+     },
+     "raw_author_name": "Alina Skorynina"
+    }
+   ],
+   "abstract_inverted_index": null,
+   "primary_location": {
+    "id": "doi:10.1038/s41586-026-11337-2",
+    "doi": "https://doi.org/10.1038/s41586-026-11337-2",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1038/s41586-026-11337-2",
+    "pdf_url": "https://www.nature.com/articles/s41586-026-11337-2.pdf",
+    "source": {
+     "id": "https://openalex.org/S137773608",
+     "display_name": "Nature",
+     "issn_l": "0028-0836",
+     "issn": [
+      "0028-0836",
+      "1476-4687"
+     ]
+    },
+    "license": null,
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1038/s41586-026-11337-2",
+     "doi": "https://doi.org/10.1038/s41586-026-11337-2",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1038/s41586-026-11337-2",
+     "pdf_url": "https://www.nature.com/articles/s41586-026-11337-2.pdf",
+     "source": {
+      "id": "https://openalex.org/S137773608",
+      "display_name": "Nature",
+      "issn_l": "0028-0836",
+      "issn": [
+       "0028-0836",
+       "1476-4687"
+      ]
+     },
+     "license": null,
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmid:42963445",
+     "doi": null,
+     "is_oa": false,
+     "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/42963445",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306525036",
+      "display_name": "PubMed",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": null,
+     "version": "publishedVersion"
+    }
+   ]
+  },
+  {
+   "id": "https://openalex.org/W7225080882",
+   "doi": "https://doi.org/10.1038/d41586-026-03480-7",
+   "title": "Chinese PhD students in clinical medicine can graduate without a thesis — more degrees to follow",
+   "publication_date": "2026-11-03",
+   "ids": {
+    "openalex": "https://openalex.org/W7225080882",
+    "doi": "https://doi.org/10.1038/d41586-026-03480-7",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/42972116"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5113077066",
+      "display_name": "Xiaoying You",
+      "orcid": null
+     },
+     "raw_author_name": "Xiaoying You"
+    }
+   ],
+   "abstract_inverted_index": null,
+   "primary_location": {
+    "id": "doi:10.1038/d41586-026-03480-7",
+    "doi": "https://doi.org/10.1038/d41586-026-03480-7",
+    "is_oa": false,
+    "landing_page_url": "https://doi.org/10.1038/d41586-026-03480-7",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S137773608",
+     "display_name": "Nature",
+     "issn_l": "0028-0836",
+     "issn": [
+      "0028-0836",
+      "1476-4687"
+     ]
+    },
+    "license": null,
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1038/d41586-026-03480-7",
+     "doi": "https://doi.org/10.1038/d41586-026-03480-7",
+     "is_oa": false,
+     "landing_page_url": "https://doi.org/10.1038/d41586-026-03480-7",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S137773608",
+      "display_name": "Nature",
+      "issn_l": "0028-0836",
+      "issn": [
+       "0028-0836",
+       "1476-4687"
+      ]
+     },
+     "license": null,
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmid:42972116",
+     "doi": null,
+     "is_oa": false,
+     "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/42972116",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306525036",
+      "display_name": "PubMed",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": null,
+     "version": "publishedVersion"
+    }
+   ]
+  }
+ ],
+ "group_by": []
+}

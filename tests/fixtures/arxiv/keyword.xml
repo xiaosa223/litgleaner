@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/oXGgnIsctgkAVYgZipZhKIhpKVo</id>
+  <title>arXiv Query: search_query=all:"large language model" AND submittedDate:"202611020000 TO 202611052359"&amp;id_list=&amp;start=0&amp;max_results=4</title>
+  <updated>2026-11-05T05:08:11Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22large+language+model%22+AND+submittedDate:%22202611020000+TO+202611052359%22&amp;start=0&amp;max_results=4&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>4</opensearch:itemsPerPage>
+  <opensearch:totalResults>261</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2611.06914v1</id>
+    <title>A Framework for Context Enrichment and Selective Robustness in LLM Social Agents</title>
+    <updated>2026-11-04T18:58:23Z</updated>
+    <link href="https://arxiv.org/abs/2611.06914v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.06914v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Researchers use large language models as agents in social simulations, where agents are prompted with observations and background information intended to shape their actions. Yet LLM agents have been shown to substantially change their behavior under meaning-preserving prompt variations, creating a validation problem for social simulation. One plausible hypothesis is that this brittleness reflects a lack of grounding and can be reduced by enriching the context provided to the agents. Whether richer context improves robustness remains unclear, in part because context richness and robustness are rarely defined in ways that support controlled comparisons. We address the first need with controlled context enrichment, a set of prompt substitution rules that systematically enriches distinct types of context: neutral padding, generic social background, descriptive decision grounding, and normative decision grounding. We address the second by introducing selective robustness as a validation criterion: insensitivity to meaning-preserving prompt variation combined with a directional response to decision-relevant changes in the social world. We demonstrate the framework in a Prisoner's Dilemma-like game, showing how it can be used to identify which forms of context enrichment produce more desirable and robust agent behavior. We find that these forms of enrichment produce distinct behavioral patterns that vary between the two models tested.</summary>
+    <category term="cs.MA" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-04T18:58:23Z</published>
+    <arxiv:comment>Accepted to the SocialAgent Workshop @ NeurIPS 2026. 12 pages, 1 figure, 2 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.MA"/>
+    <author>
+      <name>Mattia Greiche</name>
+    </author>
+    <author>
+      <name>Reihaneh Rabbany</name>
+    </author>
+    <author>
+      <name>Maximilian Puelma Touzel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.06911v1</id>
+    <title>BEAKER: An Expert-Curated Benchmark for Embodied Brains in Self-Driving Chemical Laboratories</title>
+    <updated>2026-11-04T18:57:17Z</updated>
+    <link href="https://arxiv.org/abs/2611.06911v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.06911v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Self-Driving Chemical Laboratories (SDCLs) are moving chemical experimentation toward embodied automation, where machines must perceive laboratory scenes, reason about experimental states, and act under physical, procedural, and safety constraints. Although Multimodal Large Language Models (MLLMs) are increasingly considered as embodied brains for such systems, existing laboratory benchmarks mainly focus on safety, anomaly detection, or general scientific understanding, leaving their execution-oriented embodied capabilities underexplored. To fill this gap, we introduce BEAKER, a Benchmark for evaluating Embodied Actionability, Knowledge, Experimentation, and Reasoning in SDCLs. BEAKER contains 1,000 expert-curated question-answer samples across 11 image and video task types, covering key judgments required for chemical laboratory execution, including affordance grounding, trajectory planning, equipment, state, and safety recognition, apparatus setup, operation and step reasoning, and temporal procedure reasoning. All questions and annotations are manually created and reviewed by chemistry and embodied Artificial Intelligence (AI) experts, without AI-assisted generation or annotation. We evaluate 28 general-purpose, science-oriented, chemistry-specialized, and embodied MLLMs in an offline, single-turn setting. Results show that current models can follow coarse experimental procedures in videos, but still struggle to ground actions into operable regions and feasible trajectories, to recognize fine-grained laboratory apparatus, states, and safety norms, and to order steps in mid-length procedures. BEAKER thus reveals a clear gap between coarse procedural understanding and the precise, action-grounded perception required for laboratory execution, providing a diagnostic benchmark for future MLLMs in SDCLs.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-04T18:57:17Z</published>
+    <arxiv:comment>Accepted by NeurIPS 2026 (Track on Evaluations and Datasets, Spotlight)</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Fei Lin</name>
+    </author>
+    <author>
+      <name>Tengchao Zhang</name>
+    </author>
+    <author>
+      <name>Ziyang Gong</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.06888v1</id>
+    <title>Dull, Dirty, Dangerous? Working Conditions and the Limits of Occupational AI Exposure</title>
+    <updated>2026-11-04T18:41:40Z</updated>
+    <link href="https://arxiv.org/abs/2611.06888v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.06888v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Automation is often justified as relief from dull, dirty, and dangerous work. I examine how these conditions relate to occupational AI exposure using 21 O*NET items across 754 US occupations. Higher exposure is associated with lower condition scores under a large language model (LLM) measure and AI Occupational Exposure (AIOE), with equal occupation weights and employment weights. Adjustment for physical demands, required education, training and experience, and wages reduces the composite association. The adjusted confidence intervals include zero for LLM exposure and remain below zero for AIOE. Separating repetition from restricted discretion also changes what the combined Dull score conveys. These comparisons show how item groupings and occupational characteristics shape the interpretation of exposure estimates. Occupational profiles offer a starting point for selecting contrasting research settings. Establishing desired automation or realized relief requires evidence about workers' preferences and specific interventions.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.HC" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="econ.GN" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-04T18:41:40Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Siyi Yu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2611.06868v1</id>
+    <title>On Turn-Level Best-of-N Sampling for Scaling LLM Agents</title>
+    <updated>2026-11-04T18:23:14Z</updated>
+    <link href="https://arxiv.org/abs/2611.06868v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2611.06868v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this work, we evaluate a simple inference-time scaling approach based on \textit{turn-level best-of-N sampling} (\method) for large language model (LLM) agents on complex, long-horizon tasks. We instantiate this using a \textit{generator-selector} framework with two LLMs; at each turn, a \emph{generator} model generates $N$ candidate actions and a \emph{selector} model selects one of them, which is then executed in the environment. This paper is closely related to the work of \cite{zainullina2025guided} who used critic models for guided search at inference time. Different from their work, we evaluate if off-the-shelf, open-weight LLMs can be effective at comparing different candidate actions directly. Experiments on long-horizon terminal tasks show that \method can lead to significant performance improvements, both in terms of accuracy (5--10\%) and consistency across repeated attempts. Analysis of agent trajectories reveal a shift in agent behaviour towards desirable patterns such as reduction in number of attempts to solve the task, improved task instruction following, debugging and testing.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-11-04T18:23:14Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Jalaj Bhandari</name>
+    </author>
+    <author>
+      <name>Dhawal Gupta</name>
+    </author>
+    <author>
+      <name>Hongli Zhan</name>
+    </author>
+  </entry>
+</feed>

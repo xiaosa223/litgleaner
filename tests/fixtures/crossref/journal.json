@@ -1,0 +1,317 @@
+{
+ "status": "ok",
+ "message-type": "work-list",
+ "message-version": "1.0.0",
+ "message": {
+  "facets": {},
+  "next-cursor": "MTc5MzM1OTY0NjAwMCwxMC4xMDM4JTJGZDQxNTg2LTAyNi0wMzUxMi0y",
+  "total-results": 96,
+  "items": [
+   {
+    "license": [
+     {
+      "start": {
+       "date-parts": [
+        [
+         2026,
+         10,
+         30
+        ]
+       ],
+       "date-time": "2026-10-30T00:00:00Z",
+       "timestamp": 1793318400000
+      },
+      "content-version": "tdm",
+      "delay-in-days": 0,
+      "URL": "https://www.springernature.com/gp/researchers/text-and-data-mining"
+     },
+     {
+      "start": {
+       "date-parts": [
+        [
+         2026,
+         10,
+         30
+        ]
+       ],
+       "date-time": "2026-10-30T00:00:00Z",
+       "timestamp": 1793318400000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "https://www.springernature.com/gp/researchers/text-and-data-mining"
+     }
+    ],
+    "DOI": "10.1038/d41586-026-03368-6",
+    "type": "journal-article",
+    "title": [
+     "Somewhere over the transcontinental burrito tunnel"
+    ],
+    "author": [
+     {
+      "given": "Elitsa",
+      "family": "Dermendzhiyska",
+      "sequence": "first",
+      "affiliation": [],
+      "role": [
+       {
+        "vocabulary": "crossref",
+        "role": "author"
+       }
+      ]
+     }
+    ],
+    "container-title": [
+     "Nature"
+    ],
+    "link": [
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03368-6.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+     },
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03368-6",
+      "content-type": "text/html",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+     },
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03368-6.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       30
+      ]
+     ]
+    },
+    "ISSN": [
+     "0028-0836",
+     "1476-4687"
+    ],
+    "published": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       30
+      ]
+     ]
+    }
+   },
+   {
+    "license": [
+     {
+      "start": {
+       "date-parts": [
+        [
+         2026,
+         10,
+         30
+        ]
+       ],
+       "date-time": "2026-10-30T00:00:00Z",
+       "timestamp": 1793318400000
+      },
+      "content-version": "tdm",
+      "delay-in-days": 0,
+      "URL": "https://www.springernature.com/gp/researchers/text-and-data-mining"
+     },
+     {
+      "start": {
+       "date-parts": [
+        [
+         2026,
+         10,
+         30
+        ]
+       ],
+       "date-time": "2026-10-30T00:00:00Z",
+       "timestamp": 1793318400000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "https://www.springernature.com/gp/researchers/text-and-data-mining"
+     }
+    ],
+    "DOI": "10.1038/d41586-026-03543-9",
+    "type": "journal-article",
+    "title": [
+     "Patrick Stewart dies: how Captain Picard inspired today’s science leaders"
+    ],
+    "author": [
+     {
+      "given": "Mohana",
+      "family": "Basu",
+      "sequence": "first",
+      "affiliation": [],
+      "role": [
+       {
+        "vocabulary": "crossref",
+        "role": "author"
+       }
+      ]
+     }
+    ],
+    "container-title": [
+     "Nature"
+    ],
+    "link": [
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03543-9.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+     },
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03543-9",
+      "content-type": "text/html",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+     },
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03543-9.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       30
+      ]
+     ]
+    },
+    "ISSN": [
+     "0028-0836",
+     "1476-4687"
+    ],
+    "published": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       30
+      ]
+     ]
+    }
+   },
+   {
+    "license": [
+     {
+      "start": {
+       "date-parts": [
+        [
+         2026,
+         10,
+         30
+        ]
+       ],
+       "date-time": "2026-10-30T00:00:00Z",
+       "timestamp": 1793318400000
+      },
+      "content-version": "tdm",
+      "delay-in-days": 0,
+      "URL": "https://www.springernature.com/gp/researchers/text-and-data-mining"
+     },
+     {
+      "start": {
+       "date-parts": [
+        [
+         2026,
+         10,
+         30
+        ]
+       ],
+       "date-time": "2026-10-30T00:00:00Z",
+       "timestamp": 1793318400000
+      },
+      "content-version": "vor",
+      "delay-in-days": 0,
+      "URL": "https://www.springernature.com/gp/researchers/text-and-data-mining"
+     }
+    ],
+    "DOI": "10.1038/d41586-026-03512-2",
+    "type": "journal-article",
+    "title": [
+     "Are dinosaur fossils hogging top journals? Analysis sparks debate over ‘charismatic’ finds"
+    ],
+    "author": [
+     {
+      "given": "Ewen",
+      "family": "Callaway",
+      "sequence": "first",
+      "affiliation": [],
+      "role": [
+       {
+        "vocabulary": "crossref",
+        "role": "author"
+       }
+      ]
+     }
+    ],
+    "container-title": [
+     "Nature"
+    ],
+    "link": [
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03512-2.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+     },
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03512-2",
+      "content-type": "text/html",
+      "content-version": "vor",
+      "intended-application": "text-mining"
+     },
+     {
+      "URL": "https://www.nature.com/articles/d41586-026-03512-2.pdf",
+      "content-type": "application/pdf",
+      "content-version": "vor",
+      "intended-application": "similarity-checking"
+     }
+    ],
+    "issued": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       30
+      ]
+     ]
+    },
+    "ISSN": [
+     "0028-0836",
+     "1476-4687"
+    ],
+    "published": {
+     "date-parts": [
+      [
+       2026,
+       10,
+       30
+      ]
+     ]
+    }
+   }
+  ],
+  "items-per-page": 3,
+  "query": {
+   "start-index": 0,
+   "search-terms": null
+  }
+ }
+}

@@ -1,0 +1,122 @@
+{
+ "version": "6.9",
+ "hitCount": 4,
+ "nextCursorMark": "AoIIP4AAACgyMTg3Njc2MQ==",
+ "request": {
+  "queryString": "\"single-cell RNA\" AND FIRST_IDATE:[2026-10-29 TO 2026-11-05]",
+  "resultType": "core",
+  "cursorMark": "*",
+  "pageSize": 1,
+  "sort": "",
+  "synonym": false
+ },
+ "resultList": {
+  "result": [
+   {
+    "id": "21876761",
+    "source": "MED",
+    "pmid": "21876761",
+    "pmcid": "PMC3158090",
+    "doi": "10.1371/journal.pone.0023673",
+    "title": "A signature in HIV-1 envelope leader peptide associated with transition from acute to chronic infection impacts envelope processing and infectivity.",
+    "authorString": "Asmal M, Hellmann I, Liu W, Keele BF, Perelson AS, Bhattacharya T, Gnanakaran S, Daniels M, Haynes BF, Korber BT, Hahn BH, Shaw GM, Letvin NL.",
+    "authorList": {
+     "author": [
+      {
+       "fullName": "Asmal M",
+       "lastName": "Asmal",
+       "firstName": "Mohammed",
+       "initials": "M"
+      },
+      {
+       "fullName": "Hellmann I",
+       "lastName": "Hellmann",
+       "firstName": "Ina",
+       "initials": "I"
+      },
+      {
+       "fullName": "Liu W",
+       "lastName": "Liu",
+       "firstName": "Weimin",
+       "initials": "W"
+      },
+      {
+       "fullName": "Keele BF",
+       "lastName": "Keele",
+       "firstName": "Brandon F",
+       "initials": "BF"
+      }
+     ]
+    },
+    "journalInfo": {
+     "issue": "8",
+     "volume": "6",
+     "journalIssueId": 1855469,
+     "dateOfPublication": "2011 ",
+     "monthOfPublication": 0,
+     "yearOfPublication": 2011,
+     "journal": {
+      "medlineAbbreviation": "PLoS One",
+      "title": "PloS one",
+      "essn": "1932-6203",
+      "issn": "1932-6203",
+      "nlmid": "101285081",
+      "isoabbreviation": "PLoS One"
+     },
+     "printPublicationDate": "2011-01-01"
+    },
+    "pubYear": "2011",
+    "abstractText": "Mucosal transmission of the human immunodeficiency virus (HIV) results in a bottleneck in viral genetic diversity. Gnanakaran and colleagues used a computational strategy to identify signature amino acids at particular positions in Envelope that were associated either with transmitted sequences sampled very early in infection, or sequences sampled during chronic infection. Among the strongest signatures observed was an enrichment for the stable presence of histidine at position 12 at transmission and in early infection, and a recurrent loss of histidine at position 12 in chronic infection. This amino acid lies within the leader peptide of Envelope, a region of the protein that has been shown to influence envelope glycoprotein expression and virion infectivity. We show a strong association between a positively charged amino acid like histidine at position 12 in transmitted/founder viruses with more efficient trafficking of the nascent envelope polypeptide to the endoplasmic reticulum and higher steady-state glycoprotein expression compared to viruses that have a non-basic position 12 residue, a substitution that was enriched among viruses sampled from chronically infected individuals. When expressed in the context of other viral proteins, transmitted envelopes with a basic amino acid position 12 were incorporated at higher density into the virus and exhibited higher infectious titers than did non-signature envelopes. These results support the potential utility of using a computational approach to examine large viral sequence data sets for functional signatures and indicate the importance of Envelope expression levels for efficient HIV transmission.",
+    "pubTypeList": {
+     "pubType": [
+      "Research Support, Non-U.S. Gov't",
+      "research-article",
+      "Journal Article",
+      "Research Support, N.I.H., Extramural"
+     ]
+    },
+    "fullTextUrlList": {
+     "fullTextUrl": [
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "pdf",
+       "site": "Unpaywall",
+       "url": "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0023673&type=printable"
+      },
+      {
+       "availability": "Subscription required",
+       "availabilityCode": "S",
+       "documentStyle": "doi",
+       "site": "DOI",
+       "url": "https://doi.org/10.1371/journal.pone.0023673"
+      },
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "html",
+       "site": "Europe_PMC",
+       "url": "https://europepmc.org/articles/PMC3158090"
+      },
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "pdf",
+       "site": "Europe_PMC",
+       "url": "https://europepmc.org/articles/PMC3158090?pdf=render"
+      }
+     ]
+    },
+    "isOpenAccess": "Y",
+    "inEPMC": "Y",
+    "inPMC": "Y",
+    "hasPDF": "Y",
+    "license": "cc by",
+    "dateOfCreation": "2011-08-31",
+    "electronicPublicationDate": "2011-08-18",
+    "firstPublicationDate": "2011-08-18",
+    "firstIndexDate": "2011-08-31"
+   }
+  ]
+ }
+}

@@ -1,0 +1,250 @@
+{
+ "version": "6.9",
+ "hitCount": 4,
+ "nextCursorMark": "AoIIP4AAACgxMDAwMDAw",
+ "request": {
+  "queryString": "\"single-cell RNA\" AND FIRST_IDATE:[2026-10-29 TO 2026-11-05]",
+  "resultType": "core",
+  "cursorMark": "*",
+  "pageSize": 3,
+  "sort": "",
+  "synonym": false
+ },
+ "resultList": {
+  "result": [
+   {
+    "id": "41509970",
+    "source": "MED",
+    "pmid": "41509970",
+    "pmcid": "PMC12777055",
+    "doi": "10.5005/jp-journals-10005-3269",
+    "title": "Comparative Study of Esthetic Outcome of Pedo Shades of Composite Resin-A Randomized Controlled Trial: &lt;i&gt;In Vivo&lt;/i&gt; and &lt;i&gt;In Vitro&lt;/i&gt; Study.",
+    "authorString": "Raj P, Choubey S, Doneria D, Bhat D, Mathur S, Sinha S.",
+    "authorList": {
+     "author": [
+      {
+       "fullName": "Raj P",
+       "lastName": "Raj",
+       "firstName": "Priyanka",
+       "initials": "P"
+      },
+      {
+       "fullName": "Choubey S",
+       "lastName": "Choubey",
+       "firstName": "Shikha",
+       "initials": "S"
+      },
+      {
+       "fullName": "Doneria D",
+       "lastName": "Doneria",
+       "firstName": "Divya",
+       "initials": "D"
+      },
+      {
+       "fullName": "Bhat D",
+       "lastName": "Bhat",
+       "firstName": "Diksha",
+       "initials": "D"
+      }
+     ]
+    },
+    "journalInfo": {
+     "issue": "Suppl 1",
+     "volume": "18",
+     "journalIssueId": 4089151,
+     "dateOfPublication": "2025 Nov",
+     "monthOfPublication": 11,
+     "yearOfPublication": 2025,
+     "journal": {
+      "medlineAbbreviation": "Int J Clin Pediatr Dent",
+      "title": "International journal of clinical pediatric dentistry",
+      "essn": "0975-1904",
+      "issn": "0974-7052",
+      "isoabbreviation": "Int J Clin Pediatr Dent",
+      "nlmid": "101585405"
+     },
+     "printPublicationDate": "2025-11-01"
+    },
+    "pubYear": "2025",
+    "abstractText": "<h4>Aim</h4>This study aims to compare and evaluate parental satisfaction with three different pediatric composite resins.<h4>Study design</h4>This study employed both <i>in vitro</i> and <i>in vivo</i> components. <i>In vitro</i>, composite resin samples were restored with the respective materials and evaluated for shade matching using spectrophotometry. <i>In vivo</i>, parental satisfaction with the esthetic restoration of primary incisors was assessed using a feedback form.<h4>Subjects and methods</h4>The study involved obtaining informed consent from participants and assigning subjects to three groups. Group I consisted of 10 samples treated with Activa Kids bioactive, group II had 10 samples treated with Kedo E max, and group III included 10 samples treated with FGM Vittra unique flow. Thirty samples were collected for each of <i>in vitro</i> and <i>in vivo</i> studies. In the <i>in vitro</i> component, samples were restored with the respective composite materials, and shade matching was assessed using spectrophotometry. In the <i>in vivo</i> component, parental satisfaction was evaluated postrestoration using a feedback form.<h4>Results and statistics</h4>The results indicated a significant preference for Activa™ Kids Bioactive-Restorative in terms of appearance, color match, size, contour, and overall satisfaction compared to the other two composite resins. Spectrophotometric analysis showed minimal color change postrestoration with Kedo E max, followed by Activa™ Kids Bioactive-Restorative.<h4>Conclusion</h4>The study concluded that both Activa™ Kids Bioactive-Restorative and Kedo E max exhibited good shade-matching capabilities and overall esthetic outcomes compared to FGM Vittra APS, which is unique in restoring primary incisors. Activa™ Kids Bioactive-Restorative garnered higher parental satisfaction, while Kedo E max demonstrated superior color-matching outcomes. These findings provide valuable guidance for dentists and patients in selecting the most suitable pediatric composite resin for achieving optimal esthetic outcomes and patient satisfaction in anterior teeth restorations.<h4>How to cite this article</h4>Raj P, Choubey S, Doneria D, <i>et al.</i> Comparative Study of Esthetic Outcome of Pedo Shades of Composite Resin-A Randomized Controlled Trial: <i>In Vivo</i> and <i>In Vitro</i> Study. Int J Clin Pediatr Dent 2025;18(S-1):S22-S28.",
+    "pubTypeList": {
+     "pubType": [
+      "research-article",
+      "Journal Article"
+     ]
+    },
+    "fullTextUrlList": {
+     "fullTextUrl": [
+      {
+       "availability": "Subscription required",
+       "availabilityCode": "S",
+       "documentStyle": "doi",
+       "site": "DOI",
+       "url": "https://doi.org/10.5005/jp-journals-10005-3269"
+      },
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "html",
+       "site": "Europe_PMC",
+       "url": "https://europepmc.org/articles/PMC12777055"
+      },
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "pdf",
+       "site": "Europe_PMC",
+       "url": "https://europepmc.org/articles/PMC12777055?pdf=render"
+      }
+     ]
+    },
+    "isOpenAccess": "Y",
+    "inEPMC": "Y",
+    "inPMC": "Y",
+    "hasPDF": "Y",
+    "license": "cc by-nc",
+    "dateOfCreation": "2026-01-09",
+    "electronicPublicationDate": "2025-11-05",
+    "firstPublicationDate": "2025-11-05",
+    "firstIndexDate": "2026-01-10"
+   },
+   {
+    "id": "PPR1000000",
+    "source": "PPR",
+    "doi": "10.21203/rs.3.rs-6330309/v1",
+    "title": "Evidence that variation in DNA polymerase delta subunit 1 underlies geminivirus resistance in diverse plants",
+    "authorString": "Gilbert KB, Gallardo P, King SF, Morris CM, Hernandez GL, Carrington JC, Bart RS.",
+    "authorList": {
+     "author": [
+      {
+       "fullName": "Gilbert KB",
+       "lastName": "Gilbert",
+       "firstName": "Kerrigan",
+       "initials": "KB"
+      },
+      {
+       "fullName": "Gallardo P",
+       "lastName": "Gallardo",
+       "firstName": "Patricia",
+       "initials": "P"
+      },
+      {
+       "fullName": "King SF",
+       "lastName": "King",
+       "firstName": "Stefanie",
+       "initials": "SF"
+      },
+      {
+       "fullName": "Morris CM",
+       "lastName": "Morris",
+       "firstName": "Cheyenne",
+       "initials": "CM"
+      }
+     ]
+    },
+    "pubYear": "2025",
+    "abstractText": "<title>Abstract</title>  <p>Identifying loci conferring resistance to geminiviruses is an on-going priority in diverse crop species. Multiple geminivirus resistance QTLs and genes have been described, including most recently DNA polymerase delta subunit 1 (<italic>POLD1</italic>) in both cassava and tomato. From this, we hypothesized that POLD1-mediated resistance is present in a broad range of plant species. An analysis of multiple species with published geminivirus resistance QTLs was done to identify species with POLD1 variation consistent with known resistance alleles. Further, allele mining of over 7,000 accessions across 10 different genera, from both dicots and monocots, identified additional substitutions in key regions of the POLD1 protein as possible novel resistance alleles. These results provide evidence that <italic>POLD1</italic> variation is a source for geminivirus resistance in diverse plants including cotton, soybean, squash, wheat, and maize.</p>",
+    "pubTypeList": {
+     "pubType": [
+      "Preprint"
+     ]
+    },
+    "bookOrReportDetails": {
+     "publisher": "Research Square",
+     "yearOfPublication": 2025
+    },
+    "fullTextUrlList": {
+     "fullTextUrl": [
+      {
+       "availability": "Open access",
+       "availabilityCode": "OA",
+       "documentStyle": "pdf",
+       "site": "Unpaywall",
+       "url": "https://www.researchsquare.com/article/rs-6330309/latest.pdf"
+      },
+      {
+       "availability": "Free",
+       "availabilityCode": "F",
+       "documentStyle": "doi",
+       "site": "DOI",
+       "url": "https://doi.org/10.21203/rs.3.rs-6330309/v1"
+      }
+     ]
+    },
+    "isOpenAccess": "N",
+    "inEPMC": "N",
+    "inPMC": "N",
+    "hasPDF": "N",
+    "license": "cc by",
+    "dateOfCreation": "2025-04-07",
+    "firstPublicationDate": "2025-04-04",
+    "firstIndexDate": "2025-04-07"
+   },
+   {
+    "id": "PPR1150003",
+    "source": "PPR",
+    "doi": "10.21203/rs.3.rs-8752253/v1",
+    "title": "Sensor Fusion Techniques for Robust Autonomous Navigation in Unstructured Environments",
+    "authorString": "Shariar MMH, Fahim FA, Ahmed MS, Towfiq MTA.",
+    "authorList": {
+     "author": [
+      {
+       "fullName": "Shariar MMH",
+       "lastName": "Shariar",
+       "firstName": "Md Mehedi Hasan",
+       "initials": "MMH"
+      },
+      {
+       "fullName": "Fahim FA",
+       "lastName": "Fahim",
+       "firstName": "Farhan Ahamed",
+       "initials": "FA"
+      },
+      {
+       "fullName": "Ahmed MS",
+       "lastName": "Ahmed",
+       "firstName": "Mir Sifat",
+       "initials": "MS"
+      },
+      {
+       "fullName": "Towfiq MTA",
+       "lastName": "Towfiq",
+       "firstName": "Md Tanvir Ahamed",
+       "initials": "MTA"
+      }
+     ]
+    },
+    "pubYear": "2026",
+    "abstractText": "<title>Abstract</title>  <p>Autonomous navigation within unstructured environments is a very challenging task due to sensor noise, environmental variability, and the constraints of single-modality perception. This paper discusses a robust multi-sensor fusion framework that combines data from LiDAR, camera, inertial measurement unit, and global navigation satellite system for accurate real-time navigation in diverse and uncertain conditions. It merges the probabilistic estimation through Extended Kalman Filter with a deep learning-based feature extraction layer for adaptive confidence weighting and nonlinear error minimization. Sensor data are preprocessed, temporally synchronized, and fused using an adaptive covariance model, which dynamically adapts to signal degradation or occlusion. Experimental validation across indoor, outdoor, and semi-urban terrains showed 50% improved localization accuracy and a 10% reduction in drift compared to classical fusion frameworks. The method resulted in high map consistency of 96.8%, and reliable performance was noticed for partial GNSS loss, proving that it can be used on embedded robotic platforms in real time. This study establishes that intelligent sensor fusion with adaptive uncertainty modeling forms the basis for resilient autonomy in unstructured and dynamic environments.</p>",
+    "pubTypeList": {
+     "pubType": [
+      "Preprint"
+     ]
+    },
+    "bookOrReportDetails": {
+     "publisher": "Research Square",
+     "yearOfPublication": 2026
+    },
+    "fullTextUrlList": {
+     "fullTextUrl": [
+      {
+       "availability": "Free",
+       "availabilityCode": "F",
+       "documentStyle": "doi",
+       "site": "DOI",
+       "url": "https://doi.org/10.21203/rs.3.rs-8752253/v1"
+      }
+     ]
+    },
+    "isOpenAccess": "N",
+    "inEPMC": "N",
+    "inPMC": "N",
+    "hasPDF": "N",
+    "license": "cc by",
+    "dateOfCreation": "2026-02-04",
+    "firstPublicationDate": "2026-02-03",
+    "firstIndexDate": "2026-02-04"
+   }
+  ]
+ }
+}

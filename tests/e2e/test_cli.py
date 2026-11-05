@@ -89,6 +89,40 @@ def test_doctor_reports_missing_credentials_by_name_only(config: Path, monkeypat
     assert "topsecretvalue" not in invoke(config, "doctor")
 
 
+def test_doctor_only_warns_about_missing_optional_credentials(config: Path, monkeypatch):
+    monkeypatch.delenv("SOME_OPTIONAL_KEY", raising=False)
+    path = config / "sources.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["sources"]["demo"]["optional_env"] = ["SOME_OPTIONAL_KEY"]
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    invoke(config, "db", "upgrade")
+    output = invoke(config, "doctor")
+    assert "SOME_OPTIONAL_KEY" in output
+    assert "可选" in output
+
+
+def test_doctor_asks_for_contact_email_when_real_sources_are_enabled(config: Path, monkeypatch):
+    monkeypatch.delenv("LITFACTORY_CONTACT_EMAIL", raising=False)
+    path = config / "sources.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["sources"]["crossref"] = {"adapter": "crossref"}
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    invoke(config, "db", "upgrade")
+    assert "LITFACTORY_CONTACT_EMAIL" in invoke(config, "doctor")
+    monkeypatch.setenv("LITFACTORY_CONTACT_EMAIL", "me@example.org")
+    assert "LITFACTORY_CONTACT_EMAIL" not in invoke(config, "doctor")
+
+
+def test_doctor_reports_adapter_config_errors_instead_of_crashing(config: Path, monkeypatch):
+    monkeypatch.delenv("LITFACTORY_CONTACT_EMAIL", raising=False)
+    path = config / "app.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["fulltext"] = [{"adapter": "unpaywall"}]
+    path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+    invoke(config, "db", "upgrade")
+    assert "LITFACTORY_CONTACT_EMAIL" in invoke(config, "doctor", code=1)
+
+
 def test_second_run_exits_while_lock_is_held(config: Path):
     invoke(config, "db", "upgrade")
     lock = config.parent / "data" / "demo" / "litfactory.lock"

@@ -1,0 +1,99 @@
+{
+ "total": 4,
+ "token": null,
+ "data": [
+  {
+   "paperId": "00a0a7eaf30739c2e14d8cb523df9c3e4ec483c1",
+   "externalIds": {
+    "DOI": "10.1016/j.ast.2026.113972",
+    "CorpusId": 292583716
+   },
+   "title": "A Fast Prediction Method for Aerodynamic Heating under Non-Uniform Wall Temperature Based on Graph Neural Network and Transfer Learning",
+   "venue": "Aerospace Science and Technology",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "",
+    "status": "CLOSED",
+    "license": null,
+    "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.1016/j.ast.2026.113972?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1016/j.ast.2026.113972, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-10-01",
+   "journal": {
+    "name": "Aerospace Science and Technology"
+   },
+   "authors": [
+    {
+     "authorId": "2454917543",
+     "name": "Jia-Cheng Yuan"
+    },
+    {
+     "authorId": "2356013010",
+     "name": "You'an Shi"
+    },
+    {
+     "authorId": "2446296038",
+     "name": "Feng-Yuan Zhao"
+    },
+    {
+     "authorId": "2310345025",
+     "name": "Bin Xia"
+    },
+    {
+     "authorId": "2265722359",
+     "name": "Dong Wei"
+    },
+    {
+     "authorId": "2359950083",
+     "name": "Shao-Zhuang Li"
+    },
+    {
+     "authorId": "2507031330",
+     "name": "Hang Zhao"
+    },
+    {
+     "authorId": "2397885459",
+     "name": "Lei Zeng"
+    }
+   ],
+   "abstract": null
+  },
+  {
+   "paperId": "202f716c650a41ff898095f98aaa7882eb73140d",
+   "externalIds": {
+    "ArXiv": "2611.00339",
+    "DOI": "10.1145/3831252.3834266",
+    "CorpusId": 295501816
+   },
+   "title": "Efficient NPN Classification for Large Functions using Graph Neural Network",
+   "venue": "",
+   "year": 2026,
+   "openAccessPdf": {
+    "url": "",
+    "status": null,
+    "license": null,
+    "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2611.00339, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+   },
+   "publicationDate": "2026-10-30",
+   "journal": null,
+   "authors": [
+    {
+     "authorId": "2283419271",
+     "name": "Cheng Cao"
+    },
+    {
+     "authorId": "2362923052",
+     "name": "Han-Yu Wang"
+    },
+    {
+     "authorId": "2303430210",
+     "name": "Wan-Hsuan Lin"
+    },
+    {
+     "authorId": "2281035562",
+     "name": "Jason Cong"
+    }
+   ],
+   "abstract": "Two Boolean functions are considered NPN equivalent if one can be transformed into the other by negating inputs, permuting inputs, or negating the output. Efficient NPN classification is valuable in fields such as logic synthesis, quantum computing, and information theory. However, exact NPN classification demands exhaustive enumeration of all possible input permutations and negations. Its complexity grows exponentially, making it impractical for larger functions with more inputs. In this paper, we introduce the first learning-based formulation for NPN classification by recasting it as NPN action prediction. Our method represents Boolean functions as AND-Inverter Graphs (AIGs) and applies a bidirectional heterogeneous graph neural network to predict input negations, output negation, and input permutations. To mitigate the non-canonicity of logic networks, we further introduce graph rewriting techniques that reduce structural ambiguity and recover useful symmetries before prediction. Experimental results show that NPN action prediction is learnable, that the resulting canonicalization quality improves over heuristic baselines, and that on practical benchmarks our method approaches exact methods on tractable cases while scaling to functions with up to 16 inputs."
+  }
+ ]
+}

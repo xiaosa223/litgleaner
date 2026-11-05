@@ -98,6 +98,9 @@ type = "independence"
 modules = [
   "litfactory.adapters.blobstore",
   "litfactory.adapters.fakes",
+  "litfactory.adapters.fulltext",
   "litfactory.adapters.parsers",
   "litfactory.adapters.renderers",
+  "litfactory.adapters.sources",
+  "litfactory.adapters.zotero",
 ]

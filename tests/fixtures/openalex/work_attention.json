@@ -1,0 +1,177 @@
+{
+ "id": "https://openalex.org/W2626778328",
+ "doi": "https://doi.org/10.48550/arxiv.1706.03762",
+ "title": "Attention Is All You Need",
+ "publication_date": "2017-06-12",
+ "ids": {
+  "openalex": "https://openalex.org/W2626778328",
+  "doi": "https://doi.org/10.48550/arxiv.1706.03762",
+  "mag": "2626778328"
+ },
+ "authorships": [
+  {
+   "author_position": "first",
+   "author": {
+    "id": "https://openalex.org/A5103024730",
+    "display_name": "Ashish Vaswani",
+    "orcid": "https://orcid.org/0000-0002-7794-2085"
+   },
+   "raw_author_name": "Ashish Vaswani"
+  },
+  {
+   "author_position": "middle",
+   "author": {
+    "id": "https://openalex.org/A5021878400",
+    "display_name": "Noam Shazeer",
+    "orcid": null
+   },
+   "raw_author_name": "Noam Shazeer"
+  },
+  {
+   "author_position": "middle",
+   "author": {
+    "id": "https://openalex.org/A5005777963",
+    "display_name": "Niki Parmar",
+    "orcid": null
+   },
+   "raw_author_name": "Niki Parmar"
+  }
+ ],
+ "primary_location": {
+  "id": "pmh:oai:arXiv.org:1706.03762",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "http://arxiv.org/abs/1706.03762",
+  "pdf_url": "https://arxiv.org/pdf/1706.03762",
+  "source": {
+   "id": "https://openalex.org/S4306400194",
+   "display_name": "arXiv (Cornell University)",
+   "issn_l": "2331-8422",
+   "issn": [
+    "2331-8422"
+   ]
+  },
+  "license": null,
+  "version": "submittedVersion"
+ },
+ "locations": [
+  {
+   "id": "pmh:oai:arXiv.org:1706.03762",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "http://arxiv.org/abs/1706.03762",
+   "pdf_url": "https://arxiv.org/pdf/1706.03762",
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ]
+   },
+   "license": null,
+   "version": "submittedVersion"
+  },
+  {
+   "id": "doi:10.48550/arxiv.1706.03762",
+   "doi": "https://doi.org/10.48550/arxiv.1706.03762",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.48550/arxiv.1706.03762",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ]
+   },
+   "license": null,
+   "version": null
+  },
+  {
+   "id": "mag:2963403868",
+   "doi": null,
+   "is_oa": true,
+   "landing_page_url": "https://arxiv.org/pdf/1706.03762v5",
+   "pdf_url": null,
+   "source": {
+    "id": "https://openalex.org/S4306400194",
+    "display_name": "arXiv (Cornell University)",
+    "issn_l": "2331-8422",
+    "issn": [
+     "2331-8422"
+    ]
+   },
+   "license": null,
+   "version": null
+  },
+  {
+   "id": "doi:10.65215/2q58a426",
+   "doi": "https://doi.org/10.65215/2q58a426",
+   "is_oa": false,
+   "landing_page_url": "https://doi.org/10.65215/2q58a426",
+   "pdf_url": null,
+   "source": null,
+   "license": null,
+   "version": "acceptedVersion"
+  },
+  {
+   "id": "doi:10.65215/ctdc8e75",
+   "doi": "https://doi.org/10.65215/ctdc8e75",
+   "is_oa": false,
+   "landing_page_url": "https://doi.org/10.65215/ctdc8e75",
+   "pdf_url": null,
+   "source": null,
+   "license": null,
+   "version": "acceptedVersion"
+  },
+  {
+   "id": "doi:10.65215/mdcm8z23",
+   "doi": "https://doi.org/10.65215/mdcm8z23",
+   "is_oa": false,
+   "landing_page_url": "https://doi.org/10.65215/mdcm8z23",
+   "pdf_url": null,
+   "source": null,
+   "license": null,
+   "version": "acceptedVersion"
+  },
+  {
+   "id": "doi:10.65215/ne77pf66",
+   "doi": "https://doi.org/10.65215/ne77pf66",
+   "is_oa": true,
+   "landing_page_url": "https://doi.org/10.65215/ne77pf66",
+   "pdf_url": "https://langtaosha.org.cn/lts/en/preprint/download/49/231",
+   "source": null,
+   "license": null,
+   "version": "acceptedVersion"
+  },
+  {
+   "id": "doi:10.65215/nxvz2v36",
+   "doi": "https://doi.org/10.65215/nxvz2v36",
+   "is_oa": false,
+   "landing_page_url": "https://doi.org/10.65215/nxvz2v36",
+   "pdf_url": null,
+   "source": null,
+   "license": null,
+   "version": "acceptedVersion"
+  }
+ ],
+ "best_oa_location": {
+  "id": "pmh:oai:arXiv.org:1706.03762",
+  "doi": null,
+  "is_oa": true,
+  "landing_page_url": "http://arxiv.org/abs/1706.03762",
+  "pdf_url": "https://arxiv.org/pdf/1706.03762",
+  "source": {
+   "id": "https://openalex.org/S4306400194",
+   "display_name": "arXiv (Cornell University)",
+   "issn_l": "2331-8422",
+   "issn": [
+    "2331-8422"
+   ]
+  },
+  "license": null,
+  "version": "submittedVersion"
+ }
+}

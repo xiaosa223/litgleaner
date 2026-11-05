@@ -1,0 +1,701 @@
+{
+ "meta": {
+  "count": 97,
+  "db_response_time_ms": 64,
+  "page": 1,
+  "per_page": 100,
+  "groups_count": null,
+  "cost_usd": 0.0001
+ },
+ "results": [
+  {
+   "id": "https://openalex.org/W7172250885",
+   "doi": "https://doi.org/10.1038/s41591-026-04655-5",
+   "title": "A clinical multimodal vision language foundation model with fine-grain explainability",
+   "publication_date": "2026-10-29",
+   "ids": {
+    "openalex": "https://openalex.org/W7172250885",
+    "doi": "https://doi.org/10.1038/s41591-026-04655-5",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/42957777"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5144268511",
+      "display_name": "Yang Bai",
+      "orcid": null
+     },
+     "raw_author_name": "Yang Bai"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5027015252",
+      "display_name": "Haoran Cheng",
+      "orcid": "https://orcid.org/0009-0005-9540-4570"
+     },
+     "raw_author_name": "Haoran Cheng"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5160079972",
+      "display_name": "Yang Zhou",
+      "orcid": null
+     },
+     "raw_author_name": "Yang Zhou"
+    }
+   ],
+   "abstract_inverted_index": {
+    "Despite": [
+     0
+    ],
+    "their": [
+     1
+    ],
+    "considerable": [
+     2
+    ],
+    "promise,": [
+     3
+    ],
+    "many": [
+     4
+    ],
+    "current": [
+     5
+    ],
+    "medical": [
+     6
+    ],
+    "foundation": [
+     7,
+     37
+    ],
+    "models": [
+     8
+    ],
+    "remain": [
+     9
+    ],
+    "modality": [
+     10
+    ],
+    "specific": [
+     11
+    ],
+    "and": [
+     12
+    ],
+    "lack": [
+     13
+    ],
+    "transparent": [
+     14
+    ],
+    "reasoning,": [
+     15
+    ],
+    "limiting": [
+     16
+    ],
+    "clinical": [
+     17
+    ],
+    "adoption.": [
+     18
+    ],
+    "To": [
+     19
+    ],
+    "address": [
+     20
+    ],
+    "this": [
+     21
+    ],
+    "gap,": [
+     22
+    ],
+    "we": [
+     23
+    ],
+    "introduce": [
+     24
+    ],
+    "Explainable": [
+     25
+    ],
+    "Vision": [
+     26
+    ],
+    "Language": [
+     27
+    ],
+    "Foundation": [
+     28
+    ],
+    "Model": [
+     29
+    ],
+    "for": [
+     30
+    ],
+    "Medicine": [
+     31
+    ],
+    "(EVLF-FM),": [
+     32
+    ],
+    "a": [
+     33
+    ],
+    "multimodal": [
+     34
+    ],
+    "vision": [
+     35
+    ],
+    "language": [
+     36
+    ],
+    "model": [
+     38
+    ],
+    "that": [
+     39
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1038/s41591-026-04655-5",
+    "doi": "https://doi.org/10.1038/s41591-026-04655-5",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1038/s41591-026-04655-5",
+    "pdf_url": "https://www.nature.com/articles/s41591-026-04655-5.pdf",
+    "source": {
+     "id": "https://openalex.org/S203256638",
+     "display_name": "Nature Medicine",
+     "issn_l": "1078-8956",
+     "issn": [
+      "1078-8956",
+      "1546-170X",
+      "1744-7933"
+     ]
+    },
+    "license": "cc-by-nc-nd",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1038/s41591-026-04655-5",
+     "doi": "https://doi.org/10.1038/s41591-026-04655-5",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1038/s41591-026-04655-5",
+     "pdf_url": "https://www.nature.com/articles/s41591-026-04655-5.pdf",
+     "source": {
+      "id": "https://openalex.org/S203256638",
+      "display_name": "Nature Medicine",
+      "issn_l": "1078-8956",
+      "issn": [
+       "1078-8956",
+       "1546-170X",
+       "1744-7933"
+      ]
+     },
+     "license": "cc-by-nc-nd",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmid:42957777",
+     "doi": null,
+     "is_oa": false,
+     "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/42957777",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306525036",
+      "display_name": "PubMed",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": null,
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmh:oai:arXiv.org:2509.24231",
+     "doi": null,
+     "is_oa": true,
+     "landing_page_url": "http://arxiv.org/abs/2509.24231",
+     "pdf_url": "https://arxiv.org/pdf/2509.24231",
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": null,
+     "version": "submittedVersion"
+    },
+    {
+     "id": "doi:10.48550/arxiv.2509.24231",
+     "doi": "https://doi.org/10.48550/arxiv.2509.24231",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.48550/arxiv.2509.24231",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": null,
+     "version": null
+    }
+   ]
+  },
+  {
+   "id": "https://openalex.org/W4414750690",
+   "doi": "https://doi.org/10.1098/rsos.252099",
+   "title": "Large language model developments",
+   "publication_date": "2026-11-04",
+   "ids": {
+    "openalex": "https://openalex.org/W4414750690",
+    "doi": "https://doi.org/10.1098/rsos.252099"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5015039091",
+      "display_name": "E. Joseph Sharkey",
+      "orcid": null
+     },
+     "raw_author_name": "Philip Treleaven"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5000136854",
+      "display_name": "Philip Colin Treleaven",
+      "orcid": "https://orcid.org/0000-0001-8803-8297"
+     },
+     "raw_author_name": "Edward Sharkey"
+    },
+    {
+     "author_position": "last",
+     "author": {
+      "id": "https://openalex.org/A5119816175",
+      "display_name": "Sara Craciun",
+      "orcid": "https://orcid.org/0009-0005-2459-5365"
+     },
+     "raw_author_name": "Sara Craciun"
+    }
+   ],
+   "abstract_inverted_index": {
+    "Abstract": [
+     0
+    ],
+    "Large": [
+     1
+    ],
+    "language": [
+     2
+    ],
+    "models": [
+     3,
+     10,
+     30
+    ],
+    "(LLMs)": [
+     4
+    ],
+    "are": [
+     5,
+     38
+    ],
+    "generative": [
+     6
+    ],
+    "artificial": [
+     7
+    ],
+    "intelligence": [
+     8
+    ],
+    "(AI)": [
+     9
+    ],
+    "trained": [
+     11
+    ],
+    "with": [
+     12
+    ],
+    "vast": [
+     13
+    ],
+    "amounts": [
+     14
+    ],
+    "of": [
+     15
+    ],
+    "data": [
+     16
+    ],
+    "and": [
+     17,
+     19,
+     24
+    ],
+    "context,": [
+     18
+    ],
+    "excel": [
+     20
+    ],
+    "at": [
+     21
+    ],
+    "processing,": [
+     22
+    ],
+    "understanding": [
+     23
+    ],
+    "generating": [
+     25
+    ],
+    "human": [
+     26
+    ],
+    "language,": [
+     27
+    ],
+    "using": [
+     28
+    ],
+    "transformer": [
+     29
+    ],
+    "to": [
+     31
+    ],
+    "learn": [
+     32
+    ],
+    "statistical": [
+     33
+    ],
+    "relationships": [
+     34
+    ],
+    "between": [
+     35
+    ],
+    "tokens.": [
+     36
+    ],
+    "LLMs": [
+     37
+    ],
+    "a": [
+     39
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1098/rsos.252099",
+    "doi": "https://doi.org/10.1098/rsos.252099",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1098/rsos.252099",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S2737558550",
+     "display_name": "Royal Society Open Science",
+     "issn_l": "2054-5703",
+     "issn": [
+      "2054-5703"
+     ]
+    },
+    "license": "cc-by",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1098/rsos.252099",
+     "doi": "https://doi.org/10.1098/rsos.252099",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1098/rsos.252099",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S2737558550",
+      "display_name": "Royal Society Open Science",
+      "issn_l": "2054-5703",
+      "issn": [
+       "2054-5703"
+      ]
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "doi:10.2139/ssrn.5470930",
+     "doi": "https://doi.org/10.2139/ssrn.5470930",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.2139/ssrn.5470930",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4210172589",
+      "display_name": "SSRN Electronic Journal",
+      "issn_l": "1556-5068",
+      "issn": [
+       "1556-5068"
+      ]
+     },
+     "license": null,
+     "version": "acceptedVersion"
+    }
+   ]
+  },
+  {
+   "id": "https://openalex.org/W2046766973",
+   "doi": "https://doi.org/10.1371/journal.pone.0000308",
+   "title": "Sharing Detailed Research Data Is Associated with Increased Citation Rate",
+   "publication_date": "2007-03-20",
+   "ids": {
+    "openalex": "https://openalex.org/W2046766973",
+    "doi": "https://doi.org/10.1371/journal.pone.0000308",
+    "mag": "2046766973",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/17375194",
+    "pmcid": "https://www.ncbi.nlm.nih.gov/pmc/articles/1817752"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5048491430",
+      "display_name": "Heather Piwowar",
+      "orcid": "https://orcid.org/0000-0003-1613-5981"
+     },
+     "raw_author_name": "Heather A. Piwowar"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5109883106",
+      "display_name": "Roger Day",
+      "orcid": null
+     },
+     "raw_author_name": "Roger S. Day"
+    },
+    {
+     "author_position": "last",
+     "author": {
+      "id": "https://openalex.org/A5032027675",
+      "display_name": "Douglas B. Fridsma",
+      "orcid": "https://orcid.org/0009-0009-1767-3264"
+     },
+     "raw_author_name": "Douglas B. Fridsma"
+    }
+   ],
+   "abstract_inverted_index": {
+    "BACKGROUND:": [
+     0
+    ],
+    "Sharing": [
+     1
+    ],
+    "research": [
+     2
+    ],
+    "data": [
+     3,
+     25
+    ],
+    "provides": [
+     4
+    ],
+    "benefit": [
+     5,
+     13
+    ],
+    "to": [
+     6
+    ],
+    "the": [
+     7,
+     12,
+     18,
+     31
+    ],
+    "general": [
+     8
+    ],
+    "scientific": [
+     9
+    ],
+    "community,": [
+     10
+    ],
+    "but": [
+     11
+    ],
+    "is": [
+     14
+    ],
+    "less": [
+     15
+    ],
+    "obvious": [
+     16
+    ],
+    "for": [
+     17
+    ],
+    "investigator": [
+     19
+    ],
+    "who": [
+     20
+    ],
+    "makes": [
+     21
+    ],
+    "his": [
+     22
+    ],
+    "or": [
+     23
+    ],
+    "her": [
+     24
+    ],
+    "available.": [
+     26
+    ],
+    "PRINCIPAL": [
+     27
+    ],
+    "FINDINGS:": [
+     28
+    ],
+    "We": [
+     29
+    ],
+    "examined": [
+     30
+    ],
+    "citation": [
+     32
+    ],
+    "history": [
+     33
+    ],
+    "of": [
+     34
+    ],
+    "85": [
+     35
+    ],
+    "cancer": [
+     36
+    ],
+    "microarray": [
+     37
+    ],
+    "clinical": [
+     38
+    ],
+    "trial": [
+     39
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1371/journal.pone.0000308",
+    "doi": "https://doi.org/10.1371/journal.pone.0000308",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1371/journal.pone.0000308",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S202381698",
+     "display_name": "PLoS ONE",
+     "issn_l": "1932-6203",
+     "issn": [
+      "1932-6203"
+     ]
+    },
+    "license": "cc-by",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1371/journal.pone.0000308",
+     "doi": "https://doi.org/10.1371/journal.pone.0000308",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1371/journal.pone.0000308",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S202381698",
+      "display_name": "PLoS ONE",
+      "issn_l": "1932-6203",
+      "issn": [
+       "1932-6203"
+      ]
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmh:oai:europepmc.org:1817448",
+     "doi": null,
+     "is_oa": true,
+     "landing_page_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/1817752",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306400806",
+      "display_name": "Europe PMC (PubMed Central)",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmh:oai:pubmedcentral.nih.gov:1817752",
+     "doi": null,
+     "is_oa": true,
+     "landing_page_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/1817752",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S2764455111",
+      "display_name": "PubMed Central",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmid:17375194",
+     "doi": null,
+     "is_oa": false,
+     "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/17375194",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306525036",
+      "display_name": "PubMed",
+      "issn_l": null,
+      "issn": null
+     },
+     "license": null,
+     "version": "publishedVersion"
+    }
+   ]
+  }
+ ],
+ "group_by": []
+}

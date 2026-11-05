@@ -1,0 +1,42 @@
+{
+ "total": 24,
+ "offset": 0,
+ "next": 5,
+ "data": [
+  {
+   "authorId": "2257301155",
+   "name": "G. Hinton",
+   "affiliations": [],
+   "paperCount": 41,
+   "hIndex": 11
+  },
+  {
+   "authorId": "2287034803",
+   "name": "Geoffrey Hinton",
+   "affiliations": [],
+   "paperCount": 4,
+   "hIndex": 0
+  },
+  {
+   "authorId": "2264335208",
+   "name": "Geoffrey E. Hinton",
+   "affiliations": [],
+   "paperCount": 3,
+   "hIndex": 2
+  },
+  {
+   "authorId": "2288786009",
+   "name": "Geoffrey E. Hinton",
+   "affiliations": [],
+   "paperCount": 1,
+   "hIndex": 0
+  },
+  {
+   "authorId": "2256589446",
+   "name": "Geoffrey E. Hinton",
+   "affiliations": [],
+   "paperCount": 6,
+   "hIndex": 3
+  }
+ ]
+}

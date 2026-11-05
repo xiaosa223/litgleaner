@@ -1,0 +1,372 @@
+{
+ "notes": [
+  {
+   "content": {
+    "venue": {
+     "value": "ICLR 2027 Conference Desk Rejected Submission"
+    },
+    "keywords": {
+     "value": [
+      "scaffold hopping",
+      "diffusion editing"
+     ]
+    },
+    "abstract": {
+     "value": "Scaffold hopping is a critical task in drug discovery, which seeks to discover new, structurally distinct molecules that share key functional groups and similar 3D shape with a reference binding ligand. Existing diffusion-based scaffold hopping methods formulate the problem as conditional generation of scaffolds given the functional groups. However, they lack a principled mechanism to jointly enfo"
+    },
+    "title": {
+     "value": "RIDE: Reference-Anchored Inference-Time Diffusion Editing for Scaffold Hopping"
+    },
+    "pdf": {
+     "value": "/pdf/ba5d82dfec3217be859ee23c9655fceff56d3407.pdf"
+    },
+    "venueid": {
+     "value": "ICLR.cc/2027/Conference/Desk_Rejected_Submission"
+    }
+   },
+   "tmdate": 1792045448040,
+   "tcdate": 1789760189965,
+   "writers": [
+    "ICLR.cc/2027/Conference",
+    "ICLR.cc/2027/Conference/Submission47969/Authors"
+   ],
+   "signatures": [
+    "ICLR.cc/2027/Conference/Submission47969/Authors"
+   ],
+   "forum": "UIDT2MtdMR",
+   "license": "CC BY 4.0",
+   "number": 47969,
+   "cdate": 1789760189965,
+   "readers": [
+    "everyone"
+   ],
+   "invitations": [
+    "ICLR.cc/2027/Conference/-/Submission",
+    "ICLR.cc/2027/Conference/-/Submission_Change_Before_Bidding",
+    "ICLR.cc/2027/Conference/Submission47969/-/Full_Submission",
+    "ICLR.cc/2027/Conference/-/Submission_Change_Before_Reviewing",
+    "ICLR.cc/2027/Conference/-/Edit",
+    "ICLR.cc/2027/Conference/-/Desk_Rejected_Submission"
+   ],
+   "mdate": 1792045448040,
+   "odate": 1791031328286,
+   "domain": "ICLR.cc/2027/Conference",
+   "id": "UIDT2MtdMR",
+   "version": 2
+  },
+  {
+   "content": {
+    "venue": {
+     "value": "ICLR 2027 Conference Submission"
+    },
+    "keywords": {
+     "value": [
+      "diffusion model",
+      "diffusion caching"
+     ]
+    },
+    "abstract": {
+     "value": "Diffusion caching accelerates generation by replacing transformer computation with cached or predicted features at selected denoising steps. We introduce the **Golden Path Hypothesis** (GPH): under fixed inference conditions, prompt-independent cache schedules can achieve final-output quality comparable to the best prompt-specific schedules across prompts. We investigate GPH across ten caching met"
+    },
+    "title": {
+     "value": "The Golden Path Hypothesis: Reusable Schedules in Diffusion Caching"
+    },
+    "pdf": {
+     "value": "/pdf/19550be96cb6ae98e05babefa7ba42642547216a.pdf"
+    },
+    "venueid": {
+     "value": "ICLR.cc/2027/Conference/Submission"
+    }
+   },
+   "tmdate": 1791230662908,
+   "tcdate": 1789589819659,
+   "writers": [
+    "ICLR.cc/2027/Conference",
+    "ICLR.cc/2027/Conference/Submission26848/Authors"
+   ],
+   "signatures": [
+    "ICLR.cc/2027/Conference/Submission26848/Authors"
+   ],
+   "forum": "c9hwAzUiBt",
+   "license": "CC BY 4.0",
+   "number": 26848,
+   "cdate": 1789589819659,
+   "readers": [
+    "everyone"
+   ],
+   "invitations": [
+    "ICLR.cc/2027/Conference/-/Submission",
+    "ICLR.cc/2027/Conference/-/Submission_Change_Before_Bidding",
+    "ICLR.cc/2027/Conference/Submission26848/-/Full_Submission",
+    "ICLR.cc/2027/Conference/-/Submission_Change_Before_Reviewing",
+    "ICLR.cc/2027/Conference/-/Edit"
+   ],
+   "mdate": 1791230662908,
+   "odate": 1791031328286,
+   "domain": "ICLR.cc/2027/Conference",
+   "id": "c9hwAzUiBt",
+   "version": 2
+  },
+  {
+   "content": {
+    "venue": {
+     "value": "ICLR 2027 Conference Desk Rejected Submission"
+    },
+    "keywords": {
+     "value": [
+      "autonomous driving",
+      "diffusion",
+      "safety",
+      "End-to-End"
+     ]
+    },
+    "abstract": {
+     "value": "Diffusion-based driving planners capture diverse behaviors but can generate unsafe trajectories under distribution shift. We propose BridgeGuard, a safety-constrained diffusion planning method that progressively strengthens a constraint term during denoising to drive intermediate trajectories toward a scene-dependent safety domain. Corrections operate in a low-dimensional curve space, promoting ge"
+    },
+    "title": {
+     "value": "BridgeGuard: Explicit Safety Drift for Diffusion-Based Autonomous Driving"
+    },
+    "pdf": {
+     "value": "/pdf/aa30e0f2140425c79bb577da3519aa47f75d4ebc.pdf"
+    },
+    "venueid": {
+     "value": "ICLR.cc/2027/Conference/Desk_Rejected_Submission"
+    }
+   },
+   "tmdate": 1791218486935,
+   "tcdate": 1789612793953,
+   "writers": [
+    "ICLR.cc/2027/Conference",
+    "ICLR.cc/2027/Conference/Submission27738/Authors"
+   ],
+   "signatures": [
+    "ICLR.cc/2027/Conference/Submission27738/Authors"
+   ],
+   "forum": "cclWhNhJ6D",
+   "license": "CC BY 4.0",
+   "number": 27738,
+   "cdate": 1789612793953,
+   "readers": [
+    "everyone"
+   ],
+   "invitations": [
+    "ICLR.cc/2027/Conference/-/Submission",
+    "ICLR.cc/2027/Conference/-/Submission_Change_Before_Bidding",
+    "ICLR.cc/2027/Conference/Submission27738/-/Full_Submission",
+    "ICLR.cc/2027/Conference/-/Desk_Rejected_Submission",
+    "ICLR.cc/2027/Conference/-/Edit"
+   ],
+   "mdate": 1791218486935,
+   "domain": "ICLR.cc/2027/Conference",
+   "id": "cclWhNhJ6D",
+   "version": 2
+  },
+  {
+   "content": {
+    "venue": {
+     "value": "NeurIPS 2024"
+    },
+    "pdf": {
+     "value": "https://proceedings.neurips.cc/paper_files/paper/2024/file/c7f4dbb8f3739b36029ba71a47844696-Paper-Conference.pdf"
+    },
+    "venueid": {
+     "value": "dblp.org/conf/NIPS/2024"
+    },
+    "abstract": {
+     "value": "The availability of large-scale multimodal datasets and advancements in diffusion models have significantly accelerated progress in 4D content generation. Most prior approaches rely on multiple images or video diffusion models, utilizing score distillation sampling for optimization or generating pseudo novel views for direct supervision. However, these methods are hindered by slow optimization spe"
+    },
+    "title": {
+     "value": "Diffusion4D: Fast Spatial-temporal Consistent 4D generation via Video Diffusion Models"
+    },
+    "authors": {
+     "value": [
+      "Hanwen Liang",
+      "Yuyang Yin",
+      "Dejia Xu",
+      "Hanxue Liang",
+      "Zhangyang Wang",
+      "Konstantinos N. Plataniotis",
+      "Yao Zhao",
+      "Yunchao Wei"
+     ]
+    }
+   },
+   "tmdate": 1762946929225,
+   "pdate": 1704067200000,
+   "tcdate": 1747266900556,
+   "writers": [
+    "~"
+   ],
+   "signatures": [
+    "~HANWEN_LIANG1"
+   ],
+   "forum": "qpMTsfu7Cx",
+   "license": "CC BY-SA 4.0",
+   "number": 467865,
+   "cdate": 1704067200000,
+   "readers": [
+    "everyone"
+   ],
+   "invitations": [
+    "DBLP.org/-/Record",
+    "DBLP.org/-/Edit",
+    "DBLP.org/-/Author_Coreference"
+   ],
+   "mdate": 1762946929225,
+   "domain": "DBLP.org",
+   "id": "qpMTsfu7Cx",
+   "version": 2
+  },
+  {
+   "content": {
+    "venue": {
+     "value": "NeurIPS 2024 poster"
+    },
+    "keywords": {
+     "value": [
+      "4D generation",
+      "diffusion model",
+      "spatial-temporal consistency"
+     ]
+    },
+    "abstract": {
+     "value": "The availability of large-scale multimodal datasets and advancements in diffusion models have significantly accelerated progress in 4D content generation. Most prior approaches rely on multiple images or video diffusion models, utilizing score distillation sampling for optimization or generating pseudo novel views for direct supervision. However, these methods are hindered by slow optimization spe"
+    },
+    "title": {
+     "value": "Diffusion4D: Fast Spatial-temporal Consistent 4D generation via Video Diffusion Models"
+    },
+    "pdf": {
+     "value": "/pdf/f591e6d5467584bafafeecfc8bfe987eca34f416.pdf"
+    },
+    "venueid": {
+     "value": "NeurIPS.cc/2024/Conference"
+    },
+    "authors": {
+     "value": [
+      "HANWEN LIANG",
+      "Yuyang Yin",
+      "Dejia Xu",
+      "hanxue liang",
+      "Zhangyang Wang",
+      "Konstantinos N Plataniotis",
+      "Yao Zhao",
+      "Yunchao Wei"
+     ]
+    }
+   },
+   "tmdate": 1730873865973,
+   "pdate": 1727287719087,
+   "tcdate": 1715271811975,
+   "writers": [
+    "NeurIPS.cc/2024/Conference",
+    "NeurIPS.cc/2024/Conference/Submission3414/Authors"
+   ],
+   "signatures": [
+    "NeurIPS.cc/2024/Conference/Submission3414/Authors"
+   ],
+   "forum": "grrefkWEES",
+   "license": "CC BY-NC-SA 4.0",
+   "number": 3414,
+   "cdate": 1715271811975,
+   "readers": [
+    "everyone"
+   ],
+   "invitations": [
+    "NeurIPS.cc/2024/Conference/-/Submission",
+    "NeurIPS.cc/2024/Conference/-/Edit",
+    "NeurIPS.cc/2024/Conference/-/Post_Submission",
+    "NeurIPS.cc/2024/Conference/Submission3414/-/Revision",
+    "NeurIPS.cc/2024/Conference/Submission3414/-/Camera_Ready_Revision"
+   ],
+   "mdate": 1730873865973,
+   "odate": 1730873865950,
+   "domain": "NeurIPS.cc/2024/Conference",
+   "id": "grrefkWEES",
+   "version": 2
+  },
+  {
+   "content": {
+    "venue": {
+     "value": "DiffuLM Poster"
+    },
+    "keywords": {
+     "value": [
+      "Discrete diffusion language models",
+      "Masked diffusion models",
+      "Mixture-of-experts",
+      "Non-factorized generation",
+      "Few-step generation",
+      "Latent variable models"
+     ]
+    },
+    "abstract": {
+     "value": "Masked diffusion models (MDMs) generate sequences by progressively unmasking several tokens per denoising step, but their reverse process is typically factorized over positions, limiting sample quality in the few-step regime where diffusion's speed advantage over autoregressive decoding matters most. A recent line of work introduces a continuous Gaussian latent, trained as a variational autoencode"
+    },
+    "title": {
+     "value": "E-MoE: Enhanced Mixture-of-Experts for Non-Factorized Discrete Diffusion Language Models"
+    },
+    "pdf": {
+     "value": "/pdf/ab988003c6e73dc2ad10d774a4e0640f131033c7.pdf"
+    },
+    "venueid": {
+     "value": "NeurIPS.cc/2026/Workshop/DiffuLM"
+    },
+    "authors": {
+     "value": [
+      {
+       "username": "~Ivanov_Arseny_Pavlovich1",
+       "fullname": "Arseny Ivanov",
+       "institutions": [
+        {
+         "name": "Higher School of Economics, Higher School of Economics",
+         "domain": "cs.hse.ru",
+         "country": "RU"
+        }
+       ]
+      },
+      {
+       "username": "~Alexander_Kolesov1",
+       "fullname": "Alexander Kolesov",
+       "institutions": [
+        {
+         "name": "Applied AI Institute",
+         "domain": "applied-ai.ru",
+         "country": "RU"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "tmdate": 1793727307851,
+   "pdate": 1791167542889,
+   "tcdate": 1788696054928,
+   "writers": [
+    "NeurIPS.cc/2026/Workshop/DiffuLM",
+    "NeurIPS.cc/2026/Workshop/DiffuLM/Submission138/Authors"
+   ],
+   "signatures": [
+    "NeurIPS.cc/2026/Workshop/DiffuLM/Submission138/Authors"
+   ],
+   "forum": "dgNMZ4i9bL",
+   "license": "CC BY 4.0",
+   "number": 138,
+   "cdate": 1788696054928,
+   "readers": [
+    "everyone"
+   ],
+   "invitations": [
+    "NeurIPS.cc/2026/Workshop/DiffuLM/-/Submission",
+    "NeurIPS.cc/2026/Workshop/DiffuLM/-/Submission_Change_Before_Bidding",
+    "NeurIPS.cc/2026/Workshop/DiffuLM/-/Submission_Change_Before_Reviewing",
+    "NeurIPS.cc/2026/Workshop/DiffuLM/-/Accepted_Submission_Release"
+   ],
+   "mdate": 1793727307851,
+   "odate": 1793723497328,
+   "domain": "NeurIPS.cc/2026/Workshop/DiffuLM",
+   "id": "dgNMZ4i9bL",
+   "version": 2
+  }
+ ],
+ "count": 3608
+}

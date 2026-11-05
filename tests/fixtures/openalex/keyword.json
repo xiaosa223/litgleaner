@@ -1,0 +1,698 @@
+{
+ "meta": {
+  "count": 348,
+  "db_response_time_ms": 30,
+  "page": 1,
+  "per_page": 5,
+  "groups_count": null,
+  "cost_usd": 0.001
+ },
+ "results": [
+  {
+   "id": "https://openalex.org/W4407359489",
+   "doi": "https://doi.org/10.1145/3799682.3840638",
+   "title": "FinMamba: Market-Aware Graph Enhanced Multi-Level Mamba for Stock Movement Prediction",
+   "publication_date": "2026-11-03",
+   "ids": {
+    "openalex": "https://openalex.org/W4407359489",
+    "doi": "https://doi.org/10.1145/3799682.3840638"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5048157403",
+      "display_name": "Yifan Hu",
+      "orcid": "https://orcid.org/0009-0005-9489-3691"
+     },
+     "raw_author_name": "Yifan Hu"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5114135706",
+      "display_name": "Peiyuan Liu",
+      "orcid": "https://orcid.org/0000-0002-6404-6775"
+     },
+     "raw_author_name": "Peiyuan Liu"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5001054333",
+      "display_name": "Yijie Li",
+      "orcid": "https://orcid.org/0000-0003-2118-2280"
+     },
+     "raw_author_name": "Yuante Li"
+    }
+   ],
+   "abstract_inverted_index": {
+    "Recently,": [
+     0
+    ],
+    "combining": [
+     1
+    ],
+    "stock": [
+     2,
+     15
+    ],
+    "features": [
+     3
+    ],
+    "with": [
+     4
+    ],
+    "inter-stock": [
+     5
+    ],
+    "correlations": [
+     6
+    ],
+    "has": [
+     7
+    ],
+    "become": [
+     8
+    ],
+    "a": [
+     9
+    ],
+    "common": [
+     10
+    ],
+    "and": [
+     11,
+     30
+    ],
+    "effective": [
+     12
+    ],
+    "approach": [
+     13
+    ],
+    "for": [
+     14
+    ],
+    "movement": [
+     16
+    ],
+    "prediction.": [
+     17
+    ],
+    "However,": [
+     18
+    ],
+    "financial": [
+     19
+    ],
+    "data": [
+     20
+    ],
+    "presents": [
+     21
+    ],
+    "significant": [
+     22
+    ],
+    "challenges": [
+     23
+    ],
+    "due": [
+     24
+    ],
+    "to": [
+     25
+    ],
+    "its": [
+     26
+    ],
+    "low": [
+     27
+    ],
+    "signal-to-noise": [
+     28
+    ],
+    "ratio": [
+     29
+    ],
+    "the": [
+     31,
+     35
+    ],
+    "dynamic": [
+     32
+    ],
+    "complexity": [
+     33
+    ],
+    "of": [
+     34
+    ],
+    "market,": [
+     36
+    ],
+    "which": [
+     37
+    ],
+    "give": [
+     38
+    ],
+    "rise": [
+     39
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1145/3799682.3840638",
+    "doi": "https://doi.org/10.1145/3799682.3840638",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1145/3799682.3840638",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4393918199",
+     "display_name": "ACM International Conference on Information and Knowledge Management (CIKM)",
+     "issn_l": "2155-0751",
+     "issn": [
+      "2155-0751"
+     ]
+    },
+    "license": "cc-by",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1145/3799682.3840638",
+     "doi": "https://doi.org/10.1145/3799682.3840638",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1145/3799682.3840638",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4393918199",
+      "display_name": "ACM International Conference on Information and Knowledge Management (CIKM)",
+      "issn_l": "2155-0751",
+      "issn": [
+       "2155-0751"
+      ]
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmh:oai:arXiv.org:2502.06707",
+     "doi": null,
+     "is_oa": true,
+     "landing_page_url": "https://arxiv.org/abs/2502.06707",
+     "pdf_url": "https://arxiv.org/pdf/2502.06707",
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": "cc-by",
+     "version": "submittedVersion"
+    },
+    {
+     "id": "doi:10.48550/arxiv.2502.06707",
+     "doi": "https://doi.org/10.48550/arxiv.2502.06707",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.48550/arxiv.2502.06707",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": "cc-by",
+     "version": null
+    }
+   ]
+  },
+  {
+   "id": "https://openalex.org/W4414458076",
+   "doi": "https://doi.org/10.1145/3799682.3840595",
+   "title": "Aligning the Spectrum: Hybrid Graph Pre-training and Prompt Tuning across Homophily and Heterophily",
+   "publication_date": "2026-11-03",
+   "ids": {
+    "openalex": "https://openalex.org/W4414458076",
+    "doi": "https://doi.org/10.1145/3799682.3840595"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5029505872",
+      "display_name": "Haitong Luo",
+      "orcid": "https://orcid.org/0009-0001-8258-4032"
+     },
+     "raw_author_name": "Haitong Luo"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5011048500",
+      "display_name": "Suhang Wang",
+      "orcid": "https://orcid.org/0000-0003-3448-4878"
+     },
+     "raw_author_name": "Suhang Wang"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5023594680",
+      "display_name": "Weiyao Zhang",
+      "orcid": "https://orcid.org/0000-0003-4767-0530"
+     },
+     "raw_author_name": "Weiyao Zhang"
+    }
+   ],
+   "abstract_inverted_index": {
+    "Graph": [
+     0
+    ],
+    "''pre-training": [
+     1
+    ],
+    "and": [
+     2
+    ],
+    "prompt-tuning''": [
+     3
+    ],
+    "aligns": [
+     4
+    ],
+    "downstream": [
+     5
+    ],
+    "tasks": [
+     6
+    ],
+    "with": [
+     7
+    ],
+    "pre-trained": [
+     8
+    ],
+    "objectives": [
+     9
+    ],
+    "to": [
+     10
+    ],
+    "enable": [
+     11
+    ],
+    "efficient": [
+     12
+    ],
+    "knowledge": [
+     13
+    ],
+    "transfer": [
+     14
+    ],
+    "under": [
+     15
+    ],
+    "limited": [
+     16
+    ],
+    "supervision.": [
+     17
+    ],
+    "However,": [
+     18
+    ],
+    "current": [
+     19
+    ],
+    "methods": [
+     20
+    ],
+    "typically": [
+     21
+    ],
+    "rely": [
+     22
+    ],
+    "on": [
+     23
+    ],
+    "single-filter": [
+     24
+    ],
+    "backbones": [
+     25
+    ],
+    "(e.g.,": [
+     26
+    ],
+    "low-pass),": [
+     27
+    ],
+    "whereas": [
+     28
+    ],
+    "real-world": [
+     29
+    ],
+    "graphs": [
+     30
+    ],
+    "exhibit": [
+     31
+    ],
+    "inherent": [
+     32
+    ],
+    "spectral": [
+     33
+    ],
+    "diversity.": [
+     34
+    ],
+    "Our": [
+     35
+    ],
+    "theoretical": [
+     36
+    ],
+    "Spectral": [
+     37
+    ],
+    "Specificity": [
+     38
+    ],
+    "principle": [
+     39
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1145/3799682.3840595",
+    "doi": "https://doi.org/10.1145/3799682.3840595",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1145/3799682.3840595",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4393918199",
+     "display_name": "ACM International Conference on Information and Knowledge Management (CIKM)",
+     "issn_l": "2155-0751",
+     "issn": [
+      "2155-0751"
+     ]
+    },
+    "license": "cc-by",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1145/3799682.3840595",
+     "doi": "https://doi.org/10.1145/3799682.3840595",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1145/3799682.3840595",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4393918199",
+      "display_name": "ACM International Conference on Information and Knowledge Management (CIKM)",
+      "issn_l": "2155-0751",
+      "issn": [
+       "2155-0751"
+      ]
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmh:oai:arXiv.org:2508.11328",
+     "doi": null,
+     "is_oa": true,
+     "landing_page_url": "http://arxiv.org/abs/2508.11328",
+     "pdf_url": "https://arxiv.org/pdf/2508.11328",
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": null,
+     "version": "submittedVersion"
+    },
+    {
+     "id": "doi:10.48550/arxiv.2508.11328",
+     "doi": "https://doi.org/10.48550/arxiv.2508.11328",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.48550/arxiv.2508.11328",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": null,
+     "version": null
+    }
+   ]
+  },
+  {
+   "id": "https://openalex.org/W4416235956",
+   "doi": "https://doi.org/10.1145/3799682.3840764",
+   "title": "GeoGNN: Quantifying and Mitigating Semantic Drift in Text-Attributed Graphs",
+   "publication_date": "2026-11-03",
+   "ids": {
+    "openalex": "https://openalex.org/W4416235956",
+    "doi": "https://doi.org/10.1145/3799682.3840764"
+   },
+   "authorships": [
+    {
+     "author_position": "first",
+     "author": {
+      "id": "https://openalex.org/A5001633360",
+      "display_name": "Liangwei Yang",
+      "orcid": "https://orcid.org/0000-0001-5660-766X"
+     },
+     "raw_author_name": "Liangwei Yang"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5034823980",
+      "display_name": "Jing Ma",
+      "orcid": "https://orcid.org/0000-0002-7464-8331"
+     },
+     "raw_author_name": "Jing Ma"
+    },
+    {
+     "author_position": "middle",
+     "author": {
+      "id": "https://openalex.org/A5100461783",
+      "display_name": "Jianguo Zhang",
+      "orcid": "https://orcid.org/0000-0001-9317-0268"
+     },
+     "raw_author_name": "Jianguo Zhang"
+    }
+   ],
+   "abstract_inverted_index": {
+    "Graph": [
+     0
+    ],
+    "neural": [
+     1
+    ],
+    "networks": [
+     2
+    ],
+    "(GNNs)": [
+     3
+    ],
+    "on": [
+     4
+    ],
+    "text-attributed": [
+     5
+    ],
+    "graphs": [
+     6
+    ],
+    "(TAGs)": [
+     7
+    ],
+    "typically": [
+     8
+    ],
+    "encode": [
+     9
+    ],
+    "node": [
+     10
+    ],
+    "texts": [
+     11
+    ],
+    "with": [
+     12
+    ],
+    "pretrained": [
+     13
+    ],
+    "language": [
+     14
+    ],
+    "models": [
+     15
+    ],
+    "(PLMs)": [
+     16
+    ],
+    "and": [
+     17
+    ],
+    "propagate": [
+     18
+    ],
+    "the": [
+     19
+    ],
+    "resulting": [
+     20
+    ],
+    "embeddings": [
+     21
+    ],
+    "through": [
+     22
+    ],
+    "linear": [
+     23,
+     34
+    ],
+    "neighborhood": [
+     24
+    ],
+    "aggregation.": [
+     25
+    ],
+    "Yet": [
+     26
+    ],
+    "PLM": [
+     27
+    ],
+    "representation": [
+     28
+    ],
+    "spaces": [
+     29
+    ],
+    "are": [
+     30
+    ],
+    "geometrically": [
+     31
+    ],
+    "structured,": [
+     32
+    ],
+    "so": [
+     33
+    ],
+    "aggregation": [
+     35
+    ],
+    "can": [
+     36
+    ],
+    "distort": [
+     37
+    ],
+    "semantic": [
+     38
+    ],
+    "geometry": [
+     39
+    ]
+   },
+   "primary_location": {
+    "id": "doi:10.1145/3799682.3840764",
+    "doi": "https://doi.org/10.1145/3799682.3840764",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1145/3799682.3840764",
+    "pdf_url": null,
+    "source": {
+     "id": "https://openalex.org/S4393918199",
+     "display_name": "ACM International Conference on Information and Knowledge Management (CIKM)",
+     "issn_l": "2155-0751",
+     "issn": [
+      "2155-0751"
+     ]
+    },
+    "license": "cc-by",
+    "version": "publishedVersion"
+   },
+   "locations": [
+    {
+     "id": "doi:10.1145/3799682.3840764",
+     "doi": "https://doi.org/10.1145/3799682.3840764",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.1145/3799682.3840764",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4393918199",
+      "display_name": "ACM International Conference on Information and Knowledge Management (CIKM)",
+      "issn_l": "2155-0751",
+      "issn": [
+       "2155-0751"
+      ]
+     },
+     "license": "cc-by",
+     "version": "publishedVersion"
+    },
+    {
+     "id": "pmh:oai:arXiv.org:2511.09042",
+     "doi": null,
+     "is_oa": true,
+     "landing_page_url": "http://arxiv.org/abs/2511.09042",
+     "pdf_url": "https://arxiv.org/pdf/2511.09042",
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": null,
+     "version": "submittedVersion"
+    },
+    {
+     "id": "doi:10.48550/arxiv.2511.09042",
+     "doi": "https://doi.org/10.48550/arxiv.2511.09042",
+     "is_oa": true,
+     "landing_page_url": "https://doi.org/10.48550/arxiv.2511.09042",
+     "pdf_url": null,
+     "source": {
+      "id": "https://openalex.org/S4306400194",
+      "display_name": "arXiv (Cornell University)",
+      "issn_l": "2331-8422",
+      "issn": [
+       "2331-8422"
+      ]
+     },
+     "license": null,
+     "version": null
+    }
+   ]
+  }
+ ],
+ "group_by": []
+}

@@ -23,7 +23,7 @@ from litfactory.application.topics import (
     backfill_topic,
     pause_topic,
 )
-from litfactory.bootstrap import build_context
+from litfactory.bootstrap import CONTACT_EMAIL, build_context
 from litfactory.domain.errors import ConfigError
 from litfactory.infra.config import LoadedConfig, load_config
 from litfactory.infra.db.migrate import is_up_to_date, upgrade_database
@@ -143,17 +143,16 @@ def doctor(config: ConfigOption = _DEFAULT_CONFIG) -> None:
     """检查配置、数据库、密钥和主题状态。"""
     loaded = _config(config)
     problems = _missing_credentials(loaded)
-    warnings = _fake_adapters(loaded)
+    warnings = [*_fake_adapters(loaded), *_missing_optional(loaded)]
     if not is_up_to_date(loaded.database_url):
         problems.append("数据库不是最新版本，请执行 litfactory db upgrade")
     else:
-        ctx = build_context(loaded)
-        states = ctx.store.judgments.topic_states()
-        if not any(state.status == "active" for state in states):
-            warnings.append("没有启用中的主题，请执行 litfactory topic activate <id>")
-        dead = ctx.store.jobs.list_by_status("dead")
-        if dead:
-            warnings.append(f"有 {len(dead)} 个死信任务，用 litfactory jobs list 查看")
+        try:
+            ctx = build_context(loaded)
+        except ConfigError as error:
+            problems.append(str(error))
+        else:
+            warnings.extend(_runtime_warnings(ctx))
     for warning in warnings:
         typer.secho(f"警告：{warning}", fg="yellow")
     for problem in problems:
@@ -161,6 +160,17 @@ def doctor(config: ConfigOption = _DEFAULT_CONFIG) -> None:
     if problems:
         raise typer.Exit(1)
     _echo("检查通过")
+
+
+def _runtime_warnings(ctx: AppContext) -> list[str]:
+    warnings: list[str] = []
+    states = ctx.store.judgments.topic_states()
+    if not any(state.status == "active" for state in states):
+        warnings.append("没有启用中的主题，请执行 litfactory topic activate <id>")
+    dead = ctx.store.jobs.list_by_status("dead")
+    if dead:
+        warnings.append(f"有 {len(dead)} 个死信任务，用 litfactory jobs list 查看")
+    return warnings
 
 
 def _enabled_adapters(config: LoadedConfig) -> list[tuple[str, tuple[str, ...]]]:
@@ -172,6 +182,20 @@ def _enabled_adapters(config: LoadedConfig) -> list[tuple[str, tuple[str, ...]]]
         config.app.parser,
     ]
     return [(item.adapter, item.credentials_env) for item in groups if item.enabled]
+
+
+def _missing_optional(config: LoadedConfig) -> list[str]:
+    groups = [*config.sources.values(), *config.app.fulltext]
+    missing = sorted(
+        {name for item in groups if item.enabled for name in item.optional_env}
+        - {name for name in os.environ if os.environ[name]}
+    )
+    real = [i for i in groups if i.enabled and not i.adapter.startswith(_FAKE_PREFIX)]
+    if real and not os.environ.get(CONTACT_EMAIL):
+        missing.append(CONTACT_EMAIL)
+    if not missing:
+        return []
+    return [f"可选环境变量未设置：{', '.join(missing)}。不影响运行，但部分来源额度更低或会跳过"]
 
 
 def _missing_credentials(config: LoadedConfig) -> list[str]:

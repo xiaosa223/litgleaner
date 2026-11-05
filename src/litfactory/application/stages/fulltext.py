@@ -2,28 +2,42 @@
 
 import hashlib
 import logging
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
 from litfactory.application.context import AppContext
 from litfactory.application.documents import load_chunks, pdf_key, save_document, save_parser_raw
 from litfactory.application.stages.base import Stage
 from litfactory.application.topics import active_topics
-from litfactory.ports.fulltext import FullText, FullTextRequest
+from litfactory.domain.errors import LitFactoryError, PermanentError
+from litfactory.ports.fulltext import FullText, FullTextProvider, FullTextRequest
 from litfactory.ports.store import Artifact, FullTextState, JobSpec
 
 logger = logging.getLogger(__name__)
 _PDF_MAGIC = b"%PDF-"
 
 
-def _first_available(ctx: AppContext, request: FullTextRequest) -> FullText | None:
-    for provider in ctx.fulltext:
-        found = provider.fetch(request)
+def first_available(
+    providers: Sequence[FullTextProvider], request: FullTextRequest
+) -> FullText | None:
+    """按配置顺序尝试。单个来源出错不影响后面的来源；都没拿到且有过错误时，
+    抛出第一个错误交给调度重试，而不是把论文错标成“没有全文”。"""
+    errors: list[LitFactoryError] = []
+    for provider in providers:
+        try:
+            found = provider.fetch(request)
+        except LitFactoryError as error:
+            logger.warning("全文来源 %s 出错：%s", provider.name, error)
+            errors.append(error)
+            continue
         if found is None:
             continue
         if found.content.startswith(_PDF_MAGIC):
             return found
         logger.warning("%s 返回的内容不是 PDF，已忽略：%s", provider.name, request.paper_id)
+    retryable = [error for error in errors if not isinstance(error, PermanentError)]
+    if retryable or errors:
+        raise (retryable or errors)[0]
     return None
 
 
@@ -47,7 +61,7 @@ class AcquireStage(Stage):
         if paper is None:
             raise ValueError(f"论文不存在：{paper_id}")
         request = FullTextRequest(paper_id, paper.title, ctx.store.papers.aliases_of(paper_id))
-        found = _first_available(ctx, request)
+        found = first_available(ctx.fulltext, request)
         now = ctx.now_iso()
         if found is None:
             ctx.store.papers.save_fulltext(FullTextState(paper_id, "unavailable"), now)

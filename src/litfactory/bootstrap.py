@@ -13,9 +13,26 @@ from litfactory.adapters.fakes.llm import FakeLLM
 from litfactory.adapters.fakes.parser import FakeParser
 from litfactory.adapters.fakes.publisher import FakePublisher
 from litfactory.adapters.fakes.source import FakeSource
+from litfactory.adapters.fulltext.arxiv import ArxivFullText
+from litfactory.adapters.fulltext.core import CoreFullText
+from litfactory.adapters.fulltext.crossref_tdm import CrossrefTdmFullText
+from litfactory.adapters.fulltext.europe_pmc import EuropePmcFullText
+from litfactory.adapters.fulltext.openalex import OpenAlexFullText
+from litfactory.adapters.fulltext.semantic_scholar import SemanticScholarFullText
+from litfactory.adapters.fulltext.unpaywall import UnpaywallFullText
 from litfactory.adapters.parsers.mineru_cloud import MinerUCloudParser
 from litfactory.adapters.parsers.pdf_text import PdfTextParser
 from litfactory.adapters.renderers.plain_text import PlainTextRenderer
+from litfactory.adapters.sources.arxiv import ArxivSource
+from litfactory.adapters.sources.core import CoreSource
+from litfactory.adapters.sources.crossref import CrossrefSource
+from litfactory.adapters.sources.europe_pmc import EuropePmcSource
+from litfactory.adapters.sources.openalex import OpenAlexSource
+from litfactory.adapters.sources.openreview import OpenReviewSource
+from litfactory.adapters.sources.pubmed import PubMedSource
+from litfactory.adapters.sources.semantic_scholar import SemanticScholarSource
+from litfactory.adapters.zotero.fulltext import ZoteroFullText
+from litfactory.adapters.zotero.source import ZoteroSource
 from litfactory.application.context import AppContext, ChannelBinding, RuntimeSettings
 from litfactory.application.llm_gateway import LLMGateway, Prompt, TaskRoute
 from litfactory.domain.chunker import ChunkerConfig
@@ -28,6 +45,13 @@ from litfactory.ports.parser import Parser
 from litfactory.ports.publisher import Publisher, Renderer
 from litfactory.ports.source import Source
 
+CONTACT_EMAIL = "LITFACTORY_CONTACT_EMAIL"
+S2_KEY = "SEMANTIC_SCHOLAR_API_KEY"
+CORE_KEY = "CORE_API_KEY"
+ZOTERO_KEY = "ZOTERO_API_KEY"
+OPENALEX_KEY = "OPENALEX_API_KEY"
+NCBI_KEY = "NCBI_API_KEY"
+
 
 @dataclass(frozen=True)
 class BuildArgs:
@@ -36,11 +60,19 @@ class BuildArgs:
     root: Path
     credentials: Mapping[str, str]
 
+    optional: frozenset[str] = frozenset()
+
     def secret(self, env_name: str) -> str:
         """密钥只从环境变量读取，配置文件里只写变量名。"""
         if env_name not in self.credentials:
             raise ConfigError(f"{self.name} 需要在 credentials_env 中声明 {env_name}")
         return os.environ.get(env_name, "")
+
+    def optional_secret(self, env_name: str) -> str | None:
+        """可选的 key 或联系邮箱：没有也能运行，只是额度更低。必须先在配置里声明。"""
+        if env_name not in self.credentials and env_name not in self.optional:
+            raise ConfigError(f"{self.name} 需要在 optional_env 中声明 {env_name}")
+        return os.environ.get(env_name) or None
 
     def options_with_paths(self, *keys: str) -> dict[str, Any]:
         """把配置里的相对路径换成项目根目录下的绝对路径。"""
@@ -49,6 +81,11 @@ class BuildArgs:
             if key in resolved:
                 resolved[key] = str(self.root / str(resolved[key]))
         return resolved
+
+    @property
+    def contact(self) -> str | None:
+        """礼貌通道用的联系邮箱，所有来源共用，不是密钥，不需要逐个声明。"""
+        return os.environ.get(CONTACT_EMAIL) or None
 
     def path(self, option: str) -> Path:
         return self.root / str(self.options[option])
@@ -59,9 +96,42 @@ class BuildArgs:
 
 SOURCES: Mapping[str, Callable[[BuildArgs], Source]] = {
     "fake_source": lambda a: FakeSource(a.name, a.path("records_file")),
+    "crossref": lambda a: CrossrefSource(a.name, a.options, contact_email=a.contact),
+    "openalex": lambda a: OpenAlexSource(
+        a.name, a.options, contact_email=a.contact, api_key=a.optional_secret(OPENALEX_KEY)
+    ),
+    "arxiv": lambda a: ArxivSource(a.name, a.options, contact_email=a.contact),
+    "openreview": lambda a: OpenReviewSource(a.name, a.options, contact_email=a.contact),
+    "pubmed": lambda a: PubMedSource(
+        a.name, a.options, contact_email=a.contact, api_key=a.optional_secret(NCBI_KEY)
+    ),
+    "europe_pmc": lambda a: EuropePmcSource(a.name, a.options, contact_email=a.contact),
+    "semantic_scholar": lambda a: SemanticScholarSource(
+        a.name, a.options, contact_email=a.contact, api_key=a.optional_secret(S2_KEY)
+    ),
+    "core": lambda a: CoreSource(
+        a.name, a.options, contact_email=a.contact, api_key=a.secret(CORE_KEY)
+    ),
+    "zotero": lambda a: ZoteroSource(
+        a.name, a.options, contact_email=a.contact, api_key=a.optional_secret(ZOTERO_KEY)
+    ),
 }
 FULLTEXT: Mapping[str, Callable[[BuildArgs], FullTextProvider]] = {
     "fake_fulltext": lambda _: FakeFullText(),
+    "crossref_tdm": lambda a: CrossrefTdmFullText(a.options, contact_email=a.contact),
+    "arxiv": lambda a: ArxivFullText(a.options, contact_email=a.contact),
+    "europe_pmc": lambda a: EuropePmcFullText(a.options, contact_email=a.contact),
+    "unpaywall": lambda a: UnpaywallFullText(a.options, contact_email=a.contact),
+    "openalex": lambda a: OpenAlexFullText(
+        a.options, contact_email=a.contact, api_key=a.optional_secret(OPENALEX_KEY)
+    ),
+    "semantic_scholar": lambda a: SemanticScholarFullText(
+        a.options, contact_email=a.contact, api_key=a.optional_secret(S2_KEY)
+    ),
+    "core": lambda a: CoreFullText(a.options, contact_email=a.contact, api_key=a.secret(CORE_KEY)),
+    "zotero": lambda a: ZoteroFullText(
+        a.options, contact_email=a.contact, api_key=a.optional_secret(ZOTERO_KEY)
+    ),
 }
 PARSERS: Mapping[str, Callable[[BuildArgs], Parser]] = {
     "fake_parser": lambda _: FakeParser(),
@@ -96,7 +166,8 @@ def _build[T](
 ) -> T:
     factory = _pick(registry, kind, config.adapter)
     credentials = {env: env for env in config.credentials_env}
-    return factory(BuildArgs(name, config.options, root, credentials))
+    optional = frozenset(config.optional_env)
+    return factory(BuildArgs(name, config.options, root, credentials, optional))
 
 
 def _load_prompts(config: LoadedConfig) -> dict[str, Prompt]:

@@ -166,12 +166,15 @@ sources:
 - **加来源**：写一个适配器文件，在 `bootstrap.py` 的注册表里加一行，加配置，通过 `tests/contracts/` 的统一测试。
 - **减来源**：`enabled: false`。历史 `sighting` 保留，审计时仍能看到它的贡献。
 - **原始响应先落盘**，再解析。解析器修好后可以重放，不必重新抓取。
-- 限流、重试、退避由共享 HTTP 客户端负责，适配器不各写一套。
+- 限速、错误分类、密钥脱敏和原始留档由共享 HTTP 客户端（`adapters/common/http.py`）负责，适配器不各写一套；重试和退避由任务调度负责。
+- 游标统一是 ISO 日期，每次与上次窗口重叠几天以接住晚入库的记录（`adapters/common/window.py`）；Zotero 例外，用加入时间或文库版本号。
+- 联系邮箱从 `LITFACTORY_CONTACT_EMAIL` 读取，所有来源共用；可选 key 在配置里用 `optional_env` 声明，缺失时 `doctor` 只警告。
+- 已接入的来源、能力和已知限制见 [SOURCES.md](SOURCES.md)。DBLP 的 API 有人机验证，不接入。
 - 同一个 API 的元数据发现和全文获取是两个独立适配器，分别实现 `Source` 和 `FullTextProvider`。
 
 ### 6.4 全文获取
 
-`FullTextProvider` 按配置顺序依次尝试：预印本 → Unpaywall → 出版商 API → 人工补全（Telegram 转发）→ 仅摘要。每个 `artifact` 记录 `license_basis`（`open` / `subscribed` / `user_supplied`），决定保留策略，并保证这些文件不会被公开。不实现爬取出版商网站或 Sci-Hub 适配器。
+`FullTextProvider` 按配置顺序依次尝试：用户自己的 Zotero → 预印本（arXiv、PMC 开放子集）→ 开放获取聚合（Unpaywall、OpenAlex、Semantic Scholar、CORE）→ 出版商在 Crossref 登记的文本挖掘链接（订阅文章需机构网络）→ 人工补全（Telegram 转发，未实现）→ 仅摘要。单个来源出错时继续尝试下一个；全部没拿到且有错误时交给调度重试，不标记为“没有全文”。PDF 链接来自第三方，统一由 `adapters/common/download.py` 下载：每跳检查非内网地址、限制大小和总耗时、校验 PDF 文件头。每个 `artifact` 记录 `license_basis`（`open` / `subscribed` / `user_supplied`），决定保留策略，并保证这些文件不会被公开。不实现爬取出版商网站或 Sci-Hub 适配器。
 
 ## 7. 研究主题
 
@@ -601,7 +604,7 @@ budget:
 
 1. **行走骨架（全部用假适配器，已完成）**：领域模型、数据库与迁移、任务调度、配置校验、rubric 算分、切分器、CLI。验证：E2E 测试从假信号源走到假渠道；重复运行不重复处理；改权重后 `rescore` 结果正确。
 2. **MinerU 探针（已完成）**：MinerU 云端适配器（续查不重复提交、错误码分类、额度用完推迟）和 `pdf_text` 降级解析器；用 4 种版式的真实论文对比，结构样本录制为测试数据。
-3. **真实主干**：Crossref、IEEE、手动投喂、Unpaywall、LLM、Telegram。
+3. **真实主干**：信号源和全文来源已完成（见 SOURCES.md）；IEEE、手动投喂、LLM、Telegram 待做。
 4. **校准与定时**：校准集、`rubric eval`、定时任务、告警、备份、保留清理。
 5. **防漏检**：邮件提醒、引文追踪、覆盖率审计。
 6. **扩展**：WoS、出版商全文 API、静态网页。

@@ -1,0 +1,20 @@
+{
+ "pmcid": "PMC3158090",
+ "version": 1,
+ "pmid": 21876761,
+ "doi": "10.1371/journal.pone.0023673",
+ "mid": null,
+ "title": "A Signature in HIV-1 Envelope Leader Peptide Associated with Transition from Acute to Chronic Infection Impacts Envelope Processing and Infectivity",
+ "citation": "PLoS One. 2011 Aug 18;6(8):e23673. doi: 10.1371/journal.pone.0023673",
+ "is_pmc_openaccess": true,
+ "is_manuscript": false,
+ "is_historical_ocr": false,
+ "is_retracted": false,
+ "license_code": "CC BY",
+ "pdf_url": "s3://pmc-oa-opendata/PMC3158090.1/PMC3158090.1.pdf?md5=14a4c6bee2e476951e2e7742277a16cd",
+ "xml_url": "s3://pmc-oa-opendata/PMC3158090.1/PMC3158090.1.xml?md5=4a68e6938349880e82190a41c9d2fe2a",
+ "text_url": "s3://pmc-oa-opendata/PMC3158090.1/PMC3158090.1.txt?md5=c4a57b5e82f100dd5972c30343d63930",
+ "media_urls": [
+  "s3://pmc-oa-opendata/PMC3158090.1/pone.0023673.e001.jpg?md5=9c7ca688b5590de06bb27615fc323fa7"
+ ]
+}

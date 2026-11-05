@@ -9,7 +9,11 @@ import pytest
 SRC = Path(__file__).parents[2] / "src" / "litfactory"
 MAX_FILE_LINES = 400
 MAX_FUNCTION_LINES = 50
-VENDOR = re.compile(r"mineru|telegram|crossref|ieee|arxiv|openalex|unpaywall", re.IGNORECASE)
+VENDOR = re.compile(
+    r"mineru|telegram|crossref|ieee|arxiv|openalex|unpaywall|pubmed|europe_?pmc"
+    r"|semantic.?scholar|openreview|zotero|core\.ac\.uk",
+    re.IGNORECASE,
+)
 PY_FILES = sorted(p for p in SRC.rglob("*.py") if "migrations" not in p.parts)
 
 

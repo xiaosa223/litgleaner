@@ -14,8 +14,18 @@ chunker:
   overlap_sentences: 1
 assess:
   token_budget: 6000
+# 全文来源按顺序尝试，第一个拿到 PDF 的生效。真实来源默认关闭，启用时改成 enabled: true。
+# 顺序建议：自己的库 → 预印本 → 开放获取聚合 → 机构订阅（只有在校园网或 VPN 里运行才有效）。
 fulltext:
   - adapter: fake_fulltext
+  - { adapter: zotero, enabled: false, optional_env: [ZOTERO_API_KEY] }  # 你 Zotero 里已有的 PDF
+  - { adapter: arxiv, enabled: false }
+  - { adapter: europe_pmc, enabled: false }         # PubMed Central 开放获取子集
+  - { adapter: unpaywall, enabled: false }          # 必须设置 LITFACTORY_CONTACT_EMAIL
+  - { adapter: openalex, enabled: false, optional_env: [OPENALEX_API_KEY] }
+  - { adapter: semantic_scholar, enabled: false, optional_env: [SEMANTIC_SCHOLAR_API_KEY] }
+  - { adapter: core, enabled: false, credentials_env: [CORE_API_KEY] }
+  - { adapter: crossref_tdm, enabled: false }       # 出版商登记的文本挖掘链接，订阅文章需机构网络
 parser:
   adapter: fake_parser
 # 接入真实解析时换成下面的配置（token 由 .env.example 从钥匙串注入）：

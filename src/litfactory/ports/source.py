@@ -13,6 +13,8 @@ class FetchResult:
     next_cursor: str | None
     warnings: tuple[str, ...] = ()
     raw: bytes | None = None
+    # 达到单次上限、窗口没取完。发现阶段据此不推进游标，下次重新抓取这个窗口。
+    truncated: bool = False
 
 
 class Source(Protocol):

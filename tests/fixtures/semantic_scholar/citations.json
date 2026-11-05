@@ -1,0 +1,219 @@
+{
+ "offset": 0,
+ "next": 5,
+ "data": [
+  {
+   "citingPaper": {
+    "paperId": "700bf329ecb77408f1c86b775e8f32dc3f0db663",
+    "externalIds": {
+     "DOI": "10.1007/s44295-026-00122-6",
+     "CorpusId": 295509310
+    },
+    "title": "DRSQ-Net: underwater object detection algorithm using differentiable physical restoration and dynamic sparse query",
+    "venue": "Intelligent Marine Technology and Systems",
+    "year": 2026,
+    "openAccessPdf": {
+     "url": "",
+     "status": null,
+     "license": null,
+     "disclaimer": "Notice: The following paper fields have been elided by the publisher: {'abstract'}. Paper or abstract available at https://api.unpaywall.org/v2/10.1007/s44295-026-00122-6?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1007/s44295-026-00122-6, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+    },
+    "publicationDate": "2026-11-04",
+    "journal": {
+     "volume": "4",
+     "name": "Intelligent Marine Technology and Systems"
+    },
+    "authors": [
+     {
+      "authorId": null,
+      "name": "Yuan Wang"
+     },
+     {
+      "authorId": "2451587873",
+      "name": "Pei-Zhen Xing"
+     },
+     {
+      "authorId": "2308225058",
+      "name": "Xiao-Shu Hu"
+     },
+     {
+      "authorId": "2449942248",
+      "name": "Jie Shao"
+     }
+    ],
+    "abstract": null
+   }
+  },
+  {
+   "citingPaper": {
+    "paperId": "3a0140d91f87b6da7b2d635a49b56d63bf18f8a0",
+    "externalIds": {
+     "DOI": "10.1017/jfm.2026.12201",
+     "CorpusId": 295505430
+    },
+    "title": "Forward and inverse resolvent modelling for instabilities and active control in compressible boundary layers using a Transformer neural operator",
+    "venue": "Journal of Fluid Mechanics",
+    "year": 2026,
+    "openAccessPdf": {
+     "url": "",
+     "status": null,
+     "license": null,
+     "disclaimer": "Notice: The following paper fields have been elided by the publisher: {'abstract'}. Paper or abstract available at https://api.unpaywall.org/v2/10.1017/jfm.2026.12201?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1017/jfm.2026.12201, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+    },
+    "publicationDate": "2026-11-04",
+    "journal": {
+     "volume": "1046",
+     "name": "Journal of Fluid Mechanics"
+    },
+    "authors": [
+     {
+      "authorId": "2283234611",
+      "name": "Shuo Feng"
+     },
+     {
+      "authorId": "112857429",
+      "name": "Bo-Fu Wang"
+     }
+    ],
+    "abstract": null
+   }
+  },
+  {
+   "citingPaper": {
+    "paperId": "2327c617bcb7c2835e8971d2a286f16a03154130",
+    "externalIds": {
+     "ArXiv": "2611.04893",
+     "CorpusId": 295508059
+    },
+    "title": "Fault-tolerant shallow recurrent decoders for sparse sensing with missing sensor measurements",
+    "venue": "",
+    "year": 2026,
+    "openAccessPdf": {
+     "url": "",
+     "status": null,
+     "license": null,
+     "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2611.04893, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+    },
+    "publicationDate": "2026-11-03",
+    "journal": null,
+    "authors": [
+     {
+      "authorId": "2442955484",
+      "name": "Matteo Romilio Pasqual"
+     },
+     {
+      "authorId": "2320312720",
+      "name": "Matteo Tomasetto"
+     },
+     {
+      "authorId": "144484983",
+      "name": "J. Kutz"
+     },
+     {
+      "authorId": "2305618622",
+      "name": "Andrea Manzoni"
+     }
+    ],
+    "abstract": "Real-world sensing systems are inherently imperfect: sensors may fail, intermittently disconnect, operate with asynchronous sampling rates, and be subject to noise, leading to measurement streams that are irregular, incomplete, and heterogeneous. Nevertheless, sensing strategies for real-time state reconstruction typically assume synchronous and continuously active sensors, a constraint that substantially limits their applicability in operational environments. In this work, we introduce fault-tolerant sparse sensing strategies in the context of shallow recurrent decoders (SHRED) to enable high-dimensional state estimation from sparse, asynchronous, and missing sensor measurements. Specifically, we consider naive imputation strategies, fault-tolerant recurrent temporal encoders, and we introduce four different transformer-based masking mechanisms to make SHRED explicitly aware of sensor availability through the binary data-availability mask. Moreover, we further introduce a multi-step decoding training objective for SHRED, resulting in smoother latent trajectories and more robust predictions. Throughout a synthetic benchmark and three real-world problems in hydrodynamic and ocean modeling, we show that (i) transformer-based masking mechanisms outperform standard imputation techniques and fault-tolerant recurrent architectures, (ii) the multi-step decoding training objective enhances reconstruction fidelity and robustness in the presence of heterogeneous missing-data patterns, while (iii) the computational efficiency of SHRED is preserved, with no additional inference-time overhead."
+   }
+  },
+  {
+   "citingPaper": {
+    "paperId": "5ac5ac2dc814e2ac9c26609b17bfa6f7285e765b",
+    "externalIds": {
+     "ArXiv": "2611.04287",
+     "CorpusId": 295506792
+    },
+    "title": "Predicting protein structures at any folding stage from sequence",
+    "venue": "",
+    "year": 2026,
+    "openAccessPdf": {
+     "url": "",
+     "status": null,
+     "license": null,
+     "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2611.04287, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+    },
+    "publicationDate": "2026-11-03",
+    "journal": null,
+    "authors": [
+     {
+      "authorId": "2526354484",
+      "name": "Li-Sheng Zhang"
+     },
+     {
+      "authorId": null,
+      "name": "Qing-Song Li"
+     },
+     {
+      "authorId": "2515575589",
+      "name": "Zi-Nan Xie"
+     },
+     {
+      "authorId": "2526090656",
+      "name": "Yang Yang"
+     },
+     {
+      "authorId": "2428612385",
+      "name": "Qi-Kui Yang"
+     },
+     {
+      "authorId": "2442258367",
+      "name": "Peng Lu"
+     },
+     {
+      "authorId": "2427894265",
+      "name": "Zhi-Can Fu"
+     },
+     {
+      "authorId": "2324804426",
+      "name": "Wen-Tao Cui"
+     },
+     {
+      "authorId": "2429552679",
+      "name": "Run-Tong Hou"
+     },
+     {
+      "authorId": "2332777810",
+      "name": "Zheng-Wei Xie"
+     }
+    ],
+    "abstract": "Protein structure predictors reliably identify native conformations, but do not describe the continuum connecting unfolded ensembles to folded states. Here we present FoldScape, a sequence-conditioned deep learning framework that generates C$\\alpha$ conformational ensembles at a specified folding fraction $Q$. FoldScape reconstructs three-dimensional chains through hierarchical, sliding-window regressions of one-dimensional inter-residue distances, followed by chain assembly and sampling with a rectified-flow decoder. It is trained on multi-scale coarse-grained folding trajectories and all-atom mechanical-unfolding trajectories. Across 20 human proteins (36-857 residues), at matched sample size, FoldScape covers about an order of magnitude more of the folding coordinate than seed-varied AlphaFold 3 ensembles, robustly across proteins, order parameters and binning choices. AlphaFold 3 better anchors the immediate native vicinity, which FoldScape does not reach, making the approaches complementary. FoldScape reconstruction accuracy remains approximately constant along $Q$, from collapsed coil to near-native globule, rather than deteriorating away from the native state. A stride-one crop-and-superpose scheme extends inference to chains several times longer than a single chain-level forward pass. We also show that training trajectories resolve mechanical unfolding at residue resolution, that elongation-conditioned ensembles exhibit reproducible continuous observables across pulling velocities, and that partially unfolded chains form geometrically coherent segments. FoldScape thus combines broad coverage of folding stages with stable reconstruction accuracy, without per-protein simulation."
+   }
+  },
+  {
+   "citingPaper": {
+    "paperId": "bcac514b9cba474a78b98ab6f7a9b2566ffa1ed4",
+    "externalIds": {
+     "ArXiv": "2611.05041",
+     "CorpusId": 295506659
+    },
+    "title": "Positional Encoding is All You Need for Scalable Equivariance Constraint Relaxation",
+    "venue": "",
+    "year": 2026,
+    "openAccessPdf": {
+     "url": "",
+     "status": null,
+     "license": null,
+     "disclaimer": "Notice: Paper or abstract available at https://arxiv.org/abs/2611.05041, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+    },
+    "publicationDate": "2026-11-03",
+    "journal": null,
+    "authors": [
+     {
+      "authorId": "2211478995",
+      "name": "H. Michaeli"
+     },
+     {
+      "authorId": "2341437409",
+      "name": "Haggai Maron"
+     },
+     {
+      "authorId": "2266392841",
+      "name": "Daniel Soudry"
+     }
+    ],
+    "abstract": "Equivariant neural networks incorporate known symmetries of the data, such as permutations, rotations, or translations, directly into their architecture, often improving sample efficiency and generalization. However, strict equivariance can make optimization difficult, for example, when the data only approximately satisfy the assumed symmetry, or when the equivariance constraints induce a challenging loss landscape. Recent studies have shown that relaxing equivariance during training by introducing non-equivariant dense linear layers can ease optimization in such cases and improve the performance of the resulting strictly equivariant model, after removing the relaxation layers at test time. While effective, this approach incurs a significant computational overhead, limiting its applicability in scalable architectures. In this work, we propose a more efficient constraint-relaxation method based on positional encoding (PE). Our framework injects a positional encoding with learnable scale that breaks the model's original symmetry. This positional signal is gradually annealed to zero, recovering the original equivariant model by the end of training. Empirically, we demonstrate significant improvements for translational and rotational equivariant models with only marginal compute and memory overhead."
+   }
+  }
+ ]
+}

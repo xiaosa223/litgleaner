@@ -1,0 +1,821 @@
+{
+ "totalHits": 2709,
+ "limit": 10,
+ "offset": 10,
+ "results": [
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Majdi Argoubi"
+    },
+    {
+     "name": "Khaled Mili"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/752039759"
+   ],
+   "createdDate": "2026-08-14T01:25:03+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-12T20:54:17+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.ecolmodel.2026.111768",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 385795570,
+   "identifiers": [
+    {
+     "identifier": "752039759",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.ecolmodel.2026.111768",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.ecolmodel.2026.111768",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.ecolmodel.2026.111768",
+     "type": "unknown"
+    }
+   ],
+   "title": "Constraint-based graph optimization for marine protected area networks: A graph neural network-informed approach",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.ecolmodel.2026.111768"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-14T01:25:03+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/385795570"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Naushin Nower"
+    },
+    {
+     "name": "Md. Taslim Arif"
+    },
+    {
+     "name": "Md. Moshiur Rahman"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/753666737"
+   ],
+   "createdDate": "2026-08-31T01:09:46+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-29T14:46:01+01:00",
+   "abstract": "Abstract\n                  \n                    Traffic congestion frequently propagates among the interconnected road networks over time, driven by spatial and temporal factors. Identifying and predicting these patterns is crucial for effective public transport management and urban planning. Existing systems often fail to accurately capture the complex diffusion properties of traffic flow and spatial dependencies, resulting in less reliable predictions. This study utilizes a propagation probability matrix to identify congestion propagation patterns and finds traffic behavior over 24 h, reveal",
+   "documentType": "journal article",
+   "doi": "10.1061/jtepbs.teeng-9253",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 404708926,
+   "identifiers": [
+    {
+     "identifier": "753666737",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1061/jtepbs.teeng-9253",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1061%2fjtepbs.teeng-9253",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1061%2fjtepbs.teeng-9253",
+     "type": "unknown"
+    }
+   ],
+   "title": "Congestion Propagation Identification and Prediction Using Self Attention–Based Diffusion Convolutional Approach",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1061%2fjtepbs.teeng-9253"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "American Society of Civil Engineers (ASCE)",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-31T01:09:46+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/404708926"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Mingnian Wang"
+    },
+    {
+     "name": "Xin Peng"
+    },
+    {
+     "name": "Hao Zhong"
+    },
+    {
+     "name": "Bingxu Huang"
+    },
+    {
+     "name": "Honglin Shen"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/752921461"
+   ],
+   "createdDate": "2026-08-27T01:18:46+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-25T14:23:56+01:00",
+   "abstract": "Abstract\n                  Drill-and-blast is the primary method used for constructing mountain tunnels in China. The tunnel face area contains rich geological and structural information, necessitating high-precision semantic segmentation to support automated measurement during the construction process. This paper proposes PDAPointNet++, a novel network for semantic segmentation of point clouds in tunnel construction scenarios. The method introduces three key innovations: (1) a parallel dual-level attention module (PDAM) to enhance spatial and channel feature focus; (2) integration of PDAM int",
+   "documentType": "journal article",
+   "doi": "10.1061/jccee5.cpeng-7706",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 396953723,
+   "identifiers": [
+    {
+     "identifier": "752921461",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1061/jccee5.cpeng-7706",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1061%2fjccee5.cpeng-7706",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1061%2fjccee5.cpeng-7706",
+     "type": "unknown"
+    }
+   ],
+   "title": "Parallel Dual-Level Attention-Enhanced Semantic Segmentation of 3D Point Clouds in Tunnel Construction",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1061%2fjccee5.cpeng-7706"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "American Society of Civil Engineers (ASCE)",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-27T01:18:46+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/396953723"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Bing Sun"
+    },
+    {
+     "name": "Caixia Cai"
+    },
+    {
+     "name": "Wenyang Gan"
+    },
+    {
+     "name": "Shahid Mumtaz"
+    },
+    {
+     "name": "Chaoyun Pu"
+    },
+    {
+     "name": "Yayu Yang"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/758924909"
+   ],
+   "createdDate": "2026-09-25T01:24:05+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-09-23T15:55:22+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.oceaneng.2026.128200",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 421420814,
+   "identifiers": [
+    {
+     "identifier": "758924909",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.oceaneng.2026.128200",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.oceaneng.2026.128200",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.oceaneng.2026.128200",
+     "type": "unknown"
+    }
+   ],
+   "title": "Energy-aware routing in underwater wireless sensor networks via temporal graph neural network and reinforcement learning",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.oceaneng.2026.128200"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-09-25T01:24:05+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/421420814"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Jin Cheng"
+    },
+    {
+     "name": "Qi Zhang"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/761401786"
+   ],
+   "createdDate": "2026-10-02T01:03:42+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-09-30T04:59:49+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.istruc.2026.113145",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 427052781,
+   "identifiers": [
+    {
+     "identifier": "761401786",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.istruc.2026.113145",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.istruc.2026.113145",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.istruc.2026.113145",
+     "type": "unknown"
+    }
+   ],
+   "title": "Graph neural network-based algorithm for design optimization of truss structures",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.istruc.2026.113145"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-10-02T01:03:42+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/427052781"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Yibao Li"
+    },
+    {
+     "name": "Meng Li"
+    },
+    {
+     "name": "Sijing Lai"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/755294221"
+   ],
+   "createdDate": "2026-09-04T01:21:46+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-09-02T09:55:30+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.enganabound.2026.107004",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 417511324,
+   "identifiers": [
+    {
+     "identifier": "755294221",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.enganabound.2026.107004",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.enganabound.2026.107004",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.enganabound.2026.107004",
+     "type": "unknown"
+    }
+   ],
+   "title": "A Fourier physics-informed graph neural network for Allen–Cahn and Conservative Allen–Cahn equations",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.enganabound.2026.107004"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-09-04T01:21:46+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/417511324"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Jia Xu"
+    },
+    {
+     "name": "Li-min Tian"
+    },
+    {
+     "name": "Jing-qi Lu"
+    },
+    {
+     "name": "Yi Liu"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/755993799"
+   ],
+   "createdDate": "2026-09-09T01:06:53+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-09-07T07:42:56+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.istruc.2026.112972",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 418132213,
+   "identifiers": [
+    {
+     "identifier": "755993799",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.istruc.2026.112972",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.istruc.2026.112972",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.istruc.2026.112972",
+     "type": "unknown"
+    }
+   ],
+   "title": "Physics-informed graph neural network‑based analysis method for elastic static responses of spatial latticed shells",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.istruc.2026.112972"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-09-09T01:06:53+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/418132213"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Hongyu Zhu"
+    },
+    {
+     "name": "Chunhu Zhao"
+    },
+    {
+     "name": "Xi Gu"
+    },
+    {
+     "name": "Zhuangzhuang Gong"
+    },
+    {
+     "name": "Qiang Min"
+    },
+    {
+     "name": "Xueguan Song"
+    },
+    {
+     "name": "Xinao Ma"
+    },
+    {
+     "name": "Muchen Wang"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/755322339"
+   ],
+   "createdDate": "2026-09-04T01:41:57+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-09-02T17:03:48+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.enganabound.2026.106970",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 417544196,
+   "identifiers": [
+    {
+     "identifier": "755322339",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.enganabound.2026.106970",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.enganabound.2026.106970",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.enganabound.2026.106970",
+     "type": "unknown"
+    }
+   ],
+   "title": "Thermodynamically-informed graph neural network for spatiotemporal temperature field reconstruction in heat transfer systems",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.enganabound.2026.106970"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-09-04T01:41:57+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/417544196"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "A. Rajiv"
+    },
+    {
+     "name": "Manikandan Sankarakutti Palanichamy"
+    },
+    {
+     "name": "D.S. Jayalakshmi"
+    },
+    {
+     "name": "P. Deepak Franklin"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/750514195"
+   ],
+   "createdDate": "2026-07-24T01:01:25+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-07-22T13:28:13+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.bspc.2026.110982",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 344670784,
+   "identifiers": [
+    {
+     "identifier": "750514195",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.bspc.2026.110982",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.bspc.2026.110982",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.bspc.2026.110982",
+     "type": "unknown"
+    }
+   ],
+   "title": "Enhanced brain tumor detection through spectral domain reconstruction graph neural network with privacy-preserving secure smart healthcare framework",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.bspc.2026.110982"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-07-24T01:01:25+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/344670784"
+    }
+   ]
+  },
+  {
+   "acceptedDate": "",
+   "arxivId": null,
+   "authors": [
+    {
+     "name": "Zhuang Wang"
+    },
+    {
+     "name": "Heping Xie"
+    },
+    {
+     "name": "Qiancheng Yang"
+    },
+    {
+     "name": "Cunbao Li"
+    }
+   ],
+   "citationCount": 0,
+   "contributors": [],
+   "outputs": [
+    "https://api.core.ac.uk/v3/outputs/751719835"
+   ],
+   "createdDate": "2026-08-09T01:20:08+01:00",
+   "dataProviders": [
+    {
+     "id": 4786,
+     "name": "Crossref",
+     "url": "https://api.core.ac.uk/v3/data-providers/4786",
+     "logo": "https://api.core.ac.uk/data-providers/4786/logo"
+    }
+   ],
+   "depositedDate": "2026-08-07T07:41:19+01:00",
+   "abstract": "",
+   "documentType": "journal article",
+   "doi": "10.1016/j.ijrmms.2026.106666",
+   "downloadUrl": "",
+   "fieldOfStudy": null,
+   "id": 380220991,
+   "identifiers": [
+    {
+     "identifier": "751719835",
+     "type": "core_id"
+    },
+    {
+     "identifier": "10.1016/j.ijrmms.2026.106666",
+     "type": "doi"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.ijrmms.2026.106666",
+     "type": "oai_id"
+    },
+    {
+     "identifier": "info:doi/10.1016%2fj.ijrmms.2026.106666",
+     "type": "unknown"
+    }
+   ],
+   "title": "Prediction of macroscopic mechanical behavior of lunar rock from microstructures: A physics-embedded graph neural network approach",
+   "language": null,
+   "magId": null,
+   "oaiIds": [
+    "info:doi/10.1016%2fj.ijrmms.2026.106666"
+   ],
+   "publishedDate": "2026-11-01T00:00:00+00:00",
+   "publisher": "Elsevier BV",
+   "pubmedId": null,
+   "sourceFulltextUrls": [],
+   "updatedDate": "2026-08-09T01:20:08+01:00",
+   "yearPublished": 2026,
+   "journals": [
+    {
+     "title": null,
+     "identifiers": []
+    }
+   ],
+   "links": [
+    {
+     "type": "display",
+     "url": "https://core.ac.uk/works/380220991"
+    }
+   ]
+  }
+ ],
+ "searchId": "4d16b389caf1c61d61f7903215694a4a"
+}

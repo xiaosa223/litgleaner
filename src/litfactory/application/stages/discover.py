@@ -119,4 +119,7 @@ class DiscoverStage(Stage):
             for record in result.records:
                 paper_id = resolve_record(ctx.store.papers, record, now)
                 ctx.store.papers.record_sighting(paper_id, source.name, query.hash, raw_key, now)
-            ctx.store.papers.set_cursor(source.name, query.hash, result.next_cursor, now)
+            if result.truncated:
+                logger.warning("信号源 %s 本次结果被截断，游标保持不变", source.name)
+            else:
+                ctx.store.papers.set_cursor(source.name, query.hash, result.next_cursor, now)

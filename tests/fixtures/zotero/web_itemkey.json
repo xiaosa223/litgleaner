@@ -1,0 +1,161 @@
+[
+ {
+  "key": "CMK4ZNS6",
+  "version": 15185,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2024",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "CMK4ZNS6",
+   "version": 15185,
+   "itemType": "journalArticle",
+   "title": "",
+   "creators": [
+    {
+     "creatorType": "author",
+     "firstName": "Angus",
+     "lastName": "Fraser"
+    }
+   ],
+   "publicationTitle": "Bodleian Library Record",
+   "date": "03/2024",
+   "volume": "37",
+   "issue": "1-2",
+   "pages": "23-26",
+   "journalAbbreviation": "The Bodleian Library Record",
+   "DOI": "10.3828/blr.2024.37.1-2.23",
+   "citationKey": "fraser2024",
+   "url": "http://www.liverpooluniversitypress.co.uk/doi/10.3828/blr.2024.37.1-2.23",
+   "accessDate": "2026-05-16T21:50:10Z",
+   "ISSN": "0067-9488, 3029-0465",
+   "language": "en",
+   "libraryCatalog": "DOI.org (Crossref)",
+   "extra": "reviewed-title: Write, cut, rewrite\nevent-date: 2024-02-26/2025-01-05\nevent-place: The Treasury, Weston Library",
+   "dateAdded": "2026-05-17T06:46:30Z",
+   "dateModified": "2026-05-17T06:46:30Z"
+  }
+ },
+ {
+  "key": "HYEYQKKT",
+  "version": 15184,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "numChildren": 1
+  },
+  "data": {
+   "key": "HYEYQKKT",
+   "version": 15184,
+   "itemType": "podcast",
+   "title": "Hidden brain",
+   "creators": [
+    {
+     "creatorType": "podcaster",
+     "firstName": "Shankar",
+     "lastName": "Vedantam"
+    }
+   ],
+   "abstractNote": "The Hidden Brain helps curious people understand the world – and themselves. Using science and storytelling, Hidden Brain's host Shankar Vedantam reveals the unconscious patterns that drive human behavior, the biases that shape our choices, and the triggers that direct the course of our relationship",
+   "audioFileType": "audio podcast",
+   "publisher": "NPR",
+   "DOI": "",
+   "citationKey": "vedantamHiddenBrain2015",
+   "url": "https://www.npr.org/series/423302056/hidden-brain",
+   "accessDate": "2019-10-26T22:41:44Z",
+   "language": "en",
+   "rights": "APA7 93",
+   "extra": "Issued: 2015/2019",
+   "collections": [
+    "MR2N872S"
+   ],
+   "dateAdded": "2019-10-26T22:41:44Z",
+   "dateModified": "2026-04-22T17:55:53Z"
+  }
+ },
+ {
+  "key": "VM76QQZ6",
+  "version": 15183,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2018",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "VM76QQZ6",
+   "version": 15183,
+   "itemType": "dictionaryEntry",
+   "title": "<span class=\"nocase\">tintinnabulum</span>",
+   "dictionaryTitle": "Dictionary of Medieval Latin from British sources",
+   "date": "2018",
+   "publisher": "Published for the British Academy by Oxford University Press",
+   "place": "Oxford",
+   "ISBN": "978-0-19-726633-5 978-0-19-726630-4 978-0-19-726631-1 978-0-19-726632-8",
+   "DOI": "",
+   "citationKey": "Tintinnabulum2018",
+   "language": "en",
+   "libraryCatalog": "BnF ISBN",
+   "callNumber": "480",
+   "dateAdded": "2025-06-04T10:31:28Z",
+   "dateModified": "2026-04-14T05:38:57Z"
+  }
+ },
+ {
+  "key": "5BI2HC2P",
+  "version": 15181,
+  "library": {
+   "type": "group",
+   "id": 2205533
+  },
+  "meta": {
+   "parsedDate": "2018",
+   "numChildren": 0
+  },
+  "data": {
+   "key": "5BI2HC2P",
+   "version": 15181,
+   "itemType": "dictionaryEntry",
+   "title": "",
+   "creators": [
+    {
+     "creatorType": "editor",
+     "firstName": "Richard",
+     "lastName": "Ashdowne"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "David R.",
+     "lastName": "Howlett"
+    },
+    {
+     "creatorType": "editor",
+     "firstName": "Ronald Edward",
+     "lastName": "Latham"
+    }
+   ],
+   "dictionaryTitle": "Dictionary of Medieval Latin from British sources",
+   "numberOfVolumes": "3",
+   "date": "2018",
+   "publisher": "Published for the British Academy by Oxford University Press",
+   "place": "Oxford",
+   "ISBN": "978-0-19-726633-5 978-0-19-726630-4 978-0-19-726631-1 978-0-19-726632-8",
+   "DOI": "",
+   "citationKey": "ashdowne2018",
+   "language": "en",
+   "libraryCatalog": "BnF ISBN",
+   "callNumber": "480",
+   "extra": "container-title-short: Dictionary of Medieval Latin",
+   "dateAdded": "2025-06-04T19:11:00Z",
+   "dateModified": "2026-04-14T05:28:55Z"
+  }
+ }
+]
