@@ -76,7 +76,7 @@ def test_fulltext_returns_pdf_or_none():
 def test_parser_returns_normalized_document_that_round_trips():
     pdf = FakeFullText().fetch(FullTextRequest("P", "Paper", ()))
     assert pdf is not None
-    document = FakeParser().parse(pdf.content, "a" * 64)
+    document = FakeParser().parse(pdf.content, "a" * 64).document
     assert document.source_pdf_sha256 == "a" * 64
     assert document.parser_id == FakeParser.parser_id
     assert NormalizedDocument.from_dict(document.to_dict()) == document

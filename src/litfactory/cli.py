@@ -321,9 +321,16 @@ def stats(config: ConfigOption = _DEFAULT_CONFIG) -> None:
     _echo(f"llm_calls\t{ctx.store.runs.llm_call_count()}")
 
 
-def main() -> None:
+def configure_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     logging.getLogger("alembic").setLevel(logging.WARNING)
+    # httpx 在 INFO 级别会记录完整 URL，其中包括签名上传链接，不能写进日志
+    for noisy in ("httpx", "httpcore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
+
+def main() -> None:
+    configure_logging()
     app()
 
 

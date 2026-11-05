@@ -1,5 +1,6 @@
 """组装程序：配置里的适配器名称在这里变成具体实现。新增适配器只改注册表。"""
 
+import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -12,6 +13,8 @@ from litfactory.adapters.fakes.llm import FakeLLM
 from litfactory.adapters.fakes.parser import FakeParser
 from litfactory.adapters.fakes.publisher import FakePublisher
 from litfactory.adapters.fakes.source import FakeSource
+from litfactory.adapters.parsers.mineru_cloud import MinerUCloudParser
+from litfactory.adapters.parsers.pdf_text import PdfTextParser
 from litfactory.adapters.renderers.plain_text import PlainTextRenderer
 from litfactory.application.context import AppContext, ChannelBinding, RuntimeSettings
 from litfactory.application.llm_gateway import LLMGateway, Prompt, TaskRoute
@@ -31,6 +34,21 @@ class BuildArgs:
     name: str
     options: Mapping[str, Any]
     root: Path
+    credentials: Mapping[str, str]
+
+    def secret(self, env_name: str) -> str:
+        """密钥只从环境变量读取，配置文件里只写变量名。"""
+        if env_name not in self.credentials:
+            raise ConfigError(f"{self.name} 需要在 credentials_env 中声明 {env_name}")
+        return os.environ.get(env_name, "")
+
+    def options_with_paths(self, *keys: str) -> dict[str, Any]:
+        """把配置里的相对路径换成项目根目录下的绝对路径。"""
+        resolved = dict(self.options)
+        for key in keys:
+            if key in resolved:
+                resolved[key] = str(self.root / str(resolved[key]))
+        return resolved
 
     def path(self, option: str) -> Path:
         return self.root / str(self.options[option])
@@ -47,6 +65,10 @@ FULLTEXT: Mapping[str, Callable[[BuildArgs], FullTextProvider]] = {
 }
 PARSERS: Mapping[str, Callable[[BuildArgs], Parser]] = {
     "fake_parser": lambda _: FakeParser(),
+    "pdf_text": lambda _: PdfTextParser(),
+    "mineru_cloud": lambda a: MinerUCloudParser(
+        a.secret("MINERU_API_TOKEN"), a.options_with_paths("state_dir")
+    ),
 }
 LLMS: Mapping[str, Callable[[BuildArgs], LLM]] = {
     "fake_llm": lambda _: FakeLLM(),
@@ -73,7 +95,8 @@ def _build[T](
     root: Path,
 ) -> T:
     factory = _pick(registry, kind, config.adapter)
-    return factory(BuildArgs(name, config.options, root))
+    credentials = {env: env for env in config.credentials_env}
+    return factory(BuildArgs(name, config.options, root, credentials))
 
 
 def _load_prompts(config: LoadedConfig) -> dict[str, Prompt]:
@@ -143,6 +166,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         settings=RuntimeSettings(
             max_attempts=config.app.jobs.max_attempts,
             backoff_seconds=config.app.jobs.backoff_seconds,
+            max_defer_hours=config.app.jobs.max_defer_hours,
             assess_token_budget=config.app.assess.token_budget,
             chunker=ChunkerConfig(
                 chunker.target_tokens, chunker.max_tokens, chunker.overlap_sentences

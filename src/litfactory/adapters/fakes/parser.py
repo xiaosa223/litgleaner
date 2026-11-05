@@ -4,12 +4,24 @@ import json
 
 from litfactory.domain.document import DOCUMENT_SCHEMA_VERSION, Block, NormalizedDocument
 from litfactory.domain.errors import SchemaChanged
+from litfactory.ports.parser import ParseResult
 
 
 class FakeParser:
     parser_id = "fake_parser@1"
 
-    def parse(self, pdf: bytes, sha256: str) -> NormalizedDocument:
+    def __init__(self) -> None:
+        self.fail_next: list[Exception] = []
+        self.raw_output: bytes | None = None
+        self.calls = 0
+
+    def parse(self, pdf: bytes, sha256: str) -> ParseResult:
+        self.calls += 1
+        if self.fail_next:
+            raise self.fail_next.pop(0)
+        return ParseResult(self._document(pdf, sha256), self.raw_output)
+
+    def _document(self, pdf: bytes, sha256: str) -> NormalizedDocument:
         title = json.loads(pdf.split(b"\n", 1)[1])["title"]
         if "BadParse" in title:
             raise SchemaChanged("模拟解析结果结构变化")

@@ -18,3 +18,13 @@ fulltext:
   - adapter: fake_fulltext
 parser:
   adapter: fake_parser
+# 接入真实解析时换成下面的配置（token 由 .env.example 从钥匙串注入）：
+# parser:
+#   adapter: mineru_cloud
+#   credentials_env: [MINERU_API_TOKEN]
+#   options:
+#     state_dir: data/mineru_state   # 未完成任务的续查记录，避免重复提交
+#     model_version: vlm
+#     language: ch                   # ch 同时覆盖中英文
+#     timeout_seconds: 600
+# 不耗额度的备选：adapter: pdf_text（英文论文效果接近，中文期刊明显较差）

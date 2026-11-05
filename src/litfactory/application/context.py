@@ -30,6 +30,7 @@ class ChannelBinding:
 class RuntimeSettings:
     max_attempts: int
     backoff_seconds: int
+    max_defer_hours: int
     assess_token_budget: int
     chunker: ChunkerConfig
     timezone: ZoneInfo

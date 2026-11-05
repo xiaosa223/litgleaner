@@ -21,8 +21,25 @@ class TransientError(LitFactoryError):
     """临时故障，可以按退避策略重试。"""
 
 
-class RateLimited(TransientError):
-    """触发外部频率限制。"""
+DEFAULT_RETRY_AFTER_SECONDS = 3600
+
+
+class Deferred(TransientError):
+    """现在做不了，但不是失败：推迟到指定时间后再试，不计失败次数。"""
+
+    def __init__(
+        self, message: str, retry_after_seconds: int = DEFAULT_RETRY_AFTER_SECONDS
+    ) -> None:
+        super().__init__(message)
+        self.retry_after_seconds = retry_after_seconds
+
+
+class RateLimited(Deferred):
+    """触发外部频率限制或额度用完。"""
+
+
+class StillProcessing(Deferred):
+    """外部任务还没完成，下次继续查询，不重新提交。"""
 
 
 class BudgetExceeded(LitFactoryError):

@@ -111,3 +111,47 @@ def test_malformed_item_raises_schema_changed(item):
 def test_non_list_payload_raises_schema_changed():
     with pytest.raises(SchemaChanged):
         to_normalized_document({"oops": 1}, pdf_sha256="f" * 64, parser_id="x")
+
+
+def load(name):
+    path = FIXTURE.parent / f"{name}.content_list.min.json"
+    return to_normalized_document(
+        json.loads(path.read_text(encoding="utf-8")), pdf_sha256="e" * 64, parser_id="m"
+    )
+
+
+def test_headers_footers_dropped_and_images_become_figures():
+    document = to_normalized_document(
+        [
+            {"type": "header", "text": "期刊名", "page_idx": 0},
+            {"type": "footer", "text": "版权", "page_idx": 0},
+            {"type": "image", "image_caption": ["Fig. 1 流程"], "page_idx": 0, "content": ""},
+        ],
+        pdf_sha256="f" * 64,
+        parser_id="x",
+    )
+    assert document.quality == "ok"
+    assert [(b.kind, b.caption) for b in document.blocks] == [("figure", "Fig. 1 流程")]
+
+
+@pytest.mark.parametrize("name", ["arxiv-1706.03762v7", "arxiv-1602.04938v3", "crad-202220410"])
+def test_real_layouts_map_without_unknown_types(name):
+    assert load(name).quality == "ok"
+
+
+def test_chinese_journal_layout_finds_abstract_and_conclusion():
+    result = chunk_document(load("crad-202220410"), ChunkerConfig())
+    by_type = {c.section_type for c in result.chunks}
+    assert {"abstract", "conclusion", "limitation"} <= by_type
+    assert result.quality == "ok"
+    assert len(result.references) == 82
+    abstracts = [c.text for c in result.chunks if c.section_type == "abstract"]
+    assert any(text.startswith("摘") for text in abstracts)
+
+
+@pytest.mark.parametrize("name", ["arxiv-1706.03762v7", "arxiv-1602.04938v3"])
+def test_single_column_layouts_have_full_structure(name):
+    result = chunk_document(load(name), ChunkerConfig())
+    types = {c.section_type for c in result.chunks}
+    assert {"abstract", "introduction", "method", "results", "conclusion"} <= types
+    assert result.quality == "ok"

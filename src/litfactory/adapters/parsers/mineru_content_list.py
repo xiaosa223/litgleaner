@@ -1,6 +1,6 @@
 """把 MinerU 的 content_list.json 转成统一文档格式。
 
-字段来自 2026-11-02 对一篇 IEEE 风格论文的实测，官方文档未给出定义，
+字段来自实测（IEEE 双栏、NeurIPS 单栏、ACM 双栏、中文期刊各一篇），官方文档未给出定义，
 所以未知类型保留文本并降级，结构不符直接报错，不静默丢内容。
 """
 
@@ -16,7 +16,7 @@ from litfactory.domain.document import (
 )
 from litfactory.domain.errors import SchemaChanged
 
-_DROPPED = frozenset({"page_number", "aside_text"})
+_DROPPED = frozenset({"page_number", "aside_text", "header", "footer"})
 _BBOX_LENGTH = 4
 
 
@@ -55,6 +55,11 @@ def _chart(item: Mapping[str, Any]) -> Block:
     return Block("figure", str(item.get("content") or ""), item["page_idx"], _bbox(item), caption)
 
 
+def _image(item: Mapping[str, Any]) -> Block:
+    caption = _join(item.get("image_caption"))
+    return Block("figure", str(item.get("content") or ""), item["page_idx"], _bbox(item), caption)
+
+
 def _code(item: Mapping[str, Any]) -> Block:
     caption = _join(item.get("code_caption"))
     return Block("code", str(item.get("code_body", "")), item["page_idx"], _bbox(item), caption)
@@ -65,6 +70,7 @@ _BUILDERS: Mapping[str, Callable[[Mapping[str, Any]], Block]] = {
     "equation": _simple("equation"),
     "table": _table,
     "chart": _chart,
+    "image": _image,
     "code": _code,
     "ref_text": _simple("reference"),
 }

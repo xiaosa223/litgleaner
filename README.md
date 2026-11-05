@@ -30,6 +30,15 @@ ls -R data/demo/archive        # 查看 JSON 归档
 | 处理发送结果未知的推送 | `delivery list`，确认后执行 `delivery resolve <digest> <渠道> --sent` 或 `--resend` |
 | 重新生成归档 | `archive rebuild` |
 
+## 解析器
+
+| 适配器 | 说明 |
+|---|---|
+| `mineru_cloud` | 默认推荐。需要 `MINERU_API_TOKEN`（`source .env.example` 从钥匙串注入） |
+| `pdf_text` | 不耗额度，英文论文效果接近 MinerU，中文期刊明显较差 |
+
+对比数据见 [docs/experiments/2026-11-05-parser-comparison.md](docs/experiments/2026-11-05-parser-comparison.md)。
+
 ## 开发检查
 
 ```bash

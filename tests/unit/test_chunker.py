@@ -136,6 +136,7 @@ def test_references_and_acknowledgment_do_not_enter_chunks():
     assert "Keep me." in text
     assert "Thanks" not in text
     assert "ref." not in text
+    # 未标记但形如参考文献的条目保留；作者简介这类文字不算
     assert result.references == ("[1] A ref.", "[2] Text ref.")
 
 
@@ -299,3 +300,74 @@ def test_estimate_tokens_counts_cjk_and_latin():
     assert estimate_tokens("") == 0
     assert estimate_tokens("研究方法") == 4
     assert estimate_tokens("one two three") == 4
+
+
+def test_spaced_headings_are_classified():
+    sections = split_sections(
+        doc(
+            block("heading", "I. I NTRODUCTION"),
+            block("text", "a"),
+            block("heading", "V. C ONCLUSION"),
+            block("text", "b"),
+            block("heading", "5 总 结"),
+            block("text", "c"),
+            block("heading", "6 结束语"),
+            block("text", "d"),
+            block("heading", "参　考　文　献"),
+            block("text", "[1] ref"),
+        )
+    )
+    assert [s.section_type for s in sections] == [
+        "introduction",
+        "conclusion",
+        "conclusion",
+        "conclusion",
+        "references",
+    ]
+
+
+def test_chinese_bilingual_front_matter_finds_both_abstracts():
+    sections = split_sections(
+        doc(
+            block("text", "作者甲 作者乙"),
+            block("heading", "Survey of Something Important"),
+            block("text", "Abstract In recent years things changed."),
+            block("text", "Key words a; b"),
+            block("text", "摘　要　近年来情况发生了变化。"),
+            block("text", "关键词　甲；乙"),
+            block("heading", "1 人机边界"),
+            block("text", "正文"),
+        )
+    )
+    abstracts = [s for s in sections if s.section_type == "abstract"]
+    assert len(abstracts) == 2
+    assert abstracts[0].blocks[0].text.startswith("Abstract In")
+    assert abstracts[1].blocks[0].text.startswith("摘")
+    assert all("Key words" not in b.text for s in abstracts for b in s.blocks)
+
+
+def test_body_paragraph_starting_with_abstract_word_is_not_an_abstract():
+    sections = split_sections(
+        doc(
+            block("heading", "Related Work"),
+            block("text", "Abstract interpretation is a classic technique."),
+            block("text", "Abstract syntax trees are used."),
+        )
+    )
+    assert [s.section_type for s in sections] == ["other"]
+
+
+def test_partially_marked_references_keep_unmarked_entries_but_not_bios():
+    result = chunk_document(
+        doc(
+            block("heading", "1. Conclusion"),
+            block("text", "x"),
+            block("heading", "References"),
+            block("reference", "[1] Marked."),
+            block("text", "[2] Unmarked entry."),
+            block("text", "3. Numbered entry."),
+            block("text", "Author bio, born 1979, professor."),
+        ),
+        CFG,
+    )
+    assert result.references == ("[1] Marked.", "[2] Unmarked entry.", "3. Numbered entry.")

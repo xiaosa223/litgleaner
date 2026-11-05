@@ -19,6 +19,7 @@ def _to_job(row: Row[Any]) -> Job:
         status=row.status,
         attempts=row.attempts,
         last_error=row.last_error,
+        first_deferred_at=row.first_deferred_at,
     )
 
 
@@ -41,7 +42,13 @@ class SqlJobRepo:
         if reopen:
             statement = statement.on_conflict_do_update(
                 index_elements=["key"],
-                set_={"status": "pending", "attempts": 0, "next_run_at": now, "updated_at": now},
+                set_={
+                    "status": "pending",
+                    "attempts": 0,
+                    "next_run_at": now,
+                    "updated_at": now,
+                    "first_deferred_at": None,
+                },
                 where=job.c.status == "done",
             )
         else:
@@ -52,7 +59,13 @@ class SqlJobRepo:
         self._db.write(
             update(job)
             .where(job.c.key == key)
-            .values(status="pending", attempts=0, next_run_at=now, updated_at=now)
+            .values(
+                status="pending",
+                attempts=0,
+                next_run_at=now,
+                updated_at=now,
+                first_deferred_at=None,
+            )
         )
 
     def due(self, stage: str, now: str) -> tuple[Job, ...]:
@@ -82,6 +95,19 @@ class SqlJobRepo:
             )
         )
 
+    def postpone(self, key: str, error: str, next_run_at: str, now: str) -> None:
+        """推迟但不计失败次数，用于额度用完、外部任务仍在处理等情况。"""
+        self._db.write(
+            update(job)
+            .where(job.c.key == key)
+            .values(
+                last_error=error,
+                next_run_at=next_run_at,
+                updated_at=now,
+                first_deferred_at=func.coalesce(job.c.first_deferred_at, now),
+            )
+        )
+
     def mark_dead(self, key: str, error: str, now: str) -> None:
         self._db.write(
             update(job)
@@ -97,7 +123,13 @@ class SqlJobRepo:
         return self._db.write(
             update(job)
             .where(job.c.status == "dead")
-            .values(status="pending", attempts=0, next_run_at=now, updated_at=now)
+            .values(
+                status="pending",
+                attempts=0,
+                next_run_at=now,
+                updated_at=now,
+                first_deferred_at=None,
+            )
         )
 
 

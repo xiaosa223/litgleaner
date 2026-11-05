@@ -2,7 +2,7 @@
 
 import re
 
-from litfactory.application.codec import compress_json, decompress_json
+from litfactory.application.codec import compress, compress_json, decompress_json
 from litfactory.application.context import AppContext
 from litfactory.domain.chunker import ChunkedDocument, chunk_document
 from litfactory.domain.document import NormalizedDocument
@@ -26,6 +26,20 @@ def save_document(ctx: AppContext, document: NormalizedDocument) -> tuple[str, b
     payload = compress_json(document.to_dict())
     ctx.blobs.put(key, payload)
     return key, payload
+
+
+def save_parser_raw(
+    ctx: AppContext, document: NormalizedDocument, raw: bytes | None
+) -> tuple[str, int] | None:
+    """解析器原始输出压缩保存，按保留策略短期留存，用于排查解析问题。"""
+    if raw is None:
+        return None
+    sha256 = document.source_pdf_sha256
+    safe = _UNSAFE.sub("_", document.parser_id)
+    key = f"parser_raw/{sha256[:2]}/{sha256[2:4]}/{sha256}.{safe}.zst"
+    payload = compress(raw)
+    ctx.blobs.put(key, payload)
+    return key, len(payload)
 
 
 def load_chunks(ctx: AppContext, doc_key: str) -> ChunkedDocument:

@@ -32,6 +32,7 @@ class ChannelConfig(AdapterConfig):
 class JobSettings(FrozenModel):
     max_attempts: int = Field(default=3, ge=1)
     backoff_seconds: int = Field(default=300, ge=0)
+    max_defer_hours: int = Field(default=48, gt=0)
 
 
 class ChunkerSettings(FrozenModel):

@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from litfactory.application.context import AppContext
-from litfactory.application.documents import load_chunks, pdf_key, save_document
+from litfactory.application.documents import load_chunks, pdf_key, save_document, save_parser_raw
 from litfactory.application.stages.base import Stage
 from litfactory.application.topics import active_topics
 from litfactory.ports.fulltext import FullText, FullTextRequest
@@ -94,14 +94,28 @@ class ParseStage(Stage):
         if state is None or state.pdf_sha256 is None:
             raise ValueError(f"没有可解析的 PDF：{payload['paper_id']}")
         pdf = ctx.blobs.get(pdf_key(state.pdf_sha256))
-        document = ctx.parser.parse(pdf, state.pdf_sha256)
+        parsed = ctx.parser.parse(pdf, state.pdf_sha256)
+        document = parsed.document
         key, stored = save_document(ctx, document)
+        raw_key = save_parser_raw(ctx, document, parsed.raw)
         chunked = load_chunks(ctx, key)
         now = ctx.now_iso()
         with ctx.store.atomic():
             ctx.store.papers.add_artifact(
                 Artifact(state.pdf_sha256, "doc", key, len(stored), document.parser_id, None), now
             )
+            if raw_key:
+                ctx.store.papers.add_artifact(
+                    Artifact(
+                        state.pdf_sha256,
+                        "parser_raw",
+                        raw_key[0],
+                        raw_key[1],
+                        document.parser_id,
+                        None,
+                    ),
+                    now,
+                )
             ctx.store.papers.save_fulltext(
                 FullTextState(
                     state.paper_id,

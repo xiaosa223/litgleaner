@@ -2,6 +2,7 @@
 
 import fcntl
 import json
+import logging
 import shutil
 from pathlib import Path
 
@@ -9,7 +10,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from litfactory.cli import app
+from litfactory.cli import app, configure_logging
 
 ROOT = Path(__file__).parents[2]
 runner = CliRunner()
@@ -107,3 +108,9 @@ def test_delivery_commands(config: Path):
     )
     assert result.exit_code == 2
     assert "不存在" in result.output
+
+
+def test_logging_never_records_signed_urls_from_http_client():
+    configure_logging()
+    assert logging.getLogger("httpx").getEffectiveLevel() >= logging.WARNING
+    assert logging.getLogger("httpcore").getEffectiveLevel() >= logging.WARNING

@@ -212,6 +212,7 @@ job = Table(
     Column("attempts", Integer, nullable=False, default=0),
     Column("next_run_at", String, nullable=False),
     Column("last_error", Text),
+    Column("first_deferred_at", String),
     Column("created_at", String, nullable=False),
     Column("updated_at", String, nullable=False),
     Index("ix_job_due", "stage", "status", "next_run_at"),

@@ -11,7 +11,13 @@ from litfactory.application.pipeline import run_stage
 from litfactory.application.rubric_ops import rescore
 from litfactory.application.stages.base import Stage
 from litfactory.application.topics import activate_topic, pause_topic
-from litfactory.domain.errors import ConfigError, PermanentError, SchemaChanged
+from litfactory.domain.errors import (
+    ConfigError,
+    PermanentError,
+    RateLimited,
+    SchemaChanged,
+    StillProcessing,
+)
 from litfactory.ports.store import JobSpec
 from tests.e2e.conftest import Harness, paper
 
@@ -182,3 +188,44 @@ def test_links_from_llm_never_reach_any_channel(harness: Harness):
     body = harness.publisher().sent[0].body
     assert "evil.example" not in body
     assert "https://doi.org/" in body
+
+
+def test_deferred_error_postpones_without_counting_attempts(harness: Harness):
+    harness.write_papers([paper("Quota", 5)])
+    harness.ctx.parser.fail_next.append(RateLimited("额度用完", retry_after_seconds=7200))
+    report = harness.run()
+    assert not report.ok
+    pending = [j for j in harness.ctx.store.jobs.list_by_status("pending") if j.stage == "parse"]
+    assert [j.attempts for j in pending] == [0]
+    harness.clock.advance(hours=1)
+    harness.run()
+    assert harness.ctx.store.stats()["artifact_doc"] == 0
+    harness.clock.advance(hours=1, seconds=1)
+    assert harness.run().ok
+    assert harness.ctx.store.stats()["artifact_doc"] == 1
+
+
+def test_parser_raw_output_is_stored_compressed(harness: Harness):
+    harness.ctx.parser.raw_output = b'[{"type": "text"}]'
+    harness.write_papers([paper("Raw", 5)])
+    harness.run()
+    assert harness.ctx.store.stats()["artifact_parser_raw"] == 1
+
+
+def test_rate_limit_stops_the_stage_instead_of_hammering_the_api(harness: Harness):
+    harness.write_papers([paper(f"Paper {i}", 5) for i in range(4)])
+    harness.ctx.parser.fail_next.append(RateLimited("额度用完", retry_after_seconds=3600))
+    harness.run()
+    assert harness.ctx.parser.calls == 1, "第一次限频后，本轮不应再调用解析器"
+
+
+def test_endless_deferral_is_eventually_buried(harness: Harness):
+    harness.write_papers([paper("Stuck", 5)])
+    for _ in range(60):
+        harness.ctx.parser.fail_next.append(StillProcessing("仍在处理", retry_after_seconds=3600))
+    for _ in range(60):
+        harness.run()
+        harness.clock.advance(hours=1, seconds=1)
+    dead = [j for j in harness.ctx.store.jobs.list_by_status("dead") if j.stage == "parse"]
+    assert len(dead) == 1
+    assert "推迟" in (dead[0].last_error or "")

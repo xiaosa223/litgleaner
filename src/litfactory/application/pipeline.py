@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from litfactory.application.context import AppContext
 from litfactory.application.stages.archive import ArchiveStage
@@ -17,7 +17,13 @@ from litfactory.application.stages.score import ScoreStage
 from litfactory.application.stages.select import SelectStage
 from litfactory.application.stages.triage import TriageStage
 from litfactory.application.topics import sync_topics
-from litfactory.domain.errors import BudgetExceeded, ConfigError, PermanentError
+from litfactory.domain.errors import (
+    BudgetExceeded,
+    ConfigError,
+    Deferred,
+    PermanentError,
+    RateLimited,
+)
 from litfactory.ports.store import Job
 
 logger = logging.getLogger(__name__)
@@ -73,6 +79,14 @@ class RunReport:
         return "\n".join(lines) or "没有需要处理的内容"
 
 
+def _deferred_too_long(ctx: AppContext, job: Job, now: datetime) -> bool:
+    """推迟不计失败次数，但外部任务可能永远卡住，所以总时长要有上限。"""
+    if job.first_deferred_at is None:
+        return False
+    started = datetime.fromisoformat(job.first_deferred_at)
+    return now - started > timedelta(hours=ctx.settings.max_defer_hours)
+
+
 def _bury(ctx: AppContext, stage: Stage, job: Job, message: str, now: str) -> str:
     """标记死信和善后要么都成功，要么都不生效；善后出错也不能中断其他任务。"""
     try:
@@ -91,6 +105,15 @@ def _fail(ctx: AppContext, stage: Stage, job: Job, error: Exception) -> tuple[bo
     message = f"{type(error).__name__}: {error}"[:_ERROR_LIMIT]
     attempts = job.attempts + 1
     now = ctx.clock()
+    if isinstance(error, Deferred):
+        if _deferred_too_long(ctx, job, now):
+            hours = ctx.settings.max_defer_hours
+            return True, _bury(
+                ctx, stage, job, f"推迟超过 {hours} 小时仍未完成：{message}", now.isoformat()
+            )
+        later = (now + timedelta(seconds=error.retry_after_seconds)).isoformat()
+        ctx.store.jobs.postpone(job.key, message, later, now.isoformat())
+        return False, message
     if isinstance(error, PermanentError) or attempts >= ctx.settings.max_attempts:
         return True, _bury(ctx, stage, job, message, now.isoformat())
     delay = ctx.settings.backoff_seconds * 2 ** (attempts - 1)
@@ -121,6 +144,9 @@ def run_stage(ctx: AppContext, stage: Stage) -> StageReport:
             dead += is_dead
             retried += not is_dead
             errors.append(f"{stage.name} [{job.key}]：{message}")
+            if isinstance(error, RateLimited):
+                errors.append(f"{stage.name} 触发限频或额度用完，本轮剩余任务稍后再处理")
+                break
         else:
             ctx.store.jobs.mark_done(job.key, ctx.now_iso())
             done += 1

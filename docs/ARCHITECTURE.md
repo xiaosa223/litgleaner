@@ -99,7 +99,7 @@ cli → bootstrap → adapters, infra → application → ports → domain
 | 事实 | `merge_log` | 自增 | 合并记录，支持撤销 |
 | 事实 | `sighting` | `(paper, source, query_hash)` | 谁在何时发现了它，覆盖率统计的基础 |
 | 事实 | `source_cursor` | `(source, query_hash)` | 增量抓取水位 |
-| 事实 | `artifact` | `sha256 + kind` | PDF、归一化文档等文件的索引和保留策略 |
+| 事实 | `artifact` | `sha256 + kind` | PDF、归一化文档、解析器原始输出等文件的索引和保留策略 |
 | 事实 | `fulltext` | `paper` | 全文状态：`available`、`parsed`、`unavailable`、`failed` |
 | 事实 | `extraction` | `(paper, input_hash, extractor_ver)` | 结论、不足、创新点及证据 |
 | 判断 | `topic_state` | `topic` | 主题是否启用、当前定义的哈希、从何时开始初筛 |
@@ -315,9 +315,9 @@ class NormalizedDocument:
     quality: Literal["ok", "degraded"]
 ```
 
-默认使用精准 API 的 `vlm` 模型，不使用 Agent 轻量接口：后者只返回 Markdown，没有页码、坐标和结构 JSON，无法生成上面的格式。
+默认使用精准 API 的 `vlm` 模型（适配器 `mineru_cloud`），不使用 Agent 轻量接口：后者只返回 Markdown，没有页码、坐标和结构 JSON，无法生成上面的格式。
 
-**MinerU 云端字段映射**（来自 2026-11-02 实测的 `*_content_list.json`，仅 1 篇论文，接入时用更多样本补充）：
+**MinerU 云端字段映射**（来自实测的 `*_content_list.json`：IEEE 双栏、NeurIPS 单栏、ACM 双栏、中文期刊各一篇，见 `docs/experiments/2026-11-05-parser-comparison.md`）：
 
 | MinerU `type` | 关键字段 | 归一化处理 |
 |---|---|---|
@@ -328,9 +328,10 @@ class NormalizedDocument:
 | `code` | `code_body`、`code_caption`、`sub_type` | code |
 | `ref_text` | `text` | reference |
 | `page_footnote` | `text` | 写入 `front_matter` |
-| `page_number`、`aside_text` | `text` | 丢弃 |
+| `image` | `img_path`、`image_caption`、`image_footnote`、`content` | figure |
+| `page_number`、`aside_text`、`header`、`footer` | `text` | 丢弃 |
 
-样本中没有出现的类型（比如 `image`、`list`）不能静默丢弃：记录告警并把文档标记为 `degraded`。
+样本中没有出现的类型（比如 `list`）不能静默丢弃：保留文字并把文档标记为 `degraded`。`header`、`footer`、`image` 就是这个机制在新样本中发现的。
 
 ### 9.2 切分规则
 
@@ -360,6 +361,9 @@ NormalizedDocument
 
 实测输出决定了以下规则，切分器必须针对它们写测试：
 
+- **标题可能带空格**：小型大写会被拆成 `I NTRODUCTION`，中文标题常写成 `5 总 结`、`参　考　文　献`，分类时也要检查去掉空格的写法。
+- **中文期刊有双语前置部分**：页首的英文标题不算正文开始；`Abstract In ...`（没有破折号）、`Key words`、`摘　要`、`结束语` 都要识别。
+- **参考文献后可能有作者简介和照片**：解析器标出了参考文献条目时只用这些条目。
 - **`text_level` 不能表示层级**：样本中 `V. CONCLUSION` 和 `A. Case Study` 都是 2 级，章节嵌套要靠编号（`I.`、`A.`、`1.1`）推断。
 - **摘要不是标题**：IEEE 论文的 `Abstract—...`、`Index Terms—...` 是普通段落，要按段首模式识别。如果只找标题，IEEE 论文就没有摘要。
 - **论文标题以元数据为准**：解析结果里的 1 级标题只作校验。
@@ -513,6 +517,7 @@ LLM 输出来自不可信的论文内容：所有输出都限制长度，发给�
 
 - 用 SQLite 的 `job` 表做任务队列，每个阶段自己定义幂等键。重复运行不会重复处理，也不会重复收费。
 - 同一时间只允许一个流程运行（文件锁），定时任务重叠时后者直接退出。
+- `Deferred`（额度用完、外部任务仍在处理）推迟到指定时间再试，不计失败次数。
 - 失败按指数退避重试，超过次数进入死信。`AuthFailed`、`SchemaChanged` 重试也不会成功，直接进入死信。有失败时 `litfactory run` 退出码为 1，主动告警在第 4 步加入。
 - 解析或提取彻底失败时，论文退回按摘要评估并标记为临时分，不会从系统里消失。
 - 由 cron 或 launchd 调用 `litfactory run`，运行位置无关：VPS 或 Mac 只差配置。
@@ -595,7 +600,7 @@ budget:
 每一步都要能运行和验证，不做只有框架的空壳：
 
 1. **行走骨架（全部用假适配器，已完成）**：领域模型、数据库与迁移、任务调度、配置校验、rubric 算分、切分器、CLI。验证：E2E 测试从假信号源走到假渠道；重复运行不重复处理；改权重后 `rescore` 结果正确。
-2. **MinerU 探针**：用真实论文跑通云端 API，确定字段并实现归一化；录制为测试数据。
+2. **MinerU 探针（已完成）**：MinerU 云端适配器（续查不重复提交、错误码分类、额度用完推迟）和 `pdf_text` 降级解析器；用 4 种版式的真实论文对比，结构样本录制为测试数据。
 3. **真实主干**：Crossref、IEEE、手动投喂、Unpaywall、LLM、Telegram。
 4. **校准与定时**：校准集、`rubric eval`、定时任务、告警、备份、保留清理。
 5. **防漏检**：邮件提醒、引文追踪、覆盖率审计。
@@ -605,9 +610,9 @@ budget:
 
 | 未知项 | 现状 | 影响 | 解决方式 |
 |---|---|---|---|
-| MinerU 云端输出字段 | 已用 1 篇 IEEE 风格论文实测（见 9.1），其他版式未测 | 归一化实现 | 第 2 步用不同版式论文补充样本 |
+| MinerU 云端输出字段 | 已测 IEEE、NeurIPS、ACM、中文期刊各一篇；Elsevier、Springer、扫描件未测 | 归一化实现 | 接入真实信号源后按实际论文补充 |
 | MinerU 配额 | API 文档为每天 1000 页、单文件 200 页，旧限制页为 2000 和 600 页；单次批量有 50 和 200 两种说法 | 每日上限 | 按 1000、200、50 配置 |
-| MinerU 对评分的增益 | 已有实验只比较翻译和排版，没有比较提取和评分质量 | 是否值得为每篇深评论文消耗额度 | 第 2 步用同一批论文比较 PDF 直接提取和 VLM |
+| MinerU 对评分的增益 | 已比较送入模型的内容：英文论文两者持平，中文期刊 MinerU 明显更好。对最终分数的影响还没测 | 是否值得为每篇深评论文消耗额度 | 接入大模型后用同一批论文比较分数 |
 | Telegram 限制 | 消息 4096 字符、下载 20MB、`callback_data` 64 字节是记忆值，未核实 | 渲染和按钮设计 | 实现前查文档，写入契约测试 |
 | IEEE API 配额 | 文档页未列出 | 调用频率 | 申请 Key 后确认 |
 | WoS 返回字段 | 未确认是否含摘要 | 是否需要补全 | 实测 |

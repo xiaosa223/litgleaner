@@ -27,15 +27,19 @@ SectionType = Literal[
 _ROMAN = re.compile(r"^(?P<num>[IVX]+)[.\s]\s*\S")
 _LETTER = re.compile(r"^(?P<num>[A-Z])[.\s]\s*\S")
 _DECIMAL = re.compile(r"^(?P<num>\d+(?:\.\d+)*)\.?\s+\S")
-_RUN_IN_ABSTRACT = re.compile(r"^\s*(abstract\s*[—–\-:.]|摘\s*要\s*[:：]?)", re.IGNORECASE)
-_RUN_IN_KEYWORDS = re.compile(r"^\s*(index terms|keywords?|关键词)\s*[—–\-:：.]?", re.IGNORECASE)
+# “Abstract—…”“Abstract: …” 有分隔符；中文期刊写成 “Abstract In …”，此时后面必须是大写字母，
+# 否则 “Abstract interpretation is …” 这类正文也会被当成摘要。
+_RUN_IN_ABSTRACT = re.compile(
+    r"^\s*(abstract(?:\s*[—–\-:.]|\s+(?-i:[A-Z])|\s*$)|摘\s*要\s*[:：]?)", re.IGNORECASE
+)
+_RUN_IN_KEYWORDS = re.compile(r"^\s*(index terms|key\s*words?|关键词)\s*[—–\-:：.]?", re.IGNORECASE)
 _NUMBERING = re.compile(r"^(?:[IVX]+[.\s]|[A-Z][.\s]|\d+(?:\.\d+)*\.?\s)\s*")
 
 _PATTERNS: tuple[tuple[SectionType, re.Pattern[str]], ...] = (
     ("abstract", re.compile(r"^(abstract|摘\s*要)\b", re.IGNORECASE)),
     ("references", re.compile(r"\b(references|bibliography)\b|参考文献", re.IGNORECASE)),
     ("acknowledgment", re.compile(r"acknowledg|致\s*谢", re.IGNORECASE)),
-    ("conclusion", re.compile(r"\bconclu|\bsummary\b|结论|总结", re.IGNORECASE)),
+    ("conclusion", re.compile(r"\bconclu|\bsummary\b|结论|总结|结束语|结语", re.IGNORECASE)),
     ("limitation", re.compile(r"\blimitation|threats to validity|不足|局限", re.IGNORECASE)),
     ("discussion", re.compile(r"\bdiscussion|讨论", re.IGNORECASE)),
     (
@@ -66,11 +70,17 @@ class Section:
 
 
 def classify_heading(heading: str) -> SectionType | None:
+    """同时检查去掉空格的写法：小型大写会被拆成 “C ONCLUSION”，中文标题常写成 “总 结”。"""
     bare = _NUMBERING.sub("", heading.strip())
+    squashed = re.sub(r"\s+", "", bare)
     for section_type, pattern in _PATTERNS:
-        if pattern.search(bare):
+        if pattern.search(bare) or pattern.search(squashed):
             return section_type
     return None
+
+
+def _is_numbered(heading: str) -> bool:
+    return bool(_DECIMAL.match(heading) or _ROMAN.match(heading) or _LETTER.match(heading))
 
 
 @dataclass(frozen=True)
@@ -79,6 +89,8 @@ class _Outline:
 
     stack: tuple[tuple[str, SectionType | None], ...] = ()
     last_letter: str | None = None
+    # 遇到编号或可识别的章节标题之前都算前置部分。中文期刊页首的英文标题不算正文开始。
+    started: bool = False
 
     def advance(self, heading: str) -> "_Outline":
         depth, letter = self._depth(heading)
@@ -86,7 +98,8 @@ class _Outline:
         explicit = classify_heading(heading)
         inherited = base[-1][1] if base else None
         entry = (heading, explicit or inherited)
-        return _Outline(stack=(*base, entry), last_letter=letter)
+        started = self.started or explicit is not None or _is_numbered(heading)
+        return _Outline(stack=(*base, entry), last_letter=letter, started=started)
 
     def _depth(self, heading: str) -> tuple[int, str | None]:
         if match := _DECIMAL.match(heading):
@@ -136,7 +149,7 @@ def _collect(blocks: Iterable[Block]) -> tuple[_Draft, ...]:
             outline = outline.advance(block.text)
             current = _Draft(outline.stack[-1][1], tuple(h for h, _ in outline.stack))
             continue
-        if not outline.stack and block.kind == "text":
+        if not outline.started and block.kind == "text":
             started = _front_section(block, current)
             if started and started.path != current.path:
                 drafts.append(current)

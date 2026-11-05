@@ -17,6 +17,7 @@ _DROPPED: Final = frozenset({"references", "acknowledgment"})
 _LATIN_TOKENS_PER_WORD: Final = 4 / 3
 _FALLBACK_SECTIONS: Final = 2
 _STANDALONE: Final = frozenset({"table", "figure", "code"})
+_REFERENCE_ENTRY = re.compile(r"^\s*(\[\d+\]|\d+\.\s)")
 
 
 def estimate_tokens(text: str) -> int:
@@ -186,14 +187,27 @@ def _build_chunks(
     return tuple(chunks)
 
 
+def _references(sections: tuple[Section, ...]) -> tuple[str, ...]:
+    """解析器标出的条目都算。参考文献章节里没标出的文字，如果解析器标过其他条目，
+    就只收形如 “[12]”“12.” 开头的，因为中文期刊会在后面附作者简介。"""
+    has_marked = any(b.kind == "reference" for s in sections for b in s.blocks)
+    found: list[str] = []
+    for section in sections:
+        for block in section.blocks:
+            if block.kind == "reference" or _unmarked_reference(block, section, has_marked):
+                found.append(block.text)
+    return tuple(found)
+
+
+def _unmarked_reference(block: Block, section: Section, has_marked: bool) -> bool:
+    if section.section_type != "references" or block.kind != "text" or not block.text.strip():
+        return False
+    return not has_marked or bool(_REFERENCE_ENTRY.match(block.text))
+
+
 def chunk_document(document: NormalizedDocument, config: ChunkerConfig) -> ChunkedDocument:
     sections, warnings = _with_conclusion_fallback(split_sections(document))
-    references = tuple(
-        block.text
-        for section in sections
-        for block in section.blocks
-        if block.kind == "reference" or section.section_type == "references"
-    )
+    references = _references(sections)
     body = [
         Section(
             section.section_type,

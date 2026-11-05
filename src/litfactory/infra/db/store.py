@@ -62,7 +62,7 @@ class SqlStore:
             table.name: int(self._db.fetch(select(func.count()).select_from(table))[0][0])
             for table in _COUNTED
         }
-        for kind in ("pdf", "doc"):
+        for kind in ("pdf", "doc", "parser_raw"):
             statement = select(func.count()).select_from(artifact).where(artifact.c.kind == kind)
             counts[f"artifact_{kind}"] = int(self._db.fetch(statement)[0][0])
         return counts

@@ -5,8 +5,10 @@ description = "每日发现、评估并推送有价值的学术文献"
 requires-python = ">=3.12,<3.15"
 dependencies = [
   "alembic>=1.13",
+  "httpx>=0.28.1",
   "jsonschema>=4.21",
   "pydantic>=2.7",
+  "pypdf>=6.21.4",
   "python-ulid>=2.7",
   "pyyaml>=6.0",
   "sqlalchemy>=2.0.30",
