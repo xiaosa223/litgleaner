@@ -1,0 +1,20 @@
+# 当前是演示配置：外部依赖都是假适配器，数据写入 data/demo/。
+# 接入真实信号源时，把路径和适配器换掉，流程代码不用动。
+database: data/demo/litfactory.db
+blob_root: data/demo/blobs
+archive_dir: data/demo/archive
+prompts_dir: prompts
+timezone: Asia/Shanghai
+jobs:
+  max_attempts: 3
+  backoff_seconds: 300
+chunker:
+  target_tokens: 800
+  max_tokens: 1200
+  overlap_sentences: 1
+assess:
+  token_budget: 6000
+fulltext:
+  - adapter: fake_fulltext
+parser:
+  adapter: fake_parser

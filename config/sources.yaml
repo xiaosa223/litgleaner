@@ -1,0 +1,7 @@
+# 增加信号源：写适配器、在 bootstrap.py 注册、在这里加一段。
+# 下线信号源：enabled: false，历史记录会保留。
+sources:
+  demo:
+    adapter: fake_source
+    options:
+      records_file: config/demo/papers.json

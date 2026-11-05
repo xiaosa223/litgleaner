@@ -1,0 +1,94 @@
+"""迁移和事务。"""
+
+from pathlib import Path
+
+import pytest
+from alembic.autogenerate import compare_metadata
+from alembic.runtime.migration import MigrationContext
+from sqlalchemy import create_engine, inspect
+
+from litfactory.domain.identity import Alias
+from litfactory.domain.paper import Paper
+from litfactory.infra.db.migrate import is_up_to_date, upgrade_database
+from litfactory.infra.db.schema import metadata
+from litfactory.infra.db.store import SqlStore
+from litfactory.ports.store import JobSpec
+
+
+@pytest.fixture
+def url(tmp_path: Path) -> str:
+    return f"sqlite:///{tmp_path / 'nested' / '中文路径' / 'test.db'}"
+
+
+@pytest.fixture
+def store(url: str) -> SqlStore:
+    upgrade_database(url)
+    return SqlStore(url)
+
+
+def make_paper(id_: str = "P1") -> Paper:
+    return Paper(id_, "T", "t", None, ("A",), None, None, None, "2026-01-01")
+
+
+def test_migration_matches_schema_exactly(url: str):
+    upgrade_database(url)
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        diff = compare_metadata(MigrationContext.configure(connection), metadata)
+    engine.dispose()
+    assert diff == []
+
+
+def test_upgrade_is_idempotent_and_detected(url: str):
+    assert not is_up_to_date(url)
+    upgrade_database(url)
+    upgrade_database(url)
+    assert is_up_to_date(url)
+    engine = create_engine(url)
+    assert "paper" in inspect(engine).get_table_names()
+    engine.dispose()
+
+
+def test_atomic_rolls_back_everything_on_error(store: SqlStore):
+    with pytest.raises(RuntimeError), store.atomic():
+        store.papers.insert(make_paper())
+        with store.atomic():
+            store.papers.add_aliases("P1", (Alias("doi", "10.1/x"),))
+        raise RuntimeError("中途失败")
+    assert store.papers.get("P1") is None
+    assert store.papers.find_ids_by_aliases((Alias("doi", "10.1/x"),)) == frozenset()
+
+
+def test_foreign_keys_are_enforced(store: SqlStore):
+    with pytest.raises(Exception, match="FOREIGN KEY"):
+        store.papers.add_aliases("missing", (Alias("doi", "10.1/x"),))
+
+
+def test_fill_missing_never_overwrites(store: SqlStore):
+    store.papers.insert(make_paper())
+    store.papers.fill_missing("P1", {"abstract": "first"})
+    store.papers.fill_missing("P1", {"abstract": "second"})
+    paper = store.papers.get("P1")
+    assert paper is not None
+    assert paper.abstract == "first"
+    with pytest.raises(ValueError, match="不允许"):
+        store.papers.fill_missing("P1", {"title": "x"})
+
+
+def test_enqueue_is_idempotent_even_after_done(store: SqlStore):
+    spec = JobSpec("k", "stage", {"a": 1})
+    assert store.jobs.enqueue(spec, "2026-01-01")
+    assert not store.jobs.enqueue(spec, "2026-01-02")
+    store.jobs.mark_done("k", "2026-01-01")
+    assert not store.jobs.enqueue(spec, "2026-01-03")
+    assert store.jobs.due("stage", "2027-01-01") == ()
+
+
+def test_due_respects_backoff_and_retry_dead_resets(store: SqlStore):
+    store.jobs.enqueue(JobSpec("k", "stage", {}), "2026-01-01")
+    store.jobs.mark_retry("k", "err", "2026-01-05", "2026-01-01")
+    assert store.jobs.due("stage", "2026-01-02") == ()
+    assert [j.attempts for j in store.jobs.due("stage", "2026-01-06")] == [1]
+    store.jobs.mark_dead("k", "err", "2026-01-06")
+    assert store.jobs.retry_dead("2026-01-07") == 1
+    assert [j.attempts for j in store.jobs.due("stage", "2026-01-07")] == [0]

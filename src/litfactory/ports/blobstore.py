@@ -1,0 +1,13 @@
+"""文件存储接口。业务代码只使用键，不出现文件路径。"""
+
+from typing import Protocol
+
+
+class BlobStore(Protocol):
+    def put(self, key: str, content: bytes) -> None: ...
+
+    def get(self, key: str) -> bytes: ...
+
+    def exists(self, key: str) -> bool: ...
+
+    def delete(self, key: str) -> None: ...

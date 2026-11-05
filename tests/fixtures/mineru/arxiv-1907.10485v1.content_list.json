@@ -1,0 +1,1886 @@
+[
+    {
+        "type": "text",
+        "text": "Early Anomaly Detection in Power Systems Based on Random Matrix Theory",
+        "text_level": 1,
+        "bbox": [
+            86,
+            70,
+            910,
+            137
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Xin Shi<sup>1</sup>, Robert Qiu<sup>1,2</sup>, Fellow, IEEE",
+        "bbox": [
+            349,
+            154,
+            640,
+            172
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract—It is important for detecting the anomaly in power systems before it expands and causes serious faults such as power failures or system blackout. With the deployments of phasor measurement units (PMUs), massive amounts of synchrophasor measurements are collected, which makes it possible for the realtime situation awareness of the entire system. In this paper, based on random matrix theory (RMT), a data-driven approach is proposed for anomaly detection in power systems. First, spatiotemporal data set is formulated by arranging high-dimensional synchrophasor measurements in chronological order. Based on the Ring Law in RMT for the empirical spectral analysis of ‘signal+noise’ matrix, the mean spectral radius (MSR) is introduced to indicate the system states from the macroscopic perspective. In order to realize anomaly declare automatically, an anomaly indicator based on the MSR is designed and the corresponding confidence level 1 − α is calculated. The proposed approach is capable of detecting the anomaly in an early phase and robust against random fluctuations and measuring errors. Cases on the synthetic data generated from IEEE 300-bus, 118-bus and 57-bus test systems validate the effectiveness and advantages of the approach.",
+        "bbox": [
+            73,
+            220,
+            493,
+            488
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Index Terms—early anomaly detection, power systems, phasor measurement units (PMUs), random matrix theory (RMT), ‘signal+noise’ matrix",
+        "bbox": [
+            75,
+            491,
+            491,
+            531
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "I. INTRODUCTION",
+        "text_level": 2,
+        "bbox": [
+            217,
+            546,
+            349,
+            559
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "NOMALY in power systems is common, which can easily expand and cause power failures or system blackout if can’t be detected in time. The most famous example is the blackout in North East America on the 14th August 2003. In recent years, there have been increasing deployments of phasor measurement units (PMUs), which constitute wide area measurement system (WAMS) [1] for power systems. Compared with traditional supervisory control and data acquisition (SCADA) system, WAMS can provide synchrophasor measurements with higher sampling rates, which makes it possible for detecting eventualities in a timely manner. For example, the root mean square data of voltage and current can be sampled at the rate of 30Hz or 60Hz in the WAMS, while they are obtained only at the rate of 4Hz or 5Hz in the SCADA system [2].",
+        "bbox": [
+            73,
+            564,
+            493,
+            790
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "The high sampling rate synchrophasor measurements contain rich information on the operation state of the system, which stimulates the research of advanced data analytics. For example, in [3], the voltage phasors are used to compute the Lyapunov components to estimate the short-term voltage stability. In [4], the dimensionality of the phasor-measurementunit (PMU) data is analyzed, and an PCA-based data dimensionality reduction algorithm is proposed for early event detection. In [5], a parallel detrended fluctuation analysis approach is proposed for fast event detection on massive volumes of PMU data. In [6], a density-based detection algorithm is proposed to detect local outliers, which can differentiate highquality synchrophasor data from the low-quality one during system physical disturbance. In [7], a wavelet-based algorithm is proposed for detecting the occurrence of significant changes in time-synchronized voltage and frequency measurements.",
+        "bbox": [
+            73,
+            791,
+            491,
+            821
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            503,
+            220,
+            924,
+            431
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Due to the significant deployments of PMUs in WAMS, high-dimensional synchrophasor measurements with fast sampling rate are collected, and the demand for theories capable of processing high-dimensional data has grown dramatically. Random matrix theory (RMT), introduced by Wishart in 1928 [8], is an important mathematical tool for statistical analysis of high-dimensional data. As for high-dimensional random matrices, the importance of RMT for statistics comes from the fact that it may be used to correct traditional tests or estimators which fail in the ‘large p, large n’ setting, where p is the number of parameters (dimensions) and n is the sample size. RMT starts with asymptotic theorems on the distribution of eigenvalues or singular values of random matrices with certain assumptions, and eventually gives macroscopic quantity to indicate the data behavior. The theorems ensure convergence of the empirical eigenvalue distributions to deterministic functions as the matrices grow large, which makes RMT naturally suitable for high-dimensional data analysis. Nowadays, RMT has been widely used in wireless communication [9], finance [10], quantum information [11], etc. In recent years, some work that makes substantial use of results in the RMT has emerged in the power field. For example, in [12], an architecture with the application of RMT into smart grid is proposed. In [13], based on RMT, a data-driven approach to reveal the correlations between various factors and the power system status is proposed. In [14] and [15], RMT is used for power system transient analysis and steady-state analysis, respectively.",
+        "bbox": [
+            501,
+            431,
+            924,
+            854
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "In this paper, based on RMT, a data-driven approach is proposed for anomaly detection in power systems. It tracks the data behavior by moving a window at continuously sampling times. For each moving data window, the empirical eigenvalue distribution (EED) in the complex plane is analyzed and compared with the theoretical limits, and the mean spectral radius (MSR) of the eigenvalues is calculated to indicate the system state in macroscopic. In order to realize anomaly declare automatically in real-time analysis, an anomaly indicator based on the MSR is designed and the corresponding confidence level $1 - \\alpha$ for each sampling time is calculated. The main contribution of this paper can be summarized as follows: 1) The approach is purely data-driven and does not require making assumptions or simplifications on the complex power systems. 2) The approach is sensitive to the variation of the data behavior, which makes it possible for detecting the anomaly in an early phase. 3) It is theoretically and experimentally justified that the approach is robust against random fluctuations and measuring errors of the data. 4) In the approach, the product of multiplicative data matrices can reinforce the anomaly signals, which makes it much easier for anomaly detection. 5) The proposed approach has fast computing speed, which ensures its application for real-time online analysis.",
+        "bbox": [
+            503,
+            854,
+            924,
+            946
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "<sup>1</sup> Department of Electrical Engineering,Center for Big Data and Artificial Intelligence, State Energy Smart Grid Research and Development Center, Shanghai Jiaotong University, Shanghai 200240, China.(e-mail: dugushixin@sjtu.edu.cn; rcqiu@sjtu.edu.cn.)",
+        "bbox": [
+            73,
+            863,
+            491,
+            909
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "This work was partly supported by National Key R & D Program of No. 2018YFF0214705, NSF of China No. 61571296 and (US) NSF Grant No. CNS-1619250.",
+        "bbox": [
+            73,
+            829,
+            491,
+            864
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "2 Department of Electrical and Computer Engineering,Tennessee Technological University, Cookeville, TN 38505, USA. (e-mail:rqiu@tntech.edu)",
+        "bbox": [
+            73,
+            907,
+            491,
+            933
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_number",
+        "text": "1",
+        "bbox": [
+            911,
+            30,
+            919,
+            41
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "aside_text",
+        "text": "arXiv:1907.10485v1 [eess.SP] 21 Jul 2019",
+        "bbox": [
+            22,
+            270,
+            57,
+            719
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            69,
+            493,
+            340
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The rest of this paper is organized as follows. Section II conducts anomaly analysis based on the asymptotic theorem in RMT, and the MSR is introduced as the macroscopic indicator to indicate the system states. In Section III, spatio-temporal data set is formulated by arranging high-dimensional synchrophasor measurements in chronological order and specific steps of RMT for anomaly detection are given. The advantages of our approach are systematically analyzed in this section. The synthetic data generated from IEEE 300-bus, 118-bus and 57-bus test systems are used to validate the effectiveness and advantages of our approach in Section IV. Conclusions are presented in Section V.",
+        "bbox": [
+            73,
+            340,
+            493,
+            523
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "II. ANOMALY ANALYSIS BASED ON RANDOM MATRIX THEORY",
+        "text_level": 2,
+        "bbox": [
+            89,
+            544,
+            477,
+            574
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "In this section, anomaly analysis has been conducted based on RMT. First, asymptotic theorem in RMT is used to analyze the empirical spectral density (ESD) of high-dimensional ‘signal+noise’ matrices, which illustrates the differences of ESD when a system operates in normal and abnormal states. Then the MSR is introduced as the macroscopic indicator to indicate the system states in quantity.",
+        "bbox": [
+            73,
+            582,
+            493,
+            689
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "A. Asymptotic Theorem for ‘Signal+Noise’ Matrix",
+        "text_level": 2,
+        "bbox": [
+            73,
+            712,
+            421,
+            728
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Let $\\mathbf { A } \\in \\mathbb { C } ^ { p \\times n }$ be a non-Hermitian random matrix with i.i.d. entries $a _ { i j }$ . The mean $\\mu ( a ) = 0$ and the variance $\\sigma ^ { 2 } ( a ) =$ $\\frac { 1 } { p }$ . The product of $L$ non-Hermitian random matrices can be defined as",
+        "bbox": [
+            73,
+            733,
+            491,
+            792
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathbf {Z} = \\prod_ {k = 1} ^ {L} \\mathbf {A} _ {u, k},\\tag{1}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            232,
+            792,
+            334,
+            833
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathbf { A } _ { u }$ is the singular value equivalent [16] of A. As $p , n  \\infty$ but $c = \\textstyle { \\frac { p } { n } } \\in ( 0 , 1 ]$ , according to the Ring law [17], the ESD of Z converges to the limit with probability density function (PDF)",
+        "bbox": [
+            73,
+            840,
+            491,
+            900
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "equation",
+        "text": "$$\nf _ {R L} (a) = \\left\\{ \\begin{array}{l l} \\frac {1}{\\pi c L} | a | ^ {\\left(\\frac {2}{L} - 2\\right)}, & (1 - c) ^ {\\frac {L}{2}} \\leq | a | \\leq 1 \\\\ 0, & \\text { others } \\end{array} \\right..\\tag{2}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            98,
+            909,
+            450,
+            948
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1) $L = 1$ : We first consider the case $L = 1$ in the Ring law. Let $\\mathbf { A ^ { \\prime } } \\in \\mathbb { C } ^ { p \\times n }$ be a high-dimensional data matrix and we apply the Ring law for $\\mathbf { A } ^ { \\prime } .$ . In normal state, $\\mathbf { A } ^ { \\prime }$ is considered as a standard random matrix scaled by ${ \\frac { 1 } { \\sqrt { p } } } ( { \\mathrm { i . e . } }$ $\\mathbf { A } ^ { \\prime } \\ = \\ { \\frac { 1 } { \\sqrt { p } } } \\mathbf { A }$ , where A is a random matrix with the mean $\\mu ( a ) = { \\mathrm { 0 } }$ and the variance $\\sigma ^ { 2 } ( a ) = 1$ , and satisfying the singular value equivalent hypothesis), and $\\begin{array} { r } { { \\bf Z } ^ { \\prime } = \\frac { 1 } { \\sqrt { p } } { \\bf A } _ { \\imath } } \\end{array}$ u in equation (1). Then the ESD of $\\mathbf { Z } ^ { \\prime }$ converges to the limiting spectral density $f _ { R L } ( \\boldsymbol { a } ^ { \\prime } )$ , which is shown in Figure 1(a). In the complex plane, the blue dots represent the eigenvalues of $\\mathbf { Z } ^ { \\prime }$ , the radius of the inner circle of the ring is $( 1 - c ) ^ { \\frac { 1 } { 2 } }$ and the radius of the outer circle of the ring is unity. However, what will happen in abnormal state? Here, “abnormal” means signals occur in $\\mathbf { A } ^ { \\prime }$ and the correlations among the entries $a _ { i j } ^ { \\prime }$ have been changed. Then $\\mathbf { A } ^ { \\prime }$ is considered of the type $\\begin{array} { r } { \\frac { 1 ^ { \\upsilon } } { \\sqrt { p } } \\mathbf { A } + \\mathbf { P } } \\end{array}$ , where A is a standard random matrix, which represents random noise or small fluctuations, and P is a lowrank matrix which represents anomaly signals. Figure 1(b) shows the ESD of $\\mathbf { Z } ^ { \\bar { \\prime } } = \\mathbf { \\frac { 1 } { \\sqrt { p } } } \\mathbf { A } _ { u } + \\mathbf { P }$ does not converge to the Ring law and the extreme eigenvalues (outliers) caused by anomaly signals are out of the outer circle of the ring. More surprising facts are that the outliers are in the neighborhood of the eigenvalues of P, which has been proved in [18].",
+        "bbox": [
+            501,
+            69,
+            923,
+            426
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "chart",
+        "img_path": "images/3a05a679bdcc9506a7386d8a41764ce9052eacd4dccc7182b09d350f148f99cb.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            506,
+            460,
+            699,
+            604
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "chart",
+        "img_path": "images/959c6c410a5f7dd5cbdfbc4cd7bf2bd773e5ad344e1a9500fec6e8527a7c0b3c.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) Normal state",
+            "(b) Abnormal state",
+            "Fig. 1. The ESD of $\\mathbf { Z } ^ { \\prime }$ and its comparison with the theoretical Ring law under both normal and abnormal system states. (a) $\\begin{array} { r } { \\mathbf { A } ^ { \\prime } = \\frac { 1 } { \\sqrt { p } } \\mathbf { A } } \\end{array}$ , where A is a $\\phantom { - } 8 0 0 \\times 1 0 0 0$ standard random gaussian matrix and $p = 8 0 0$ . (b) $\\mathbf { A } ^ { \\prime }$ is considered of the type $\\scriptstyle { \\frac { 1 } { \\sqrt { p } } } \\mathbf { A } + \\mathbf { P }$ , where A is a 800×1000 standard random gaussian matrix, $p = \\dot { 8 0 0 }$ , and ${ \\bf P } = d i a g ( 2 - i , - 1 + i , 2 + i , 0 , \\cdot \\cdot \\cdot , 0 )$ The outliers of $\\mathbf { Z } ^ { \\prime }$ are close to the eigenvalues of $\\mathbf { P } _ { : }$ , each of which is marked with a cross."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            720,
+            460,
+            905,
+            604
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2) $L > 1 :$ Furthermore, we explore the case $L > 1$ in the Ring law. Let $\\mathbf { A } ^ { \\prime } { } _ { k } \\ \\in \\ \\mathbb { C } ^ { p \\times n } ( k \\ = \\ 1 , 2 , \\cdot \\cdot \\cdot \\ , L )$ be a high-dimensional data matrix and we apply the Ring law for the product of $\\mathbf { A ^ { \\prime } } _ { k }$ . In normal state, $\\mathbf { A ^ { \\prime } } _ { k }$ is considered as a standard random matrix scaled by $\\begin{array} { r } { \\frac { 1 } { \\sqrt { p } } \\ \\mathrm { ( i . e . , ~ } \\mathbf { A ^ { \\prime } } _ { k } \\ = \\ \\frac { 1 } { \\sqrt { p } } \\mathbf { A } _ { k } } \\end{array}$ where $\\mathbf { A } _ { k }$ is a random matrix with the mean $\\mu ( a ) = \\mathrm { { 0 } }$ and the variance $\\sigma ^ { 2 } ( a ) \\ = \\ 1$ , and satisfying the singular value equivalent hypothesis), and $\\mathbf { Z } ^ { \\prime } = \\prod _ { k = 1 } ^ { L } \\frac { 1 } { \\sqrt { p } } \\mathbf { A } _ { u , k }$ according to equation (1). Then the ESD of $\\mathbf { Z } ^ { \\prime }$ converges to the limiting spectral density $f _ { R L } ( \\boldsymbol { a } ^ { \\prime } )$ , which is shown in Figure 2(a). In the complex plane, the blue dots represent the eigenvalues of $\\mathbf { Z ^ { \\prime } } ,$ , the radius of the inner circle of the ring is $( 1 - c ) ^ { \\frac { L } { 2 } }$ and the radius of the outer circle of the ring is unity.",
+        "bbox": [
+            503,
+            732,
+            923,
+            946
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "page_number",
+        "text": "2",
+        "bbox": [
+            910,
+            30,
+            921,
+            41
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "chart",
+        "img_path": "images/460a143fe413918d8df05243fd09d93d3d1c7a9063d0f1d00b1a25dcf7fe71ae.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            76,
+            85,
+            269,
+            228
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "chart",
+        "img_path": "images/f9269573dbeeb555e083ba47bb1fee1177929cdb6046888c841464e300891d31.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) Normal state",
+            "(b) Abnormal state",
+            "Fig. 2. The ESD of $\\mathbf { Z } ^ { \\prime }$ and its comparison with the theoretical Ring law under both normal and abnormal system states. (a) $\\begin{array} { r } { \\mathbf { A } ^ { \\prime } { } _ { k } = \\frac { 1 } { \\sqrt { p } } \\mathbf { A } _ { k } } \\end{array}$ (k = $1 , 2 , 3 , 4 )$ , where $\\mathbf { A } _ { k }$ is a standard 800 × 1000 random gaussian matrix and $p = 8 0 0 .$ . (b) $\\mathbf { A ^ { \\prime } } _ { k }$ is considered of the type $\\begin{array} { r } { \\frac { 1 } { \\sqrt { p } } \\mathbf { A } _ { k } + \\bar { \\mathbf { P } } _ { k } \\ ( k = 1 , 2 , 3 , 4 ) . } \\end{array}$ where $\\mathbf { A } _ { k }$ is a standard 800 × 1000 random gaussian matrix, $p \\ = \\ 8 0 0$ ${ \\bf P } _ { 1 } = d i a g ( - 1 + i , - 2 , 1 , 0 , \\cdots , 0 ) , { \\bf P } _ { 2 } = \\bar { d } i a g ( 1 , 1 - i , 1 , \\hat { 0 } , \\cdots , 0 )$ ${ \\bf P } _ { 3 } = d i a g ( 1 , 1 , 2 - i , 0 , \\cdot \\cdot \\cdot , 0 )$ , and $\\mathbf { P } _ { 4 } = d i a g ( 1 , 1 , 1 , 0 , \\cdots , 0 )$ . The outliers of $\\dot { \\mathbf { Z } ^ { \\prime } }$ are close to the eigenvalues of $\\mathbf { P } ,$ , each of which is marked with a cross."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            287,
+            85,
+            478,
+            229
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In abnormal state, $\\mathbf { A ^ { \\prime } } _ { k }$ is considered of the type $\\scriptstyle { \\frac { 1 } { \\sqrt { p } } } \\mathbf { A } _ { k } + \\mathbf { P } _ { k }$ where $\\mathbf { A } _ { k }$ is a standard random matrix satisfying the singular value equivalent hypothesis, which represents random noise or small fluctuations, and $\\mathbf { P } _ { k }$ is a low-rank matrix which represents anomaly signals. Then the product of $\\mathbf { A ^ { \\prime } } _ { k }$ is calculated as",
+        "bbox": [
+            73,
+            387,
+            491,
+            479
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\begin{array}{l} \\mathbf {Z} ^ {\\prime} = \\prod_ {k = 1} ^ {L} (\\frac {1}{\\sqrt {p}} \\mathbf {A} _ {u, k} + \\mathbf {P} _ {k}) \\\\ \\qquad = p ^ {- L / 2} \\mathbf {A} _ {u, 1} \\dots \\mathbf {A} _ {u, L} + \\mathbf {M} + \\mathbf {P} _ {1} \\dots \\mathbf {P} _ {L} \\end{array} ,\\tag{3}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            130,
+            478,
+            437,
+            537
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "where $p ^ { - L / 2 } \\mathbf { A } _ { u , 1 } \\cdot \\cdot \\cdot \\mathbf { A } _ { u , L }$ is the random term, $\\mathbf { P } _ { 1 } \\cdots \\mathbf { P } _ { L }$ is the deterministic term, and M represents the ‘mixed’ terms, each containing at least one random factor and one deterministic factor. Figure 2(b) shows the ESD of $\\mathbf { Z } ^ { \\prime }$ does not converge to the Ring law and some extreme eigenvalues (outliers) caused by anomaly signals are out of the outer circle of the ring. More surprising facts are that the outliers are only determined by the deterministic term $\\mathbf { P } _ { 1 } \\cdots \\mathbf { P } _ { L }$ and the ‘mixed’ terms M do not affect the asymptotic location of the outliers, which are shown in Figure 3. Similar conclusions for the Circular law can be found in [19]. Thus, the product of multiple ‘signal+noise’ matrices can reinforce the signals, which makes it much easier to detect the anomaly.",
+        "bbox": [
+            73,
+            544,
+            491,
+            743
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "B. Macroscopic Indicator",
+        "text_level": 2,
+        "bbox": [
+            75,
+            763,
+            254,
+            777
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Based on the analysis in Section II-A, it can be concluded that the ESDs are different for a high-dimensional random matrix with or without anomaly signals, which inspires us to investigate the statistics regarding the empirical eigenvalues in the complex plane to indicate the data behavior in macroscopic quantity. The mean spectral radius (MSR) is the mean distribution radius of the eigenvalues of the product Z in equation (1), which is defined as",
+        "bbox": [
+            73,
+            782,
+            493,
+            904
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\kappa_ {\\mathrm{MSR}} = \\frac {1}{p} \\sum_ {i = 1} ^ {p} | \\lambda_ {i} |,\\tag{4}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            217,
+            909,
+            352,
+            949
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "chart",
+        "img_path": "images/093c03d6be367bbf76dd59c90e0b175e6d2babc30d60a56df6465db8e769a1b4.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            506,
+            85,
+            697,
+            229
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "chart",
+        "img_path": "images/4ade6e812b7c117b7767df96cc24ea6f616c7ca4f43f22556681d75bc90cfb12.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a)",
+            "(b)",
+            "Fig. 3. (a) The ESD of $\\mathbf { Z } ^ { \\prime } \\ : = \\ : p ^ { - 2 } \\mathbf { A } _ { u , 1 } \\cdot \\cdot \\cdot \\mathbf { A } _ { u , 4 } \\ : + \\ : \\mathbf { P } _ { 1 } \\cdot \\cdot \\cdot \\mathbf { P } _ { 4 } ,$ where A<sub>k</sub> $( k \\ : = \\ : 1 , 2 , 3 , 4 )$ is a standard 800 × 1000 random gaussian matrix and $\\mathbf { A } _ { u , k }$ is the singular value equivalent of $\\mathbf { A } _ { k } , \\ p \\ = \\ 8 0 0 , \\ \\mathbf { P } _ { 1 } \\ =$ diag(− $\\cdot 1 + i , - 2 , 1 , 0 , \\cdot \\cdot \\cdot , 0 ) , { \\bf P } _ { 2 } = d i a g ( 1 , 1 - i , 1 , 0 , \\cdot \\cdot \\cdot , 0 ) , { \\bf P } _ { 3 } =$ diag(1 $, 1 , 2 - i , 0 , \\cdots , 0 )$ , and ${ \\bf P } _ { 4 } = d i a g ( 1 , 1 , 1 , 0 , \\cdot \\cdot \\cdot , 0 )$ . The outliers are close to the eigenvalues of the deterministic term $\\mathbf { P } _ { 1 } \\cdots \\mathbf { P } _ { 4 \\cdot ( 6 ) }$ The ESD of $\\mathbf { Z } ^ { \\prime } = p ^ { - 2 } \\mathbf { A } _ { u , 1 } \\cdot \\cdot \\cdot \\mathbf { A } _ { u , 4 } -$ + $\\mathbf { M } + \\mathbf { P } _ { 1 } \\cdot \\cdot \\cdot \\mathbf { P } _ { 4 } ,$ and the ‘mixed’ terms M do not affect the asymptotic location of the outliers."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            718,
+            87,
+            906,
+            229
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "where $\\lambda _ { i } ( i = 1 , \\cdots , p )$ are the eigenvalues of Z and $| \\lambda _ { i } |$ is the radius of $\\lambda _ { i }$ in the complex plane. It can be used to measure the distribution of the eigenvalues in macroscopic quantity. For example, the MSR of the eigenvalues of the standard $\\mathbf { Z } ^ { \\prime } \\left( \\mathrm { i . e . } \\right.$ $\\begin{array} { r } { \\sigma ^ { 2 } ( \\overline { { \\mathbf { z } ^ { \\prime } \\dot { \\mathbf { \\theta } } _ { i } } } ) = \\frac { 1 } { p } ~ ( i = 1 , \\cdots , p ) } \\end{array}$ for each row of $\\mathbf { Z ^ { \\prime } } )$ under both normal and abnormal system states corresponding to $L = 1$ in Section II-A are shown in Figure 4. It can be concluded that the MSR decreases when the system state changes from normal to abnormal.",
+        "bbox": [
+            503,
+            377,
+            923,
+            513
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "chart",
+        "img_path": "images/af382e63dd1a5c1d000ced4a0b42b175c612ac2f000ed84ace6018f03767b46b.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            506,
+            544,
+            700,
+            689
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "chart",
+        "img_path": "images/e18e15d964a98ae548f078815af7ab9d4c970a86d79b014b67afe9de39e4964f.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) Normal state",
+            "(b) Abnormal state",
+            "Fig. 4. (a) In normal state, the calculated MSR is 0.7597. (b) In abnormal state, the value of MSR is 0.7343."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            717,
+            545,
+            908,
+            689
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "III. RANDOM MATRIX THEORY FOR ANOMALY DETECTION",
+        "text_level": 2,
+        "bbox": [
+            545,
+            782,
+            880,
+            811
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Based on the analysis in Section II, an RMT-based anomaly detection approach is proposed in this section. First, spatiotemporal data set is formulated by arranging high-dimensional synchrophasor measurements in chronological order in power systems. Then, details on the RMT for real-time data analysis are presented, in which a moving data window method is used. Finally, steps of the RMT for anomaly detection are given, and we systematically analyze the advantages of the approach.",
+        "bbox": [
+            503,
+            823,
+            923,
+            946
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "page_number",
+        "text": "3",
+        "bbox": [
+            911,
+            30,
+            919,
+            40
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "A. Spatio-Temporal Data Formulation",
+        "text_level": 2,
+        "bbox": [
+            73,
+            69,
+            338,
+            84
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Assume there are P-dimensional measurement variables (such as P−dimensional voltage measurements from P PMUs installed in a power system) $\\bar { ( } d _ { 1 } , d _ { 2 } , . . . , d _ { P } ) \\in \\mathbb { C } ^ { 1 \\times P }$ . At the sampling time $t _ { j } .$ the P−dimensional measurements can be formulated as a column vector $\\mathbf { 1 } ( t _ { j } ) = ( d _ { 1 } , d _ { 2 } , . . . , d _ { P } ) ^ { H }$ . For a series of time N, a spatio-temporal data set $ { \\mathbf { D } } \\in  { \\mathbb { C } } ^ { P \\times N }$ is formulated by arranging these vectors d in chronological order. To be mentioned is that, by stacking the $P$ measurements in a series of time N together, the spatio-temporal data contains the most information on the operating states of the system.",
+        "bbox": [
+            73,
+            88,
+            493,
+            253
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "B. Real-Time Data Analysis for Anomaly Detection",
+        "text_level": 2,
+        "bbox": [
+            73,
+            273,
+            428,
+            289
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "In real-time analysis, we can move a $p \\times n \\ ( p = P , \\ n \\leq$ N) window on D at continuous sampling times and the last sampling time is the current time, which enables us to track the data behavior in real-time. For example, at the sampling time $t _ { j }$ , the obtained data window $\\mathbf { X } ( t _ { j } )$ is formulated as",
+        "bbox": [
+            73,
+            294,
+            491,
+            371
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathbf {X} (t _ {j}) = (\\mathbf {d} (t _ {j - n + 1}), \\mathbf {d} (t _ {j - n + 2}), \\dots , \\mathbf {d} (t _ {j})),\\tag{5}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            129,
+            377,
+            439,
+            395
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathbf { d } ( t _ { k } ) = ( d _ { 1 } , d _ { 2 } , \\cdot \\cdot \\cdot , d _ { p } ) ^ { H }$ for $t _ { j - n + 1 } \\leq t _ { k } \\leq t _ { j }$ is the sampling data at time $t _ { k }$",
+        "bbox": [
+            73,
+            402,
+            491,
+            434
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "For the data matrix $\\mathbf { X } \\in \\mathbb { C } ^ { p \\times n }$ , we convert it into the standard form X<sup>ˆ</sup> by",
+        "bbox": [
+            73,
+            434,
+            491,
+            464
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\hat {x} _ {i j} = (x _ {i j} - \\mu (\\mathbf {x} _ {i})) \\times \\frac {\\sigma (\\hat {\\mathbf {x}} _ {i})}{\\sigma (\\mathbf {x} _ {i})} + \\mu (\\hat {\\mathbf {x}} _ {i}),\\tag{6}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            147,
+            469,
+            421,
+            502
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathbf { x } _ { i } \\ = \\ ( x _ { i 1 } , x _ { i 2 } , . . . , x _ { i n } ) , \\ \\mu ( \\hat { \\mathbf { x } } _ { i } ) \\ = \\ 0 ,$ , and $\\sigma ( \\hat { \\mathbf { x } } _ { i } ) = 1$ $( i = 1 , 2 , . . . , p ; j = 1 , 2 , . . . , n )$ . The singular value equivalent of $\\hat { \\mathbf X }$ is introduced as",
+        "bbox": [
+            73,
+            508,
+            491,
+            554
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\hat {\\mathbf {X}} _ {u} = \\sqrt {\\frac {1}{n} \\hat {\\mathbf {X}} \\hat {\\mathbf {X}} ^ {H}} \\mathbf {U},\\tag{7}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            212,
+            556,
+            354,
+            590
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathbf { U } \\in \\mathbb { C } ^ { p \\times p }$ is a Haar unitary matrix, and $\\hat { \\mathbf { X } } _ { u } \\in \\mathbb { C } ^ { p \\times p } .$ According to equation (1), the product of L (such as $t _ { j - L + 1 } \\sim t _ { j }$ for the sampling time) non-Hermitian matrices $\\ddot { \\mathbf { X } } _ { k }$ is obtained by",
+        "bbox": [
+            73,
+            598,
+            491,
+            660
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\mathbf {Z} = \\prod_ {k = 1} ^ {L} \\hat {\\mathbf {X}} _ {u, k}.\\tag{8}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            230,
+            666,
+            334,
+            709
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Then Z is converted to the standard form $\\hat { \\mathbf { Z } }$ by",
+        "bbox": [
+            73,
+            715,
+            400,
+            732
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\hat {\\mathbf {z}} _ {i} = \\frac {\\mathbf {z} _ {i}}{\\sqrt {p} \\sigma (\\mathbf {z} _ {i})},\\tag{9}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            228,
+            736,
+            338,
+            767
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathbf { z } _ { i } ~ = ~ ( z _ { i 1 } , \\cdot \\cdot \\cdot ~ , z _ { i p } ) ~ ( i ~ = ~ 1 , \\cdot \\cdot \\cdot , p ) , ~ \\sigma ( \\mathbf { z } _ { i } )$ is the standard deviation of $\\mathbf { z } _ { i } ,$ , and thus $\\begin{array} { r } { \\sigma ^ { 2 } ( \\hat { \\bf z } _ { i } ) = \\frac { 1 } { p } . } \\end{array}$ Then the eigenvalues $\\lambda _ { \\hat { \\mathbf { Z } } , i }$ of $\\hat { \\mathbf { Z } }$ can be obtained and the MSR $\\kappa _ { \\mathrm { M S R } }$ in equation (4) can be calculated. Since $\\lambda _ { \\hat { \\mathbf { Z } } , i }$ is a complicated matrix function of the product $\\hat { \\mathbf { Z } } ,$ it can be considered as a random variable.",
+        "bbox": [
+            73,
+            772,
+            493,
+            868
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "In practice, for a series of time $T \\ ( T \\ \\leq \\ N ) , \\ \\kappa _ { \\mathrm { M S R } }$ is generated for each sampling time with continuously moving windows and the last sampling time $t _ { j }$ is considered as the current time. In order to realize anomaly declare automatically in real-time analysis, an anomaly indicator η is defined based on the generated $\\kappa _ { \\mathrm { M S R } } .$ . For example, at the sampling time $t _ { k }$ , the anomaly indicator $\\eta ( t _ { k } )$ is calculated as",
+        "bbox": [
+            73,
+            869,
+            493,
+            946
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            503,
+            69,
+            919,
+            99
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\eta (t _ {k}) = | \\kappa_ {\\mathrm{MSR}} (t _ {j}) - \\kappa_ {\\mathrm{MSR}} (t _ {j - 1}) |,\\tag{10}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            593,
+            107,
+            834,
+            125
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $j - T + 1 < k \\leq j$ and $| \\cdot |$ is the absolute value function. Here, η for the T sampling times is considered to follow a student t-distribution with $T - 1$ degree of freedom. Now we convert $\\eta$ for the last sampling time $t _ { j }$ into the standard form ηˆ by",
+        "bbox": [
+            501,
+            132,
+            923,
+            208
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\hat {\\eta} (t _ {j}) = \\frac {| \\eta (t _ {j}) - \\mu (\\eta) |}{\\sigma (\\eta)},\\tag{11}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            630,
+            205,
+            795,
+            239
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\mu ( \\eta )$ and $\\sigma ( \\eta )$ are the mean and standard deviation of $\\eta$ for the $T$ sampling times, and $\\hat { \\eta }$ follows the standard t-distribution with $T - 1$ degree of freedom. We can obtain the confidence level 1 − α of $\\eta ( t _ { j } )$ once $\\hat { \\eta } ( t _ { j } )$ and $T - 1$ are calculated. For example, let $\\hat { \\eta } ( t _ { j } ) = 2 . 3 6 4$ and $T - 1 = 1 0 0$ then the confidence level $1 - \\alpha$ for the last sampling time $t _ { j }$ is 98%. Thus, an anomaly can be declared automatically by comparing $1 - \\alpha$ with the threshold $( 1 - \\alpha ) _ { t h }$ defined empirically.",
+        "bbox": [
+            501,
+            244,
+            923,
+            382
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "C. Anomaly Detection Approach and Its Advantages",
+        "text_level": 2,
+        "bbox": [
+            504,
+            402,
+            864,
+            417
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Based on the research mentioned above, an RMT-based approach is proposed for anomaly detection in power systems. The specific steps are given in Table III-C.",
+        "bbox": [
+            503,
+            421,
+            921,
+            468
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "code",
+        "sub_type": "algorithm",
+        "code_caption": [],
+        "code_body": "<div class=\"mineru-algorithm\" style=\"white-space: pre-wrap; font-family:monospace;\">\nSteps of the RMT-based Anomaly Detection Approach\n1: A spatio-temporal data set  $D \\in C^{P \\times N}$  is formulated by arranging P synchrophasor measurements in a series of time N in chronological order.\n2: For the sampling time  $t_{j}$ :\n2a) Obtain the data matrix  $\\mathbf{X}(t_{j})$  as in equation (5) by using a  $p \\times n$  ( $p = P, n \\leq N$ ) window on D;\n2b) Convert  $\\mathbf{X}(t_{j})$  into the standard form matrix  $\\hat{\\mathbf{X}}(t_{j})$  through equation (6);\n2c) The singular value equivalent of  $\\hat{\\mathbf{X}}(t_{j})$  is introduced as  $\\hat{\\mathbf{X}}_{u}(t_{j})$  in equation (7);\n2d) The product  $\\mathbf{Z}(t_{j})$  of L non-Hermitian matrices  $\\hat{\\mathbf{X}}(t_{j})$  is calculated through equation (8);\n2e) Convert  $\\mathbf{Z}(t_{j})$  into the standard form  $\\hat{\\mathbf{Z}}(t_{j})$  through equation (9);\n2f) Calculate the eigenvalues  $\\lambda_{\\hat{\\mathbf{Z}},i} (i = 1, \\cdots, p)$  of  $\\hat{\\mathbf{Z}}(t_{j})$  and compare the ESD with the theoretical Ring law;\n2g) Calculate  $\\kappa_{\\mathrm{MSR}}(t_{j})$  through equation (4) and the corresponding  $\\eta(t_{j})$  in equation (10);\n3: Draw the  $\\kappa_{MSR} - t$  and  $\\eta - t$  curves for a series of time N.\n4: Calculate the confidence level  $1 - \\alpha$  of  $\\eta$  for each sampling time and declare anomalies where  $(1 - \\alpha) &gt; (1 - \\alpha)_{th}$ .\n</div>",
+        "bbox": [
+            513,
+            479,
+            918,
+            734
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Step 1 is conducted for data set formulation. For each sampling time, obtain a moving data window on the data set and the last sampling time is considered as the current time, which is shown in Step 2a. In Step 2b∼2f, the Ring law in RMT is used for the data window analysis. The MSR and corresponding anomaly indicator for each sampling time are calculated in Step $2 \\mathrm { g } .$ . The $\\kappa _ { \\mathrm { M S R } } - t$ and $\\eta - t$ curves are drawn in Step 3 to indicate the data behavior. In Step 4, the confidence level of $\\eta$ for each sampling time is calculated and compared with the threshold to realize anomaly declare automatically.",
+        "bbox": [
+            501,
+            748,
+            923,
+            914
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "The RMT-based anomaly detection approach is purely datadriven and suitable for high-dimensional data analysis, such as tens, hundreds or more. It is sensitive to the variation of the data behavior, which makes it possible for detecting the early anomalies. The steps above involve no mechanism models, thus avoiding the errors brought by assumptions and simplifications. For each sampling time, a spatio-temporal data window instead of just the current sampling data is analyzed in the approach. The average result makes it robust against random fluctuations and measuring errors in the data. What’s more, our approach is practical for real-time analysis for the fast computing speed.",
+        "bbox": [
+            503,
+            914,
+            923,
+            945
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "page_number",
+        "text": "4",
+        "bbox": [
+            910,
+            30,
+            921,
+            40
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            69,
+            493,
+            220
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "IV. CASE STUDIES",
+        "text_level": 2,
+        "bbox": [
+            212,
+            234,
+            352,
+            250
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In this section, the effectiveness of our approach is validated with the synthetic data generated from IEEE 300-bus, 118-bus and 57-bus test systems [20]. Detailed information about IEEE 300-bus, 118-bus and 57-bus test systems can be found in case300.m, case118.m and case57.m in Matpower6.0 package [21]. And the simulation environment is MATLAB2016. Three cases in different scenarios were designed: 1) The first case, leveraging the synthetic data from IEEE 300-bus test system, tested the effectiveness of our approach with $L \\ = \\ 1$ for anomaly detection, in which an anomaly signal was set by a sudden increase of impedance. 2) In the second case, we tested the effectiveness of our approach with $L > 1$ for anomaly detection and compared that with the case $L \\ = \\ 1$ . In this case, the synthetic data was generated from IEEE 118-bus test system and an increasing anomaly signal was set by gradually increasing the active load. 3) We validated the advantages of our approach in anomaly detection by comparing it with other existing techniques in the last case. In this case, the synthetic data was generated from IEEE 57-bus test system and an increasing anomaly signal was set by gradually increasing the active load.",
+        "bbox": [
+            73,
+            253,
+            493,
+            571
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "A. Case Study on L = 1",
+        "text_level": 2,
+        "bbox": [
+            73,
+            589,
+            246,
+            604
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In this case, the synthetic data generated from IEEE 300- bus test system contained 300 voltage measurement variables with sampling 2000 times. For the generated data set D, a little white noise E $( E _ { i t } \\sim N ( 0 , 1 )$ $i = 1 , \\cdots , 3 0 0 ; \\ t =$ $1 , \\cdots , 2 0 0 0 )$ was introduced to represent random fluctuations and measuring errors, $\\mathrm { i . e . , } \\tilde { \\mathbf { D } } = \\mathbf { D } + \\gamma \\mathbf { E }$ . The scale of the added white noise is $\\begin{array} { r } { \\gamma = \\sqrt { \\frac { T r ( { \\bf D } { \\bf D } ^ { H } ) } { T r ( { \\bf E } { \\bf E } ^ { H } ) \\times \\tau _ { S N R } } } . } \\end{array}$ , where $T r ( \\cdot )$ represents the trace function and $\\tau _ { S N R }$ is the signal-noise-rate. In order to test the effectiveness of our approach with $L = 1$ in equation (8), an assumed anomaly signal was set by a sudden increase of impedance from bus 33 to 34 and others stayed unchanged, which was shown in Table I. The generated data was shown in Figure 5. In the experiments, the size of the moving window was set as $3 0 0 \\times 5 0 0$ and the signal-noise-rate $\\tau _ { S N R }$ was set to be 10000. The experiments were conducted for 20 times and the results were averaged.",
+        "bbox": [
+            73,
+            608,
+            493,
+            854
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "The anomaly detection results are shown in Figure 6. The anomaly indicator η in Figure 6(b) is normalized into $( 0 , 1 ]$ It is noted that the $\\kappa _ { \\mathrm { M S R } } ~ - ~ t$ curve begins at $t _ { s } ~ = ~ 5 0 0$ because the initial moving window includes 499 times of historical sampling and the present sampling data. And the $\\eta - t$ curve begins at $t _ { s } = 5 0 1$ for $\\eta ( 5 0 1 )$ is calculated through $\\kappa _ { \\mathrm { M S R } } ( 5 0 0 )$ and $\\kappa _ { \\mathrm { M S R } } ( 5 0 1 )$ in equation (10). In the real-time calculation of $1 - \\alpha$ for each data point on the $\\eta - t$ curve, a series of $T = 1 0 0$ sampling times (i.e., 99 times of historical sampling times and the current sampling time) are considered to follow a student t-distribution. The threshold $( 1 - \\alpha ) _ { t h }$ is set to be 98%. The anomaly detection processes are shown as follows:",
+        "bbox": [
+            73,
+            854,
+            493,
+            946
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "table",
+        "img_path": "images/336fdbd216313a9b36efbfcaa8c022146ee302ef305ef884cfbc498249ff746b.jpg",
+        "table_caption": [
+            "TABLE I",
+            "AN ASSUMED SIGNAL FROM BUS 33 TO 34 IN CASE A."
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>fBus</td><td>tBus</td><td>Sampling Time</td><td>Impedance(p.u.)</td></tr><tr><td rowspan=\"2\">33</td><td rowspan=\"2\">34</td><td> $t_{s} = 1 \\sim 1000$ </td><td>0.2</td></tr><tr><td> $t_{s} = 1001 \\sim 2000$ </td><td>20</td></tr><tr><td>Others</td><td>Others</td><td> $t_{s} = 1 \\sim 2000$ </td><td>Unchanged</td></tr></table>",
+        "bbox": [
+            540,
+            104,
+            885,
+            157
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/b96292092122d90144943d9a444bd422f3b29130e5a689981e1670727f6e590e.jpg",
+        "content": "",
+        "chart_caption": [
+            "Fig. 5. The synthetic data generated from IEEE 300-bus test system in Case A. An anomaly signal was set at $t _ { s } = 1 0 0 1$ L"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            558,
+            176,
+            864,
+            263
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/85214c854cea4592e549842a1993ee615557cd7c3fad7a3ac1ce80e49c349928.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            509,
+            327,
+            697,
+            439
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/8a9e02acf835730ce6c64626f28116f31b97f51082c4cdc57b194e402f23ba89.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) $\\kappa _ { \\mathrm { M S R } } - t$ curve",
+            "Fig. 6. The anomaly detection results in Case A.",
+            "(b) $\\eta - t$ curve"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            720,
+            329,
+            906,
+            439
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/2a812392141185cbd6f1288d7642e90a6cd8108532e8aa70f2a8ea58a4a3a9e7.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            506,
+            506,
+            700,
+            651
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "chart",
+        "img_path": "images/60935d8c5ecd9683ab44366f55b2279d4a1d04fc493ea1eea576751dc2b53d8d.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) $t _ { s } = 1 0 0 0$",
+            "(b) $t _ { s } = 1 0 0 1$",
+            "Fig. 7. The ESD and its comparison with theoretical Ring law in Case A."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            715,
+            507,
+            908,
+            651
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            503,
+            717,
+            921,
+            821
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "I. During $t _ { s } = 5 0 0 \\sim 1 0 0 0 , \\kappa _ { \\mathrm { M S R } }$ and η remain almost constant and the corresponding values of $1 - \\alpha$ are small, which indicates no anomalies occur and the system operates in normal state. For example, at $t _ { s } ~ = ~ 1 0 0 0$ , the calculated value of $1 - \\alpha$ is 19.59%. As is shown in Figure 7(a), the ESD converges almost surely to the theoretical Ring law.",
+        "bbox": [
+            503,
+            824,
+            923,
+            914
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "II. At $t _ { s } = 1 0 0 1$ , κ<sub>MSR</sub> and η begin to change rapidly and the corresponding 1−α is 99.99%, which indicates an anomaly is detected and the system operates in abnormal state. As is shown in Figure 7(b), the ESD does not converge to the Ring law. It is noted that, from $t _ { s } = 1 0 0 1 \\sim 1 5 0 0$ , the $\\kappa _ { \\mathrm { M S R } } - t$ curve is almost U-shaped, because the delay lag of the anomaly signal to $\\kappa _ { \\mathrm { M S R } }$ is equal to the moving window’s width.",
+        "bbox": [
+            504,
+            914,
+            921,
+            945
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "page_number",
+        "text": "5",
+        "bbox": [
+            911,
+            31,
+            919,
+            40
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "table",
+        "img_path": "images/5fc9be6f4b1415d5fc6ff975f6cf9510cca3074f1a921a38091574b29c146b92.jpg",
+        "table_caption": [
+            "TABLE II",
+            "AN ASSUMED SIGNAL FOR ACTIVE LOAD OF BUS 20 IN CASE B."
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Bus</td><td>Sampling Time</td><td>Active Power(MW)</td></tr><tr><td rowspan=\"2\">20</td><td> $t_{s} = 1 \\sim 500$ </td><td>20</td></tr><tr><td> $t_{s} = 501 \\sim 1000$ </td><td> $20 \\rightarrow 70$ </td></tr><tr><td>Others</td><td> $t_{s} = 1 \\sim 1000$ </td><td>Unchanged</td></tr></table>",
+        "bbox": [
+            130,
+            104,
+            434,
+            157
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "chart",
+        "img_path": "images/55ba4c53ff303200e05ab04598a50037de68ac6602bacd469a4d6c9890379552.jpg",
+        "content": "",
+        "chart_caption": [
+            "Fig. 8. The synthetic data generated from IEEE 118-bus test system in Case B. One increasing signal was set at $t _ { s } = 5 0 1$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            127,
+            174,
+            434,
+            262
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "chart",
+        "img_path": "images/135e110053184ac2067d9cc6b1cb890cf13a5e206a1874365ef919eaa613db31.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "bbox": [
+            78,
+            324,
+            267,
+            422
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "chart",
+        "img_path": "images/177d5f5068355709279552f1505dba0733586f872c0ad6c05ca8bf6241d822c1.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) $\\kappa _ { \\mathrm { M S R } } - t$ curve",
+            "(b) η − t curve",
+            "Fig. 9. The anomaly detection results in Case B."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            287,
+            324,
+            477,
+            422
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            483,
+            491,
+            559
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "III. At $t _ { s } = 1 5 0 1 , \\kappa _ { \\mathrm { M S R } }$ returns to normal and remains constant afterwards, which indicates the anomaly signal disappears and the system returns to normal state. It is noted that $\\eta ( 1 5 0 1 )$ is large and the corresponding 1−α is 99.99%, which is caused by the change of the system state.",
+        "bbox": [
+            73,
+            559,
+            493,
+            636
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "B. Case Study on $L > 1$",
+        "text_level": 2,
+        "bbox": [
+            75,
+            654,
+            246,
+            667
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "In this case, we test the effectiveness of our approach with $L \\ > \\ 1$ and compare that with the case $L \\ = \\ 1$ The synthetic data generated from IEEE 118-bus test system contained 118 voltage measurement variables with sampling 1000 times and a little white noise was introduced to represent random fluctuations and measuring errors. In the simulation, an increasing anomaly signal was set by a gradual increase of active load at bus 20 and others stayed unchanged, which was shown in Table II. The generated data was shown in Figure 8. In the experiments, the size of the moving window was set as $1 1 8 \\times 2 0 0$ and the signal-noise-rate τ<sub>SNR</sub> was set to be 10000.. The experiments were conducted for 20 times and the results were averaged.",
+        "bbox": [
+            73,
+            672,
+            493,
+            869
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "The anomaly detection results of our approach with $L =$ $1 \\ \\sim \\ 4$ are shown in Figure 9, where $\\kappa _ { \\mathrm { M S R } }$ and η are normalized into (0, 1]. It is noted that the $\\kappa _ { \\mathrm { M S R } } - t$ curves corresponding to $L = 1 , 2 , 3 , 4$ begin at $t _ { s } = 2 0 0 , 2 0 1 , 2 0 2 , 2 0 3$ because the initial moving window contains 200 times of sampling data and the initial $\\kappa _ { \\mathrm { M S R } }$ is calculated through the product of L consecutive moving data windows. And the $\\eta - t$ curves corresponding to $L \\ = \\ 1 , 2 , 3 , 4$ begin at $t _ { s } = 2 0 1$ , 202, 203, 204, because the initial $\\eta ( t _ { k } )$ is calculated through $\\kappa _ { \\mathrm { M S R } } \\big ( t _ { k - 1 } \\big )$ and $\\kappa _ { \\mathrm { M S R } } ( t _ { k } )$ in equation (10). In realtime analysis, the parameter T and the threshold $( 1 - \\alpha ) _ { t h }$ are set the same as in Case A. The anomaly detection processes are shown as follows:",
+        "bbox": [
+            73,
+            869,
+            493,
+            945
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            69,
+            923,
+            189
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "I. During $t _ { s } = 2 0 0 \\sim 5 0 0 $ κ<sub>MSR</sub> and η remain almost constant and the corresponding $1 - \\alpha$ of η are small random values, which indicates no anomalies occur and the system operates in normal state. For example, at $t _ { s } = 5 0 0$ the calculated $1 - \\alpha$ of η corresponding to $L = 1 , 2 , 3 , 4$ are 45.457%, 45.045%, 39.943%, 12.609%, respectively. As is shown in Figure 10, the ESD converges almost surely to the theoretical Ring law.",
+        "bbox": [
+            503,
+            190,
+            923,
+            310
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "II. At $t _ { s } ~ = ~ 5 0 1 , ~ \\kappa _ { \\mathrm { M S R } }$ and η change rapidly and the corresponding $1 \\ : - \\ : \\alpha$ of η for $\\begin{array} { r } { \\begin{array} { r c l } { L } & { = } & { 1 , 2 , 3 , 4 } \\end{array} } \\end{array}$ are 99.998%, 99.998%, 99.999%, 99.999%, which indicates an anomaly is detected and the system operates in abnormal state. As is shown in Figure 11, the ESD does not converge to the Ring law. It is noted that, with the increase of the number of multiplicative data windows, the values of $\\kappa _ { \\mathrm { M S R } }$ decrease more rapidly from $t _ { s } = 5 0 1 \\sim 7 0 0$ , which makes it easier for detecting the anomaly signal. It validates our claim in Section II-A that the product of multiple ‘signal+noise’ matrices can reinforce the signals.",
+        "bbox": [
+            503,
+            311,
+            923,
+            477
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "III. From $t _ { s } = 7 0 1 , \\kappa _ { \\mathrm { M S R } }$ and η remain almost constant for the increasing signal is contained throughout the moving window afterwards.",
+        "bbox": [
+            503,
+            478,
+            923,
+            523
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "C. Case Study on Comparison with Other Approaches",
+        "text_level": 2,
+        "bbox": [
+            504,
+            546,
+            877,
+            561
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "In this case, we compare our spectrum analysis (SA) approach with one-class support vector machines (SVMs) [22], structured autoencoders (AEs) [23] and long short term memory (LSTM) networks [24] to illustrate the advantages of our approach for anomaly detection, i.e., more sensitive to the variation of the data behavior and robust against random fluctuations and measuring errors. The IEEE 57-bus test system is used to generate the synthetic data. In the simulation, an increasing anomaly signal was set by a gradual increase of active load at bus 20 and others stayed unchanged, which was shown in Table III. The generated data contained 57 voltage measurement variables with sampling 1000 times, which was shown in Figure 12. In the experiment, the signalnoise-rate $\\tau _ { S N R }$ was set as 1000. For SVMs, AEs and LSTM, we trained the detection models only using a normal data sequence during $t _ { s } = 1 \\sim 2 0 0$ and computed the testing errors for the remaining sequence during $t _ { s } = 2 0 1 \\sim 1 0 0 0 .$ , in which one times of sampling was used as a training/testing sample. For our approach, both the case of $L = 1$ and $L > 1$ were tested. The parameters involved in the detection approaches are summarized as in Table IV.",
+        "bbox": [
+            501,
+            566,
+            923,
+            883
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "The anomaly detection results of different approaches are normalized into [0, 1], which are shown in Figure 13. For SVMs, the normalization result of signed distance to the separating hyperplane is plotted; for AEs and LSTM, the normalized values of testing errors are plotted; for SA (L = 1)",
+        "bbox": [
+            503,
+            883,
+            923,
+            946
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "page_number",
+        "text": "6",
+        "bbox": [
+            910,
+            31,
+            921,
+            40
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "chart",
+        "img_path": "images/cf4c77b161fa95d7e6afd73702e3d0ddc119fd544a7553fb3eec97fca25c5200.jpg",
+        "content": "",
+        "chart_caption": [
+            "(a) $L = 1$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            81,
+            84,
+            274,
+            229
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/3be6ae5be2adc38bb32463e9fa142399d48b5dfb404a16a385c3297d5f400c47.jpg",
+        "content": "",
+        "chart_caption": [
+            "(b) $L = 2$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            289,
+            84,
+            486,
+            229
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/6ab1f80fc5677edb204d88f711779969cdf37a77cc58cf53179b2b4ef0148bd0.jpg",
+        "content": "",
+        "chart_caption": [
+            "(c) $L = 3$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            501,
+            84,
+            697,
+            228
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/a80c86779eb4b7f743cdaeb0841c2189bea0dba7d1deb5a45a249dd3bffa509b.jpg",
+        "content": "",
+        "chart_caption": [
+            "(d) $L = 4$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            710,
+            84,
+            905,
+            228
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/1743d233a3077b2db792bf88bb149d404ab3ab53d65dd93ba0363f6389d79e93.jpg",
+        "content": "",
+        "chart_caption": [
+            "Fig. 10. In normal state (such as $t _ { s } = 5 0 0 )$ , the ESD converges almost surely to the theoretical Ring law.",
+            "(a) $L = 1$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            80,
+            297,
+            274,
+            444
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/f901ed326041ac7302fd7c924722c7c58b12769241b859902a878a3a9c591c4e.jpg",
+        "content": "",
+        "chart_caption": [
+            "(b) $L = 2$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            287,
+            297,
+            486,
+            444
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/97d90a0ce4cb48aab802a2d68137bfe43346333d55dca0657c94a23c7613931f.jpg",
+        "content": "",
+        "chart_caption": [
+            "(c) $L = 3$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            501,
+            299,
+            697,
+            444
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/f4d71f28ed15458cf1e3a7332066864861e0f9a699c167b389dfa81af5d07c23.jpg",
+        "content": "",
+        "chart_caption": [
+            "(d) $L = 4$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            710,
+            299,
+            905,
+            443
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/50d1d6e1723887fcb2af24291af44a9f85ce3e4fd96a382acb64480a1b4cf609.jpg",
+        "table_caption": [
+            "Fig. 11. In abnormal state (such as $t _ { s } = 5 0 1 )$ , the ESD does not converge to the theoretical Ring law.",
+            "AN ASSUMED SIGNAL FOR ACTIVE LOAD OF BUS 20 IN CASE C.",
+            "TABLE III"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Bus</td><td>Sampling Time</td><td>Active Power(MW)</td></tr><tr><td rowspan=\"2\">20</td><td> $t_s = 1 \\sim 500$ </td><td>10</td></tr><tr><td> $t_s = 501 \\sim 1000$ </td><td> $10 \\rightarrow 60$ </td></tr><tr><td>Others</td><td> $t_s = 1 \\sim 1000$ </td><td>Unchanged</td></tr></table>",
+        "bbox": [
+            130,
+            542,
+            434,
+            595
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/976ec8de43ee4debe28790eb966358d0b5b40a92d237da7108ee7d3c31acb8d2.jpg",
+        "content": "",
+        "chart_caption": [
+            "Fig. 12. The synthetic data generated from IEEE 57-bus test system. An increasing anomaly signal was set at $t _ { s } ~ = ~ 5 0 1$ . With the increase of the anomaly signal, the voltage collapses at $t _ { s } = 9 8 0$"
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            133,
+            611,
+            434,
+            696
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/2b05d1615f4cb2a4fb86f9903b81131c402c80932b8aae7369353a2cc607839b.jpg",
+        "content": "",
+        "chart_caption": [
+            "Fig. 13. The anomaly detection results of different approaches in Case C."
+        ],
+        "chart_footnote": [],
+        "bbox": [
+            127,
+            773,
+            431,
+            871
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            75,
+            929,
+            491,
+            945
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/29abd9a65a249eb7653b5f65db6612cc325e33f2c2e02225b024ce36936ca5af.jpg",
+        "table_caption": [
+            "TABLE IV",
+            "PARAMETER SETTINGS INVOLVED IN THE DETECTION APPROACHES."
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Approaches</td><td>Parameter Settings</td></tr><tr><td>SVMs</td><td>the upper bound on the fraction of training errors  $v: 0.03$ ;the kernel function:  $K(\\mathbf{x}_i, \\mathbf{x}_j) = (0.01\\mathbf{x}_i^T\\mathbf{x}_j)^3$ ;</td></tr><tr><td>AEs</td><td>the model depth: 3;the number of neurons in each layer of encoder: 57, 32, 16;the number of neurons in each layer of decoder: 16, 32, 57;the initial learning rate: 0.001;the activation function: sigmoid;the minimum reconstruction error: 0.00001;the optimizer: Adam.</td></tr><tr><td>LSTM</td><td>the time steps: 1;the model depth: 3;the number of neurons in each layer: 57, 64, 57;the initial learning rate: 0.001;the activation function: sigmoid, tanh;the minimum loss: 0.00001;the optimizer: Adam.</td></tr><tr><td>SA( $L = 1$ )</td><td>the moving window’s size:  $57 \\times 200$ ;the number of multiplicative data windows:  $L = 1$ .</td></tr><tr><td>SA( $L > 1$ )</td><td>the moving window’s size:  $57 \\times 200$ ;the number of multiplicative data windows:  $L = 2$ .</td></tr></table>",
+        "bbox": [
+            514,
+            542,
+            911,
+            827
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "and SA $( L > 1 ) , 1 - \\hat { \\kappa } _ { \\mathrm { M S R } }$ is plotted, where $\\begin{array} { r } { \\hat { \\kappa } _ { \\mathrm { M S R } } } \\end{array}$ is the normalized value of $\\kappa _ { \\mathrm { M S R } } .$ . It can be obtained that:",
+        "bbox": [
+            503,
+            854,
+            921,
+            883
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "I. SA $( L \\ = \\ 1 )$ and SA $( L \\ > \\ 1 )$ are able to detect the anomaly signal much earlier (i.e., $t _ { s } ~ = ~ 5 2 0 ~ \\sim ~ 5 3 0 )$ than other approaches, which validates our approach is more sensitive to the variation of the data behavior by exploring the data correlations and robust against random fluctuations and measuring errors. The reason is that, in our approach, a data window instead of just the current sampling data is analyzed for each sampling time. The average result makes our approach more robust against random fluctuations and measuring errors of the data.",
+        "bbox": [
+            503,
+            883,
+            923,
+            946
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "page_number",
+        "text": "7",
+        "bbox": [
+            911,
+            31,
+            921,
+            41
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/6240c8e8a0d25f57be2a18e39c9cdebe5ab2b13b590adfafe98b23f01d908ef4.jpg",
+        "table_caption": [
+            "TABLE V",
+            "THE AVERAGE CALCULATION TIME OF DIFFERENT APPROACHES."
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Approaches</td><td>SVMs</td><td>AEs</td><td>LSTM</td><td>SA( $L = 1$ )</td><td>SA( $L = 2$ )</td></tr><tr><td> $ACT$  (unit: s)</td><td>0.001</td><td>0.001</td><td>0.002</td><td>0.001</td><td>0.002</td></tr></table>",
+        "bbox": [
+            76,
+            104,
+            493,
+            133
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            73,
+            162,
+            493,
+            253
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "II. SA $( L \\ > \\ 1 )$ outperforms SA $( L \\ = \\ 1 )$ in anomaly detection, which indicates the product of multiple moving data windows can reinforce the anomaly signal so that it can be detected much easier.",
+        "bbox": [
+            73,
+            253,
+            491,
+            314
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "III. The detection curves in our SA approach increase rapidly when the voltage collapses from $t _ { s } ~ = ~ 9 8 0$ , while that of other approaches vibrates with the voltage values. It indicates our approach can reflect the system state more accurately in macroscopic.",
+        "bbox": [
+            73,
+            315,
+            491,
+            391
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Furthermore, in order to illustrate the efficiency of different detection approaches, the average calculation time (ACT) for each sampling time was counted. For SVMs, AEs and LSTM, the ACT for each testing sample was counted, which does not include the model training time. The experiments were conducted on a server with 2.60 GHz central processing unit (CPU) and 8.00 GB random access memory (RAM). The ACT for SVMs, AEs, LSTM, SA $( L \\ = \\ 1 )$ and SA $( L = 2 )$ are shown in Table V. Considering our approach is an unsupervised approach without any training, it can be concluded that our approach has competitive performance in detection efficiency.",
+        "bbox": [
+            73,
+            392,
+            493,
+            573
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "V. CONCLUSION",
+        "text_level": 2,
+        "bbox": [
+            223,
+            597,
+            344,
+            609
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Based on random matrix theory, a data-driven approach is proposed for anomaly detection in power systems. It is capable of detecting the anomaly in an early phase by exploring the variation of the data behavior. The mean spectral radius gives insight into the system states from a macroscopic perspective, which is used to indicate the data behavior in our approach. An anomaly indicator based on the MSR is designed and the corresponding confidence level 1 − α is calculated to realize anomaly declare automatically. Our approach is purely datadriven without making assumptions and simplifications on the complex power systems. It is robust against random fluctuations and measuring errors, and it has fast computing speed. Case studies on synthetic data corroborate the effectiveness and advantages of our approach, which indicates our approach can be served as a primitive for real-time data analysis in power systems.",
+        "bbox": [
+            73,
+            621,
+            493,
+            864
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "REFERENCES",
+        "text_level": 2,
+        "bbox": [
+            236,
+            883,
+            333,
+            898
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[1] M. Zima, M. Larsson, P. Korba, C. Rehtanz, and G. Andersson, “Design aspects for wide-area monitoring and control systems,” Proc. IEEE, vol. 93, no. 5, pp. 980–996, May 2005.",
+        "bbox": [
+            83,
+            909,
+            491,
+            944
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[2] S. G. Ghiocel, J. H. Chow, G. Stefopoulos, B. Fardanesh, D. Maragal, B. Blanchard, M. Razanousky, and D. B. Bertagnolli, “Phasormeasurement-based state estimation for synchrophasor data quality improvement and power transfer interface monitoring,” IEEE Trans. Power Syst., vol. 29, no. 2, pp. 881–888, Mar. 2014.",
+        "bbox": [
+            513,
+            71,
+            921,
+            128
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[3] S. Dasgupta, M. Paramasivam, U. Vaidya, and V. Ajjarapu, “Real-time monitoring of short-term voltage stability using pmu data,” IEEE Trans. Power Syst., vol. 28, no. 4, pp. 3702–3711, Jul. 2013.",
+        "bbox": [
+            513,
+            128,
+            921,
+            162
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[4] L. Xie, Y. Chen, and P. R. Kumar, “Dimensionality reduction of synchrophasor data for early event detection: Linearized analysis,” IEEE Trans. Power Syst., vol. 29, no. 6, pp. 2784–2794, Nov. 2014.",
+        "bbox": [
+            513,
+            162,
+            921,
+            196
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[5] M. Khan, P. M. Ashton, M. Li, G. A. Taylor, I. Pisica, and J. Liu, “Parallel detrended fluctuation analysis for fast event detection on massive pmu data,” IEEE Trans. Smart Grid, vol. 6, no. 1, pp. 360– 368, Jan. 2015.",
+        "bbox": [
+            513,
+            195,
+            921,
+            241
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[6] M. Wu and L. Xie, “Online detection of low-quality synchrophasor measurements: A data-driven approach,” IEEE Trans. Power Syst., vol. 32, no. 4, pp. 2817–2827, Jul. 2017.",
+        "bbox": [
+            513,
+            241,
+            921,
+            275
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[7] D.-I. Kim, T. Y. Chun, S.-H. Yoon, G. Lee, and Y.-J. Shin, “Waveletbased event detection method using pmu data,” IEEE Trans. Smart grid, vol. 8, no. 3, pp. 1154–1162, May 2017.",
+        "bbox": [
+            513,
+            275,
+            921,
+            309
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[8] J. Wishart, “The generalised product moment distribution in samples from a normal multivariate population,” Biometrika, vol. 20, no. 1/2, pp. 32–52, 1928.",
+        "bbox": [
+            513,
+            309,
+            921,
+            343
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[9] R. C. Qiu, Z. Hu, H. Li, and M. C. Wicks, Cognitive radio communication and networking: Principles and practice. Hoboken, NJ, USA:Wiley, 2012.",
+        "bbox": [
+            511,
+            343,
+            921,
+            377
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[10] N. A. S. B. K. Saad, Random Matrix Theory with Applications in Statistics and Finance. Canada: Ottawa, 2013.",
+        "bbox": [
+            506,
+            377,
+            921,
+            400
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[11] K. Chaitanya, “Random matrix theory approach to quantum mechanics,” arXiv preprint arXiv:1501.06665, 2015. [Online]. Available: https: //arxiv.org/pdf/1501.06665.pdf",
+        "bbox": [
+            506,
+            398,
+            921,
+            434
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[12] X. He, Q. Ai, R. C. Qiu, W. Huang, L. Piao, and H. Liu, “A big data architecture design for smart grids based on random matrix theory,” IEEE Trans. Smart Grid, vol. 8, no. 2, pp. 674–686, Mar. 2017.",
+        "bbox": [
+            506,
+            434,
+            921,
+            468
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[13] X. Xu, X. He, Q. Ai, and R. C. Qiu, “A correlation analysis method for power systems based on random matrix theory,” IEEE Trans. Smart Grid, vol. 8, no. 4, pp. 1811–1820, Jul. 2017.",
+        "bbox": [
+            506,
+            468,
+            921,
+            502
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[14] W. Liu, D. Zhang, X. Wang, D. Liu, and X. Wu, “Power system transient stability analysis based on random matrix theory,” Proc. CSEE, vol. 36, no. 18, pp. 4854–4863, Oct. 2016.",
+        "bbox": [
+            506,
+            501,
+            921,
+            535
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[15] X. Wu, D. Zhang, D. Liu, W. Liu, and C. Deng, “A method for power system steady stability situation assessment based on random matrix theory,” Proc. CSEE, vol. 36, no. 20, pp. 5414–5420, Dec. 2016.",
+        "bbox": [
+            506,
+            535,
+            921,
+            570
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[16] J. R. Ipsen and M. Kieburg, “Weak commutation relations and eigenvalue statistics for products of rectangular random matrices,” Physical Review E, vol. 89, no. 3, p. 032106, 2014.",
+        "bbox": [
+            506,
+            569,
+            921,
+            604
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[17] A. Guionnet, M. Krishnapur, and O. Zeitouni, “The single ring theorem,” arXiv preprint arXiv:0909.2214, 2009. [Online]. Available: https://arxiv.org/pdf/0909.2214.pdf",
+        "bbox": [
+            506,
+            604,
+            921,
+            637
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[18] F. Benaych-Georges and J. Rochet, “Outliers in the single ring theorem,” Probab. Theory Related Fields, vol. 165, no. 1-2, pp. 313–363, May 2016.",
+        "bbox": [
+            506,
+            637,
+            921,
+            671
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[19] N. Coston, S. O’Rourke, and P. M. Wood, “Outliers in the spectrum for products of independent random matrices,” arXiv preprint arXiv:1711.07420, 2017. [Online]. Available: https://arxiv.org/pdf/1711. 07420.pdf",
+        "bbox": [
+            506,
+            671,
+            921,
+            715
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[20] R. D. Zimmerman, C. E. Murillo-Sanchez, and R. J. Thomas, “Matpower: Steady-state operations, planning, and analysis tools for power systems research and education,” IEEE Trans. Power Syst., vol. 26, no. 1, pp. 12–19, Feb. 2011.",
+        "bbox": [
+            506,
+            715,
+            921,
+            762
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[21] R. D. Zimmerman and C. E. Murillo-Sanchez, “Matpower 6.0 users´ manual,” Dec. 2016.",
+        "bbox": [
+            506,
+            762,
+            921,
+            784
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[22] J. Ma and S. Perkins, “Time-series novelty detection using one-class support vector machines,” Proc. IJCNN, pp. 1741–1745, 2003.",
+        "bbox": [
+            506,
+            784,
+            921,
+            808
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[23] J. Liu, J. Guo, P. Orlik, M. Shibata, D. Nakahara, S. Mii, and M. Taka´c,ˇ “Anomaly detection in manufacturing systems using structured neural networks,” 13th WCICA, pp. 175–180, 2018.",
+        "bbox": [
+            506,
+            806,
+            919,
+            840
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "ref_text",
+        "text": "[24] P. Malhotra, L. Vig, G. Shroff, and P. Agarwal, “Long short term memory networks for anomaly detection in time series,” Proc. ESANN, pp. 89–94, 2015.",
+        "bbox": [
+            506,
+            840,
+            919,
+            875
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "page_number",
+        "text": "8",
+        "bbox": [
+            911,
+            31,
+            921,
+            40
+        ],
+        "page_idx": 7
+    }
+]

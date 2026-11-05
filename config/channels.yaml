@@ -1,0 +1,16 @@
+# channels 定义发到哪里，routes 定义什么内容、什么时候发。
+# visibility: public 的渠道只能收到公开主题，并且只有白名单字段。
+channels:
+  me:
+    adapter: fake_publisher
+    renderer: plain_text
+    visibility: private
+    options:
+      output_file: data/demo/outbox.jsonl
+routes:
+  - id: daily-me
+    topic: "*"
+    channel: me
+    schedule: daily 00:00
+    tiers: [must_read, need_fulltext]
+    limit: 5

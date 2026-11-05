@@ -1,0 +1,155 @@
+"""评价指标：唯一分数由代码计算，修改配置时影响范围可判断。"""
+
+import json
+from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
+
+from litfactory.domain.rubric import Rubric, apply_fulltext_constraint, compute_score
+
+DEFAULT = Path(__file__).parents[2] / "config" / "rubrics" / "default.json"
+
+
+def raw() -> dict:
+    return json.loads(DEFAULT.read_text(encoding="utf-8"))
+
+
+def rubric() -> Rubric:
+    return Rubric.model_validate(raw())
+
+
+def levels(rel, nov, evi, reu) -> dict:
+    return {"relevance": rel, "novelty": nov, "evidence": evi, "reusability": reu}
+
+
+@pytest.mark.parametrize(
+    ("given", "score", "tier"),
+    [
+        (levels(5, 5, 5, 5), 100, "must_read"),
+        (levels(4, 4, 3, 3), 72, "digest"),
+        (levels(4, 4, 4, 4), 80, "must_read"),
+        (levels(3, 3, 3, 3), 60, "digest"),
+        (levels(2, 2, 2, 2), 40, "drop"),
+    ],
+)
+def test_score_and_tier(given, score, tier):
+    result = compute_score(rubric(), given)
+    assert (result.score, result.tier, result.provisional, result.gated) == (
+        score,
+        tier,
+        False,
+        False,
+    )
+
+
+def test_gate_failure_drops_even_with_high_other_levels():
+    result = compute_score(rubric(), levels(1, 5, 5, 5))
+    assert result.gated
+    assert result.tier == "drop"
+
+
+def test_null_levels_are_provisional_and_cannot_be_must_read():
+    result = compute_score(rubric(), levels(5, 5, None, None))
+    assert result.score == 100
+    assert result.provisional
+    assert result.tier == "need_fulltext"
+
+
+def test_provisional_below_threshold_is_dropped():
+    result = compute_score(rubric(), levels(2, 2, None, None))
+    assert (result.score, result.tier) == (40, "drop")
+
+
+def test_abstract_only_score_uses_available_weights():
+    result = compute_score(rubric(), levels(4, 3, None, None))
+    assert result.score == 72
+
+
+def test_unknown_gate_level_does_not_silently_drop():
+    result = compute_score(rubric(), levels(None, 5, 5, 5))
+    assert result.provisional
+    assert not result.gated
+    assert result.tier == "need_fulltext"
+
+
+def test_all_null_is_dropped():
+    result = compute_score(rubric(), levels(None, None, None, None))
+    assert (result.score, result.tier) == (0, "drop")
+
+
+def test_rounds_half_up_not_bankers():
+    data = raw()
+    data["levels"]["max"] = 4
+    weights = iter([50, 50, 0, 0])
+    data["dimensions"] = [d for d in data["dimensions"] if d["key"] in {"relevance", "novelty"}]
+    for dim in data["dimensions"]:
+        dim["weight"] = next(weights)
+        dim["anchors"] = {"0": "low"}
+    custom = Rubric.model_validate(data)
+    assert compute_score(custom, {"relevance": 2, "novelty": 0}).score == 25
+    data["levels"]["max"] = 8
+    assert compute_score(Rubric.model_validate(data), {"relevance": 2, "novelty": 0}).score == 13
+
+
+def test_rejects_missing_or_out_of_range_levels():
+    with pytest.raises(ValueError, match="缺少"):
+        compute_score(rubric(), {"relevance": 5})
+    with pytest.raises(ValueError, match="范围"):
+        compute_score(rubric(), levels(6, 5, 5, 5))
+    with pytest.raises(ValueError, match="未知"):
+        compute_score(rubric(), {**levels(5, 5, 5, 5), "extra": 1})
+
+
+def test_fulltext_constraint_nulls_only_fulltext_dimensions_and_copies():
+    original = levels(5, 4, 5, 5)
+    constrained = apply_fulltext_constraint(rubric(), original, fulltext_used=False)
+    assert constrained == levels(5, 4, None, None)
+    assert original == levels(5, 4, 5, 5)
+    assert apply_fulltext_constraint(rubric(), original, fulltext_used=True) == original
+
+
+def test_weight_change_only_changes_policy_hash():
+    data = raw()
+    data["dimensions"][0]["weight"] = 30
+    data["dimensions"][1]["weight"] = 30
+    changed = Rubric.model_validate(data)
+    assert changed.policy_hash != rubric().policy_hash
+    assert changed.semantic_hash == rubric().semantic_hash
+
+
+def test_anchor_change_only_changes_semantic_hash():
+    data = raw()
+    data["dimensions"][0]["anchors"]["3"] = "新的锚点"
+    changed = Rubric.model_validate(data)
+    assert changed.semantic_hash != rubric().semantic_hash
+    assert changed.policy_hash == rubric().policy_hash
+
+
+def test_assessment_schema_never_asks_llm_for_total_score():
+    schema = rubric().assessment_schema()
+    assert schema["additionalProperties"] is False
+    assert set(schema["properties"]) == {"dimensions"}
+    dims = schema["properties"]["dimensions"]["properties"]
+    assert set(dims) == {"relevance", "novelty", "evidence", "reusability"}
+    assert dims["relevance"]["properties"]["level"]["maximum"] == 5
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda d: d["dimensions"][0].update(weight=10), "权重总和"),
+        (lambda d: d["gates"][0].update(dimension="nope"), "门槛"),
+        (lambda d: d["gates"][0].update(min_level=9), "门槛"),
+        (lambda d: d["tiers"].pop(), "min_score 为 0"),
+        (lambda d: d["provisional"].update(tier="digest"), "provisional"),
+        (lambda d: d["dimensions"][0]["anchors"].update({"9": "x"}), "锚点"),
+        (lambda d: d["dimensions"].append(dict(d["dimensions"][0], weight=1)), "维度"),
+        (lambda d: d.update(typo=1), "typo"),
+    ],
+)
+def test_invalid_rubric_fails_fast(mutate, message):
+    data = raw()
+    mutate(data)
+    with pytest.raises(ValidationError, match=message):
+        Rubric.model_validate(data)

@@ -1,0 +1,10 @@
+# 初筛用便宜模型，提取和评估用强模型。
+providers:
+  main:
+    adapter: fake_llm
+tasks:
+  triage: { provider: main, model: demo-cheap, prompt: triage }
+  extract: { provider: main, model: demo-strong, prompt: extract }
+  assess: { provider: main, model: demo-strong, prompt: assess }
+budget:
+  daily_usd: 2.0
