@@ -9,10 +9,15 @@ from typing import Any
 
 from litfactory.adapters.blobstore.local import LocalBlobStore
 from litfactory.adapters.fakes.fulltext import FakeFullText
+from litfactory.adapters.fakes.library import FakeLibrary
 from litfactory.adapters.fakes.llm import FakeLLM
 from litfactory.adapters.fakes.parser import FakeParser
 from litfactory.adapters.fakes.publisher import FakePublisher
 from litfactory.adapters.fakes.source import FakeSource
+from litfactory.adapters.feishu.api import APP_ID_ENV, APP_SECRET_ENV, FeishuMessenger
+from litfactory.adapters.feishu.card import FeishuCardRenderer
+from litfactory.adapters.feishu.listener import FeishuListener, answerers_from
+from litfactory.adapters.feishu.publisher import FeishuPublisher
 from litfactory.adapters.fulltext.arxiv import ArxivFullText
 from litfactory.adapters.fulltext.core import CoreFullText
 from litfactory.adapters.fulltext.crossref_tdm import CrossrefTdmFullText
@@ -20,6 +25,10 @@ from litfactory.adapters.fulltext.europe_pmc import EuropePmcFullText
 from litfactory.adapters.fulltext.openalex import OpenAlexFullText
 from litfactory.adapters.fulltext.semantic_scholar import SemanticScholarFullText
 from litfactory.adapters.fulltext.unpaywall import UnpaywallFullText
+from litfactory.adapters.llm.anthropic import AnthropicMessagesLLM
+from litfactory.adapters.llm.base import HttpLLM
+from litfactory.adapters.llm.gemini import GeminiLLM
+from litfactory.adapters.llm.openai import OpenAIChatLLM, OpenAIResponsesLLM
 from litfactory.adapters.parsers.mineru_cloud import MinerUCloudParser
 from litfactory.adapters.parsers.pdf_text import PdfTextParser
 from litfactory.adapters.renderers.plain_text import PlainTextRenderer
@@ -32,7 +41,13 @@ from litfactory.adapters.sources.openreview import OpenReviewSource
 from litfactory.adapters.sources.pubmed import PubMedSource
 from litfactory.adapters.sources.semantic_scholar import SemanticScholarSource
 from litfactory.adapters.zotero.fulltext import ZoteroFullText
+from litfactory.adapters.zotero.local_api import (
+    default_key_file,
+    read_local_key,
+    save_local_key,
+)
 from litfactory.adapters.zotero.source import ZoteroSource
+from litfactory.adapters.zotero.writer_local import ZoteroLocalLibrary
 from litfactory.application.context import AppContext, ChannelBinding, RuntimeSettings
 from litfactory.application.llm_gateway import LLMGateway, Prompt, TaskRoute
 from litfactory.domain.chunker import ChunkerConfig
@@ -40,6 +55,8 @@ from litfactory.domain.errors import ConfigError
 from litfactory.infra.config import AdapterConfig, LoadedConfig
 from litfactory.infra.db.store import SqlStore
 from litfactory.ports.fulltext import FullTextProvider
+from litfactory.ports.inbound import CardClick
+from litfactory.ports.library import ReferenceLibrary
 from litfactory.ports.llm import LLM
 from litfactory.ports.parser import Parser
 from litfactory.ports.publisher import Publisher, Renderer
@@ -140,14 +157,44 @@ PARSERS: Mapping[str, Callable[[BuildArgs], Parser]] = {
         a.secret("MINERU_API_TOKEN"), a.options_with_paths("state_dir")
     ),
 }
+
+
+def _llm_key(args: BuildArgs) -> str | None:
+    """credentials_env 写 0 个（本地服务）或 1 个变量名。声明了就必须有值，启动时报错。"""
+    if len(args.credentials) > 1:
+        raise ConfigError(f"大模型提供方 {args.name} 的 credentials_env 只能写一个变量")
+    env = next(iter(args.credentials), None)
+    if env is None:
+        return None
+    key = args.secret(env)
+    if not key:
+        raise ConfigError(f"大模型提供方 {args.name} 需要环境变量 {env}")
+    return key
+
+
 LLMS: Mapping[str, Callable[[BuildArgs], LLM]] = {
     "fake_llm": lambda _: FakeLLM(),
+    "anthropic_messages": lambda a: AnthropicMessagesLLM(a.name, a.options, _llm_key(a)),
+    "openai_chat": lambda a: OpenAIChatLLM(a.name, a.options, _llm_key(a)),
+    "openai_responses": lambda a: OpenAIResponsesLLM(a.name, a.options, _llm_key(a)),
+    "gemini": lambda a: GeminiLLM(a.name, a.options, _llm_key(a)),
 }
 PUBLISHERS: Mapping[str, Callable[[BuildArgs], Publisher]] = {
     "fake_publisher": lambda a: FakePublisher(a.optional_path("output_file")),
+    "feishu": lambda a: FeishuPublisher(
+        a.options, FeishuMessenger(a.secret(APP_ID_ENV), a.secret(APP_SECRET_ENV))
+    ),
+}
+LIBRARIES: Mapping[str, Callable[[BuildArgs], ReferenceLibrary]] = {
+    # 本地 key 由 litfactory zotero authorize 写入私有文件，也可以用环境变量覆盖。
+    "fake_library": lambda _: FakeLibrary(),
+    "zotero_local": lambda a: ZoteroLocalLibrary(
+        a.options, api_key=read_local_key(os.environ, default_key_file())
+    ),
 }
 RENDERERS: Mapping[str, Callable[[], Renderer]] = {
     "plain_text": PlainTextRenderer,
+    "feishu_card": FeishuCardRenderer,
 }
 
 
@@ -193,6 +240,9 @@ def _build_llm(config: LoadedConfig, store: SqlStore, clock: Callable[[], dateti
     for task, setting in config.llm.tasks.items():
         if setting.provider not in providers:
             raise ConfigError(f"LLM 任务 {task} 引用了未启用的提供方：{setting.provider}")
+        llm = providers[setting.provider]
+        if isinstance(llm, HttpLLM):
+            llm.check_model(setting.model)
         routes[task] = TaskRoute(
             providers[setting.provider], setting.model, prompts[setting.prompt]
         )
@@ -210,6 +260,64 @@ def _build_channels(config: LoadedConfig) -> dict[str, ChannelBinding]:
                 publisher=_build(PUBLISHERS, "发布", name, channel, config.root),
             )
     return channels
+
+
+def build_library(config: LoadedConfig) -> ReferenceLibrary | None:
+    library = config.app.library
+    if library is None or not library.enabled:
+        return None
+    return _build(LIBRARIES, "文献库", library.adapter, library, config.root)
+
+
+def _zotero_local(config: LoadedConfig) -> ZoteroLocalLibrary:
+    library = config.app.library
+    if library is None or library.adapter != "zotero_local":
+        raise ConfigError("config/app.yaml 的 library 不是 zotero_local，见 docs/CHANNELS.md")
+    return ZoteroLocalLibrary(
+        library.options, api_key=read_local_key(os.environ, default_key_file())
+    )
+
+
+def authorize_zotero(config: LoadedConfig) -> Path:
+    """弹出 Zotero 授权窗口，把 key 存进只有本人可读的文件。返回文件路径，不返回 key。"""
+    writer = _zotero_local(config)
+    try:
+        key = writer.authorize()
+    finally:
+        writer.close()
+    path = default_key_file()
+    save_local_key(key, path)
+    return path
+
+
+def zotero_status(config: LoadedConfig) -> list[str]:
+    """只读检查：Zotero 在运行、本地 API 已开启、有 key、目标分组。不写入任何东西。"""
+    writer = _zotero_local(config)
+    try:
+        writer.probe()
+        lines = ["Zotero 正在运行，本地 API 已开启"]
+        key = read_local_key(os.environ, default_key_file())
+        lines.append("已授权" if key else "未授权：运行 litfactory zotero authorize")
+        lines.append(f"目标分组：{writer.collection_name}（第一次写入时自动创建）")
+        return lines
+    finally:
+        writer.close()
+
+
+def build_feishu_listener(
+    config: LoadedConfig, channel: str, on_click: Callable[[CardClick], None]
+) -> tuple[FeishuListener, Callable[[str, str], None]]:
+    """返回监听器和“更新某条消息的卡片”的函数。凭据与这个渠道的推送共用。"""
+    settings = config.channels.get(channel)
+    if settings is None or settings.adapter != "feishu" or not settings.enabled:
+        raise ConfigError(f"config/channels.yaml 里没有启用的飞书渠道 {channel}")
+    args = BuildArgs(
+        channel, settings.options, config.root, {env: env for env in settings.credentials_env}
+    )
+    app_id, app_secret = args.secret(APP_ID_ENV), args.secret(APP_SECRET_ENV)
+    messenger = FeishuMessenger(app_id, app_secret)
+    listener = FeishuListener(app_id, app_secret, answerers_from(settings.options), on_click)
+    return listener, messenger.update
 
 
 def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = None) -> AppContext:
@@ -231,6 +339,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         parser=_build(PARSERS, "解析", config.app.parser.adapter, config.app.parser, config.root),
         llm=_build_llm(config, store, now),
         channels=_build_channels(config),
+        library=build_library(config),
         blobs=LocalBlobStore(config.path(config.app.blob_root)),
         archive=LocalBlobStore(config.path(config.app.archive_dir)),
         clock=now,

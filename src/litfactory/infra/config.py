@@ -57,6 +57,7 @@ class AppSettings(FrozenModel):
     assess: AssessSettings = AssessSettings()
     fulltext: tuple[AdapterConfig, ...] = ()
     parser: AdapterConfig
+    library: AdapterConfig | None = None  # 加入文献库，不写或 enabled: false 时关闭
 
 
 class SourcesFile(FrozenModel):

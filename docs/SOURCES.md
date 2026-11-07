@@ -77,6 +77,7 @@ uv run python scripts/probe_sources.py           # 真实网络联调，不写�
 
 - local 模式把数据库复制到临时目录后只读打开，读完删除副本，不会写你的数据库；Zotero 开着也能读。
 - local 的游标是已处理条目的最大加入时间，web 的游标是文库版本号。
+- 这里只读。把推送的论文写进 Zotero 是另一条路径（本地 API 写入），见 [CHANNELS.md](CHANNELS.md)。
 
 ## 已知限制
 

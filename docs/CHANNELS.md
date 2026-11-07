@@ -1,0 +1,91 @@
+# 推送渠道与加入 Zotero
+
+选中的论文推送到飞书卡片。点「加入 Zotero」，论文就进入你本机的 Zotero，并附带推荐理由笔记；系统已经取到的 PDF 也会一起放进去，可以直接在 Zotero 里精读和批注。没有飞书时，用命令行 `litfactory zotero add` 完成同样的操作。
+
+```text
+推送卡片 ──点击──▶ feishu listen ──记下──▶ feedback 表 ──▶ library 阶段 ──▶ 本机 Zotero
+命令行 zotero add ─────────────────────────┘                （没开时排队，打开后自动加入）
+```
+
+渠道只负责把点击记进 `feedback` 表，写入 Zotero 由 `library` 阶段完成。Zotero 没开、或者暂时连不上时，任务会留在队列里按退避重试，点击不会丢。
+
+## Zotero
+
+需要 Zotero 10 以上的桌面端。Zotero 10 的本地 API 支持写入，不经过 zotero.org，也不占云端存储空间。
+
+1. 在 Zotero 里打开 **设置 → 高级 → 允许此计算机上的其他应用程序与 Zotero 通信**。
+2. 在 `config/app.yaml` 里打开 `library`，示例见文件末尾。
+3. 运行 `litfactory zotero authorize`，在 Zotero 的弹窗里点 **始终允许**。
+   - key 会写进 `~/.config/litfactory/zotero-local-key`，权限是 600，命令行不会打印它。
+   - 如果点的是「允许」，拿到的是一次性 key，命令会要求你重新授权。
+4. 运行 `litfactory zotero status` 检查，这个命令只读，不会写入。
+5. 运行 `litfactory zotero add 10.xxxx/yyyy`，可以是 DOI、doi.org 链接、arXiv 编号或论文编号。只能加入论文工厂已经发现过的论文。
+
+写进去的内容：
+
+| 内容 | 说明 |
+|---|---|
+| 条目 | 有 arXiv 编号、没有期刊的论文建成预印本，其余建成期刊论文 |
+| 分组 | `collection`（默认「论文工厂」），没有就自动创建 |
+| 标签 | `tags`，加上主题名和推送等级（如「必读」） |
+| 子笔记 | 阅读价值分、一句话总结、创新点、结论、不足，末尾有论文工厂编号 |
+| PDF | 系统已经取到的全文；`attach_pdf: false` 时不放。开了 Zotero 文件同步时，会按你自己的同步设置上传 |
+
+不会重复写入：
+- 先按标题搜索，再核对 DOI 或 arXiv 编号。Zotero 里已经有这篇时，只补分组和标签。
+- 笔记和 PDF 已经挂过的，不会再挂一份。
+- 写成功后记进 `library_entry` 表。之后再点「加入」，或者 Zotero 重启后，都不会再写。
+
+已知限制：
+- Zotero 的快速搜索不检索 DOI 字段。如果你库里这篇的标题和论文工厂里的差别很大，查重会找不到它，结果是建出第二条。
+- 只写「我的文库」，不写群组文库。
+- 写进去的论文下次运行时会被 `zotero` 信号源重新看到。它按 DOI 合并回同一篇，不会重复推送。
+
+## 飞书
+
+### 准备一个飞书应用
+
+**不要和 agent-autoloop 或其他程序共用同一个飞书应用。** 一个应用的卡片点击只会送到一个长连接，共用时点击会被对方收走，这边收不到。
+
+1. 打开[飞书开放平台](https://open.feishu.cn/app)，**创建企业自建应用**。
+2. **添加应用能力 → 机器人**。
+3. **权限管理**里开通：
+   - 以应用身份发消息：`im:message:send_as_bot`
+   - 更新卡片要用的消息权限：`im:message`
+4. **事件与回调 → 回调配置**：
+   - 订阅方式选 **使用长连接接收回调**。
+   - 添加回调 **卡片回传交互**（`card.action.trigger`）。
+   - 保存时，飞书要求长连接已经在线，所以要先跑一次下面第 4 步的 `litfactory feishu listen`。
+5. 创建版本并发布。应用可用范围要包含你自己。
+6. 获取自己的 open_id，例如在开放平台的 API 调试台里调用「获取用户信息」。
+
+以上权限名称和控制台路径来自飞书开放平台文档，控制台改版后名称可能不同。
+
+### 接入论文工厂
+
+1. 安装可选依赖：`uv sync --extra feishu`。
+2. 把应用凭据放进环境变量，`.env.example` 里有从钥匙串读取的示例：
+
+   ```bash
+   security add-generic-password -U -a "$USER" -s feishu.litfactory.app_id -w
+   security add-generic-password -U -a "$USER" -s feishu.litfactory.app_secret -w
+   ```
+
+3. 在 `config/channels.yaml` 加飞书渠道。可以照着文件末尾的示例，并把路由的 `channel` 指向它。
+4. 常驻运行 `litfactory feishu listen --channel feishu_me`，用来接收按钮点击。可以交给 launchd、pm2 或 agent-autoloop 守护。
+5. `litfactory run` 推送后，在卡片上点按钮：
+   - 立刻会看到提示「已收到，正在加入 Zotero」。
+   - 写完后，卡片上这一篇会变成「✅ 已加入 Zotero」。
+   - Zotero 没开时，会显示「⏳ 已记下，等待加入 Zotero」，打开 Zotero 后下一次运行时自动加入。这之后卡片不会再自动更新。
+
+### 安全
+
+- 只有 `answerers` 里的人点击才算数。发给个人时默认就是接收人本人；发到群里时必须写明 `answerers`。
+- 按钮只带论文编号和推送编号，监听程序会校验格式。同一次点击重复送达，只会记一次。
+- 卡片里的标题、摘要和模型生成的文字都按纯文本显示，里面的链接、@ 人和格式符号都不会生效。唯一的链接是按 DOI 拼出来的 doi.org 地址。
+- 发送时带 uuid，飞书一小时内对同一 uuid 只发一次，所以连接断开后的重试不会重复推送。
+
+### 已验证到哪一层
+
+- 卡片结构、错误分类和回调解析：只有离线测试，按 lark-oapi 1.7.5 源码构造，还没有在真实飞书里发送或点击过。
+- 错误码分类：使用开放平台文档里的常见值，是记忆值，没有逐个核实。

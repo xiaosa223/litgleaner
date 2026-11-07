@@ -150,6 +150,22 @@ class HttpClient:
         except ValueError as error:
             raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
 
+    def post_json(
+        self, path: str, body: Mapping[str, Any], *, headers: Mapping[str, str] | None = None
+    ) -> Any:
+        """POST JSON 并解析 JSON 响应。错误分类与 get 相同。"""
+        self._wait_turn()
+        try:
+            response = self._client.post(path, json=body, headers=headers)
+        except httpx.HTTPError as error:
+            raise TransientError(f"连接 {self.service} 失败：{type(error).__name__}") from error
+        self._remember(response)
+        self._raise_for_status(response)
+        try:
+            return response.json()
+        except ValueError as error:
+            raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
+
     def get_text(
         self, path: str, params: Mapping[str, Any] | None = None, *, allow_missing: bool = False
     ) -> str | None:

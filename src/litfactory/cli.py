@@ -1,13 +1,8 @@
 """命令行入口。这里只做参数处理和输出，业务逻辑都在 application。"""
 
-import fcntl
 import logging
 import os
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
 from datetime import datetime
-from functools import wraps
-from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -23,9 +18,17 @@ from litfactory.application.topics import (
     backfill_topic,
     pause_topic,
 )
-from litfactory.bootstrap import CONTACT_EMAIL, build_context
-from litfactory.domain.errors import ConfigError
-from litfactory.infra.config import LoadedConfig, load_config
+from litfactory.bootstrap import CONTACT_EMAIL, build_context, zotero_status
+from litfactory.cli_library import feishu_app, zotero_app
+from litfactory.cli_shared import DEFAULT_CONFIG as _DEFAULT_CONFIG
+from litfactory.cli_shared import ConfigOption
+from litfactory.cli_shared import context_or_exit as _context
+from litfactory.cli_shared import echo as _echo
+from litfactory.cli_shared import friendly as _friendly
+from litfactory.cli_shared import load_or_exit as _config
+from litfactory.cli_shared import run_lock as _run_lock
+from litfactory.domain.errors import ConfigError, LitFactoryError
+from litfactory.infra.config import LoadedConfig
 from litfactory.infra.db.migrate import is_up_to_date, upgrade_database
 
 app = typer.Typer(help="论文工厂：发现、评估并推送值得读的文献", no_args_is_help=True)
@@ -42,69 +45,15 @@ for name, group in (
     ("jobs", jobs_app),
     ("archive", archive_app),
     ("delivery", delivery_app),
+    ("zotero", zotero_app),
+    ("feishu", feishu_app),
 ):
     app.add_typer(group, name=name)
 
-ConfigOption = Annotated[
-    Path, typer.Option("--config", envvar="LITFACTORY_CONFIG", help="配置目录")
-]
 SinceOption = Annotated[
     datetime | None, typer.Option(formats=["%Y-%m-%d"], help="只处理此日期之后的论文")
 ]
-_DEFAULT_CONFIG = Path("config")
 _FAKE_PREFIX = "fake_"
-
-
-def _friendly[**P, R](command: Callable[P, R]) -> Callable[P, R]:
-    """用户输入或配置错误只显示说明，不显示堆栈。真正的程序错误仍然会暴露。"""
-
-    @wraps(command)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        try:
-            return command(*args, **kwargs)
-        except ConfigError as error:
-            typer.secho(str(error), fg=typer.colors.RED, err=True)
-            raise typer.Exit(2) from error
-
-    return wrapper
-
-
-def _echo(message: str) -> None:
-    typer.echo(message)
-
-
-def _config(path: Path) -> LoadedConfig:
-    try:
-        return load_config(path)
-    except ConfigError as error:
-        typer.secho(str(error), fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from error
-
-
-def _context(path: Path) -> AppContext:
-    config = _config(path)
-    if not is_up_to_date(config.database_url):
-        typer.secho("数据库不是最新版本，请先执行：litfactory db upgrade", fg="red", err=True)
-        raise typer.Exit(2)
-    try:
-        return build_context(config)
-    except ConfigError as error:
-        typer.secho(str(error), fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from error
-
-
-@contextmanager
-def _run_lock(config: LoadedConfig) -> Iterator[None]:
-    """定时任务可能重叠。同一时间只允许一个流程运行，避免重复调用和重复计费。"""
-    path = config.path(config.app.database).with_suffix(".lock")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w") as handle:
-        try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as error:
-            typer.secho("已有流程正在运行，本次退出", fg="yellow", err=True)
-            raise typer.Exit(3) from error
-        yield
 
 
 def _print_plan(plan: WorkPlan, dry_run: bool, action: str) -> None:
@@ -153,6 +102,7 @@ def doctor(config: ConfigOption = _DEFAULT_CONFIG) -> None:
             problems.append(str(error))
         else:
             warnings.extend(_runtime_warnings(ctx))
+            warnings.extend(_library_warnings(loaded))
     for warning in warnings:
         typer.secho(f"警告：{warning}", fg="yellow")
     for problem in problems:
@@ -171,6 +121,17 @@ def _runtime_warnings(ctx: AppContext) -> list[str]:
     if dead:
         warnings.append(f"有 {len(dead)} 个死信任务，用 litfactory jobs list 查看")
     return warnings
+
+
+def _library_warnings(config: LoadedConfig) -> list[str]:
+    library = config.app.library
+    if library is None or not library.enabled or library.adapter != "zotero_local":
+        return []
+    try:
+        lines = zotero_status(config)
+    except LitFactoryError as error:
+        return [f"Zotero 暂时写不进去（选中的论文会排队等待）：{error}"]
+    return [line for line in lines if line.startswith("未授权")]
 
 
 def _enabled_adapters(config: LoadedConfig) -> list[tuple[str, tuple[str, ...]]]:

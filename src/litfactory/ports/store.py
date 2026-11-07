@@ -138,6 +138,26 @@ class DigestRecord:
 
 
 @dataclass(frozen=True)
+class FeedbackRecord:
+    id: str
+    paper_id: str
+    channel: str
+    action: str
+    digest_id: str | None = None
+    actor: str | None = None
+    external_id: str | None = None
+
+
+@dataclass(frozen=True)
+class LibraryRecord:
+    paper_id: str
+    library: str
+    item_key: str
+    created: bool
+    warnings: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class LLMCall:
     task: str
     model: str
@@ -234,6 +254,15 @@ class OutputRepo(Protocol):
     ) -> None: ...
 
 
+class FeedbackRepo(Protocol):
+    def add(self, record: FeedbackRecord, now: str) -> bool: ...
+    def pending_saves(self, library: str) -> tuple[str, ...]: ...
+    def latest_action(self, paper_id: str) -> str | None: ...
+    def save_entry(self, record: LibraryRecord, now: str) -> None: ...
+    def get_entry(self, paper_id: str, library: str) -> LibraryRecord | None: ...
+    def latest_card(self, paper_id: str) -> tuple[Mapping[str, Any], str] | None: ...
+
+
 class JobRepo(Protocol):
     def enqueue(self, spec: JobSpec, now: str, *, reopen: bool = False) -> bool: ...
     def reopen(self, key: str, now: str) -> None: ...
@@ -260,6 +289,8 @@ class Store(Protocol):
     def judgments(self) -> JudgmentRepo: ...
     @property
     def outputs(self) -> OutputRepo: ...
+    @property
+    def feedback(self) -> FeedbackRepo: ...
     @property
     def jobs(self) -> JobRepo: ...
     @property

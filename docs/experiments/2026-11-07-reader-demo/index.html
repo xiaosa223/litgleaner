@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>论文工厂领读器</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="data.js"></script>
+<style>
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #f1efe9; --line: #e3e0d7;
+  --text: #22211e; --muted: #6b6860; --faint: #9a968c;
+  --accent: #2f5bd3; --accent-soft: #e8eefc;
+  --author: #3b3a36; --author-line: #b8b3a5;
+  --model: #6a4fc4; --model-soft: #f1edfc;
+  --infer: #b45a00; --infer-soft: #fdf1e3;
+  --user: #8a6d00; --user-soft: #fff7d1;
+  --ok: #2f7a45; --ok-soft: #e7f5ea;
+  --goal: #e0f0ff; --goal-bar: #3b82c4;
+  --novelty: #fde7ef; --novelty-bar: #c43b74;
+  --method: #e5f6e8; --method-bar: #2f8a4a;
+  --result: #fff1d6; --result-bar: #c98a0b;
+  --warn: #9a3412; --warn-soft: #fff1ea;
+  --pair: rgba(47, 91, 211, .13);
+  --shadow: 0 6px 24px rgba(30, 28, 20, .12);
+  --serif: "Source Serif 4", Georgia, "Songti SC", serif;
+  --sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1a18; --surface: #242320; --surface-2: #2d2c28; --line: #3a3833;
+    --text: #ebe8e1; --muted: #a8a49a; --faint: #7d7a72;
+    --accent: #8aa8ff; --accent-soft: #2a3352;
+    --author: #e3dfd6; --author-line: #6d685d;
+    --model: #b9a5ff; --model-soft: #312a46;
+    --infer: #ffb066; --infer-soft: #3d2c1a;
+    --user: #ffd84d; --user-soft: #3a3418;
+    --ok: #79d18f; --ok-soft: #1f3a27;
+    --goal: #1f3347; --goal-bar: #6fb3ef; --novelty: #45222f; --novelty-bar: #ef7aa9;
+    --method: #1f3b27; --method-bar: #6cc887; --result: #3f321a; --result-bar: #f0b542;
+    --warn: #ffae85; --warn-soft: #3d2519; --pair: rgba(138, 168, 255, .2);
+    --shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font: 14px/1.6 var(--sans); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.hidden { display: none !important; }
+
+.app { height: 100vh; display: flex; flex-direction: column; }
+.demo-note { background: var(--warn-soft); color: var(--warn); font-size: 12px; padding: 4px 16px; text-align: center; }
+header.bar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.bar .title { font-weight: 600; flex: 1 1 200px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar .title small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 4px 10px; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 2px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="false"] { opacity: .45; }
+.chip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 4px 10px; font-size: 13px; }
+.ghost:hover { border-color: var(--accent); }
+.primary { border: 0; background: var(--accent); color: #fff; border-radius: 8px; padding: 6px 14px; }
+.primary.sm { padding: 4px 12px; font-size: 13px; }
+.linkbtn { border: 0; background: transparent; color: var(--muted); text-decoration: underline; font-size: 12px; padding: 0 4px; }
+.cost { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.group label { font-size: 12px; color: var(--muted); }
+.hint { font-size: 12px; color: var(--faint); }
+
+.layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr) 400px; grid-template-rows: minmax(0, 1fr); }
+.layout.wide { grid-template-columns: minmax(0, 1fr) 400px; }
+.layout.wide nav.toc { display: none; }
+nav.toc, main.doc, aside.panel { min-height: 0; }
+nav.toc { border-right: 1px solid var(--line); overflow: auto; padding: 12px 8px; background: var(--surface); }
+nav.toc a { display: block; padding: 4px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 13px; cursor: pointer; }
+nav.toc a:hover { background: var(--surface-2); color: var(--text); }
+nav.toc a.active { color: var(--accent); background: var(--accent-soft); }
+nav.toc a.l3 { padding-left: 20px; } nav.toc a.l4 { padding-left: 32px; font-size: 12px; }
+main.doc { overflow: auto; padding: 24px 16px 120px; }
+aside.panel { border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; }
+@media (max-width: 1180px) { .layout, .layout.wide { grid-template-columns: minmax(0, 1fr) 380px; } nav.toc { display: none; } }
+@media (max-width: 820px) {
+  .layout, .layout.wide { grid-template-columns: minmax(0, 1fr); }
+  aside.panel { position: fixed; inset: auto 0 0 0; height: 50vh; z-index: 30; box-shadow: var(--shadow); border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* 原版视图 */
+.pages { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.layout.wide .pages { max-width: 1240px; }
+.page-row { display: flex; gap: 20px; align-items: flex-start; }
+.page { position: relative; flex: 1 1 auto; background: #fff; box-shadow: var(--shadow); border-radius: 4px; }
+.page img { display: block; width: 100%; height: auto; border-radius: 4px; user-select: none; }
+.page .no { position: absolute; left: 8px; bottom: -20px; color: var(--faint); font-size: 12px; }
+.ov { position: absolute; border-radius: 3px; pointer-events: none; z-index: 3; }
+.ov.hov, .ov.focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+.ov.has-pop, .ov.hov { z-index: 9; }
+.ov.f-goal { background: rgba(59, 130, 196, .12); box-shadow: -7px 0 0 -3px var(--goal-bar); }
+.ov.f-novelty { background: rgba(196, 59, 116, .10); box-shadow: -7px 0 0 -3px var(--novelty-bar); }
+.ov.f-method { background: rgba(47, 138, 74, .10); box-shadow: -7px 0 0 -3px var(--method-bar); }
+.ov.f-result { background: rgba(201, 138, 11, .14); box-shadow: -7px 0 0 -3px var(--result-bar); }
+.ov .acts { position: absolute; left: calc(100% + 8px); top: 0; display: none; flex-direction: column; gap: 4px; pointer-events: auto; }
+.ov.hov .acts { display: flex; }
+.acts button, .side button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 1px 8px; font: 12px var(--sans); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.acts button:hover, .side button:hover { border-color: var(--accent); color: var(--accent); }
+.uhl { position: absolute; background: rgba(255, 214, 0, .35); z-index: 1; pointer-events: none; border-radius: 2px; }
+.pop { position: absolute; left: 0; right: 0; z-index: 8; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 14px; pointer-events: auto; }
+.pop .x { float: right; border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; }
+/* pdf.js 文字层 */
+.textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; z-index: 2; opacity: 1; text-size-adjust: none; -webkit-text-size-adjust: none; forced-color-adjust: none; transform-origin: 0 0; }
+.textLayer :is(span, br) { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
+.textLayer span.markedContent { top: 0; height: 0; }
+.textLayer ::selection { background: rgba(47, 91, 211, .28); }
+.textLayer br::selection { background: transparent; }
+.textLayer .endOfContent { display: block; position: absolute; inset: 100% 0 0; z-index: -1; cursor: default; user-select: none; }
+/* 原版双语：右侧对照栏 */
+.trans-col { position: relative; flex: 0 0 40%; }
+.trans-col .tb { position: absolute; left: 0; right: 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--line); font-size: 13.5px; line-height: 1.65; color: var(--text); }
+.trans-col .tb.pair, .trans-col .tb:hover { border-left-color: var(--accent); }
+.trans-col .tb.missing { color: var(--faint); font-size: 12px; }
+
+/* 段落视图 */
+.flow { max-width: 720px; margin: 0 auto; background: var(--surface); padding: 36px 48px; border-radius: 8px; box-shadow: var(--shadow); font: 17px/1.75 var(--serif); }
+.flow.bi { max-width: 1180px; padding: 36px 40px; }
+@media (max-width: 820px) { .flow, .flow.bi { padding: 20px 16px; } }
+.flow h1 { font-size: 26px; line-height: 1.3; margin: 0 0 4px; }
+.flow .meta { font: 13px var(--sans); color: var(--muted); margin-bottom: 20px; }
+.flow .hd { margin: 32px 0 8px; } .flow h2.hd { font-size: 21px; } .flow h3.hd { font-size: 18px; margin-top: 24px; } .flow h4.hd { font-size: 16px; margin-top: 20px; }
+.hd .hz { font: 500 .8em var(--sans); color: var(--muted); margin-left: 10px; }
+.blk { position: relative; margin: 0 0 16px; padding: 2px 4px; border-radius: 4px; }
+.blk.focus { outline: 2px solid var(--accent); outline-offset: 4px; }
+.blk .side { position: absolute; left: -48px; top: 0; display: none; flex-direction: column; gap: 4px; padding-right: 10px; }
+.blk:hover .side { display: flex; }
+.flow.bi .blk .side { left: auto; right: -44px; padding: 0 0 0 10px; }
+@media (max-width: 820px) { .blk .side, .flow.bi .blk .side { left: auto; right: 0; top: -26px; flex-direction: row; padding: 0; } }
+.bi-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; }
+.bi-row .zhcol { font: 15px/1.8 var(--sans); color: var(--text); }
+.bi-row .zhcol.missing { color: var(--faint); font-size: 13px; padding-top: 4px; }
+@media (max-width: 900px) { .bi-row { grid-template-columns: 1fr; gap: 6px; } }
+.zh-inline { font: 15px/1.8 var(--sans); margin: 8px 0 2px; padding: 2px 0 2px 14px; border-left: 2px solid var(--accent); color: var(--text); }
+.zh-inline .tag { display: block; margin-top: 2px; }
+.s { border-radius: 3px; transition: background-color .12s; }
+.s.pair { background: var(--pair); }
+.tag { font: 11px var(--sans); color: var(--muted); }
+mark.hl { color: inherit; border-radius: 2px; padding: 0 1px; }
+mark.hl-goal { background: var(--goal); box-shadow: inset 0 -2px 0 var(--goal-bar); }
+mark.hl-novelty { background: var(--novelty); box-shadow: inset 0 -2px 0 var(--novelty-bar); }
+mark.hl-method { background: var(--method); box-shadow: inset 0 -2px 0 var(--method-bar); }
+mark.hl-result { background: var(--result); box-shadow: inset 0 -2px 0 var(--result-bar); }
+mark.hl-user { background: var(--user-soft); box-shadow: inset 0 -2px 0 var(--user); color: inherit; }
+mark.flash { color: inherit; animation: flash 1.8s ease-out forwards; }
+@keyframes flash { from { background: rgba(47, 91, 211, .45); } to { background: rgba(47, 91, 211, 0); } }
+.term, .term-zh { border-bottom: 1px dotted var(--model); cursor: help; }
+.cite { border: 0; background: transparent; color: var(--accent); padding: 0 1px; font: inherit; position: relative; }
+.cite[data-s]::after { content: ""; position: absolute; right: -2px; top: 2px; width: 5px; height: 5px; border-radius: 50%; }
+.cite[data-s="suggest"]::after { background: var(--infer); } .cite[data-s="inlib"]::after { background: var(--accent); } .cite[data-s="read"]::after { background: var(--method-bar); }
+.fig { margin: 12px 0 18px; text-align: center; }
+.fig .crop { width: 100%; max-width: 560px; margin: 0 auto; background-repeat: no-repeat; border: 1px solid var(--line); border-radius: 4px; }
+.fig figcaption, .tbl figcaption { font: 13px/1.5 var(--sans); color: var(--muted); margin-top: 6px; }
+.tbl { overflow-x: auto; margin: 12px 0 18px; }
+.tbl table { border-collapse: collapse; font: 13px var(--sans); margin: 0 auto; }
+.tbl td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+.eq { overflow-x: auto; margin: 10px 0 16px; text-align: center; }
+.gap-note { font: 13px var(--sans); color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 6px 10px; }
+.gap-note button { border: 0; background: transparent; color: var(--accent); text-decoration: underline; padding: 0; }
+.degraded { font: 13px var(--sans); color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; margin-bottom: 16px; }
+
+/* 侧栏 */
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; background: transparent; padding: 10px 0; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tabbody { flex: 1; overflow: auto; padding: 14px 16px 24px; }
+.sec { margin-bottom: 18px; }
+.sec > h4 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.badge { font: 600 10px/1 var(--sans); padding: 3px 5px; border-radius: 4px; letter-spacing: .02em; white-space: nowrap; }
+.b-model { color: var(--model); background: var(--model-soft); }
+.b-infer { color: var(--infer); background: var(--infer-soft); }
+.b-user { color: var(--user); background: var(--user-soft); }
+.b-author { color: var(--author); background: var(--surface-2); }
+.model, .infer { padding: 6px 10px; border-radius: 0 6px 6px 0; margin: 4px 0; }
+.model { border-left: 3px dashed var(--model); background: var(--model-soft); }
+.infer { border-left: 3px dashed var(--infer); background: var(--infer-soft); }
+.flag { float: right; border: 0; background: transparent; color: var(--faint); font-size: 11px; padding: 0 0 0 6px; opacity: 0; }
+.model:hover .flag, .infer:hover .flag, .flagged .flag { opacity: 1; }
+.flagged .mt { text-decoration: line-through; color: var(--faint); }
+blockquote.author { margin: 4px 0; padding: 4px 10px; border-left: 3px solid var(--author-line); font: italic 14px/1.6 var(--serif); color: var(--author); }
+.pg { font: 11px var(--sans); color: var(--accent); border: 1px solid var(--accent-soft); background: var(--accent-soft); border-radius: 4px; padding: 0 4px; margin-left: 4px; font-style: normal; }
+.pg:hover { border-color: var(--accent); }
+.usernote { width: 100%; border: 1px solid var(--user); background: var(--user-soft); color: var(--text); border-radius: 8px; padding: 8px 10px; font: 13px/1.6 var(--sans); resize: vertical; min-height: 64px; }
+.warnbox { background: var(--warn-soft); color: var(--warn); border-radius: 6px; padding: 8px 10px; margin: 6px 0; }
+.pill { font-size: 11px; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.s-suggest { background: var(--infer-soft); color: var(--infer); } .s-inlib { background: var(--accent-soft); color: var(--accent); }
+.s-read { background: var(--method); color: var(--method-bar); } .s-optional { background: var(--surface-2); color: var(--muted); } .s-skip { background: var(--surface-2); color: var(--faint); }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.link { color: var(--accent); cursor: pointer; }
+.goal { font: 600 11px var(--sans); color: var(--goal-bar); background: var(--goal); border-radius: 4px; padding: 1px 5px; }
+.symtab { width: 100%; border-collapse: collapse; font-size: 13px; }
+.symtab td { border-bottom: 1px solid var(--line); padding: 4px; vertical-align: top; }
+/* 读后卡片 */
+.cardhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.meter { flex: 1 1 100%; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--ok); }
+.step { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.step.done { border-color: var(--ok-soft); }
+.step > h4 { margin: 0 0 2px; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.step .num { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-2); color: var(--muted); font: 600 11px/20px var(--sans); text-align: center; }
+.step.done .num { background: var(--ok); color: #fff; }
+.prompt { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.lbl { font: 600 12px var(--sans); color: var(--muted); margin: 10px 0 4px; display: flex; align-items: center; gap: 6px; }
+.cmp { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 13px; }
+.cmp ul { margin: 2px 0 6px; padding-left: 0; list-style: none; }
+.cmp li { margin: 3px 0; display: flex; gap: 6px; align-items: baseline; }
+.cmp .k { font-weight: 600; white-space: nowrap; }
+.k-same { color: var(--ok); } .k-ai { color: var(--model); } .k-you { color: var(--user); }
+.adopt { border: 1px solid var(--model); background: transparent; color: var(--model); border-radius: 5px; font-size: 11px; padding: 0 6px; margin-left: auto; white-space: nowrap; }
+
+/* 原理动画 */
+.anim { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--surface); }
+.anim h5 { margin: 0; font-size: 14px; }
+.anim .sub { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.anim .eqline { overflow-x: auto; font-size: 13px; margin: 4px 0 8px; }
+.stage { min-height: 214px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; padding: 8px 0; animation: stagein .45s ease; }
+@keyframes stagein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.mx { display: inline-grid; gap: 2px; font: 11px var(--sans); }
+.mx .h { color: var(--muted); text-align: center; font-size: 10px; }
+.mx .rl { color: var(--muted); font-size: 10px; text-align: right; padding-right: 3px; align-self: center; }
+.mx .c { width: 30px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: var(--surface-2); transition: background-color .5s, outline-color .3s; font-variant-numeric: tabular-nums; }
+.mx .c.f { outline: 2px solid var(--accent); }
+.mx .cap { grid-column: 1 / -1; text-align: center; font-weight: 600; color: var(--muted); margin-top: 2px; }
+.op { font: 600 16px var(--sans); color: var(--muted); }
+.bars { display: grid; grid-template-columns: auto 1fr auto; gap: 3px 6px; align-items: center; font: 11px var(--sans); width: 100%; max-width: 320px; }
+.bars .bar { height: 12px; border-radius: 3px; background: var(--accent); transition: width .6s ease; }
+.bars .bar.alt { background: var(--faint); }
+.bars .t { color: var(--muted); }
+.note { font-size: 11px; color: var(--muted); text-align: center; width: 100%; }
+.heads { display: grid; grid-template-columns: repeat(4, auto); gap: 6px; }
+.headbox { border: 1px solid var(--line); border-radius: 6px; padding: 3px; display: grid; grid-template-columns: repeat(4, 8px); gap: 1px; }
+.headbox i { width: 8px; height: 8px; border-radius: 1px; }
+.anim .ctl { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.anim .ctl button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 1px 8px; font-size: 12px; }
+.anim .prog { flex: 1; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+.anim .prog i { display: block; height: 100%; background: var(--model); transition: width .3s; }
+.anim .stepcap { font-weight: 600; font-size: 13px; margin-top: 8px; }
+.anim .foot { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 4px; }
+.anim.big .mx .c { width: 46px; height: 34px; font-size: 13px; }
+.anim.big .stage { min-height: 320px; }
+.anim.big .bars { max-width: 480px; font-size: 13px; }
+.anim.big .headbox { grid-template-columns: repeat(4, 12px); } .anim.big .headbox i { width: 12px; height: 12px; }
+/* 问答 */
+.msgs { display: flex; flex-direction: column; gap: 10px; }
+.msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-radius: 12px 12px 2px 12px; padding: 6px 12px; max-width: 85%; }
+.msg.bot { background: var(--surface-2); border-radius: 12px 12px 12px 2px; padding: 8px 12px; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ask { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.ask textarea { flex: 1; resize: none; height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; font: 13px var(--sans); background: var(--surface); color: var(--text); }
+.search { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; background: var(--surface); color: var(--text); }
+
+/* 浮层 */
+.tip { position: fixed; z-index: 50; max-width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 12px; font: 13px/1.55 var(--sans); }
+.tip .zhname { font-weight: 600; font-size: 14px; }
+.selbar { position: fixed; z-index: 55; display: flex; gap: 2px; background: var(--text); border-radius: 8px; padding: 3px; box-shadow: var(--shadow); }
+.selbar button { border: 0; background: transparent; color: var(--bg); padding: 3px 10px; font-size: 13px; border-radius: 6px; }
+.selbar button:hover { background: rgba(255, 255, 255, .16); }
+.selbar button.on { background: var(--accent); color: #fff; }
+.selpop { position: fixed; z-index: 56; width: 380px; max-width: calc(100vw - 24px); max-height: 60vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 12px 14px; font-size: 14px; }
+.selpop .src { font: italic 13px/1.5 var(--serif); color: var(--muted); margin-bottom: 4px; }
+.selpop .zhs { font: 15px/1.75 var(--sans); margin-bottom: 8px; }
+.selpop .x { float: right; border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; }
+.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .35); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal .box { background: var(--surface); border-radius: 12px; max-width: 640px; width: 100%; max-height: 85vh; overflow: auto; padding: 18px 20px; box-shadow: var(--shadow); }
+.modal pre { white-space: pre-wrap; background: var(--surface-2); padding: 12px; border-radius: 8px; font-size: 13px; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 6px 14px; border-radius: 8px; z-index: 70; font-size: 13px; }
+
+/* 收件箱 */
+.inbox { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+.inbox h1 { font-size: 22px; margin: 0 0 4px; }
+.profile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 12px 0 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.card.off { opacity: .55; }
+.card h3 { margin: 4px 0; font: 600 16px/1.4 var(--serif); }
+.card .row { color: var(--muted); font-size: 12px; margin-top: 0; }
+.score { font: 700 20px var(--sans); color: var(--accent); }
+.lvl { background: var(--novelty); color: var(--novelty-bar); border-radius: 4px; padding: 1px 6px; font-weight: 600; }
+.progress { font-size: 12px; color: var(--ok); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="demo-note">演示版：讲解、译文、卡片和问答由人工撰写，模拟模型输出；所有“作者原话”和逐句译文已在构建时核验。批注保存在本浏览器。</div>
+  <div id="inbox" class="hidden" style="overflow:auto;flex:1"></div>
+  <div id="reader" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <header class="bar">
+      <button class="ghost" id="back">← 收件箱</button>
+      <div class="title" id="ptitle"></div>
+      <div class="group"><label>视图</label>
+        <div class="seg" id="viewSeg"><button data-v="pdf">原版</button><button data-v="flow">段落</button></div></div>
+      <div class="group"><label>翻译</label>
+        <div class="seg" id="transSeg"><button data-t="off">原文</button><button data-t="bi">双语对照</button></div>
+        <span class="hint">选中句子即可翻译</span></div>
+      <div class="group" id="facetChips"></div>
+      <button class="chip" id="termChip" aria-pressed="true">术语释义</button>
+      <button class="ghost" id="pure" title="关闭所有增强（Esc）">纯原文</button>
+      <span class="cost" title="演示数据">本篇 ¥0.04 · 本月 ¥3.20</span>
+      <button class="ghost" id="help" title="快捷键">?</button>
+    </header>
+    <div class="layout">
+      <nav class="toc" id="toc" aria-label="目录"></nav>
+      <main class="doc" id="doc"></main>
+      <aside class="panel" id="panel">
+        <div class="tabs" role="tablist" id="tabs">
+          <button data-tab="guide">导读</button><button data-tab="card">读后卡片</button><button data-tab="qa">问答</button><button data-tab="notes">笔记</button>
+        </div>
+        <div class="tabbody" id="tabbody"></div>
+        <div class="ask hidden" id="askbar"><textarea id="askInput" placeholder="问这篇论文…（/ 聚焦）"></textarea><button class="primary" id="askBtn">问</button></div>
+      </aside>
+    </div>
+  </div>
+</div>
+<div class="tip hidden" id="tip"></div>
+<div class="selbar hidden" id="selbar"><button data-a="tr">翻译</button><button data-a="hl">高亮</button><button data-a="note">记笔记</button><button data-a="ask">问</button><button data-a="auto" title="之后每次选中都直接高亮，不再弹出菜单">连续高亮</button></div>
+<div class="selpop hidden" id="selpop"></div>
+
+<script>
+"use strict";
+const D = window.READER_DATA;
+const PAGE_W = 612, PAGE_H = 792;
+const FACETS = [{ key: "goal", label: "目标" }, { key: "novelty", label: "创新" }, { key: "method", label: "方法" }, { key: "result", label: "结果" }];
+const REF_STATUS = { suggest: "建议先读", inlib: "已在你的库里", read: "你已读过", optional: "选读", skip: "可跳过" };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("lf-demo2-" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("lf-demo2-" + k, JSON.stringify(v)); } catch { /* 无痕模式不保存 */ } },
+};
+const S = {
+  view: store.get("view", "pdf"), bi: store.get("bi", false),
+  facets: new Set(store.get("facets", FACETS.map(f => f.key))), terms: store.get("terms", true),
+  open: new Set(), tab: "guide", notes: store.get("notes", []), fieldNotes: store.get("fieldNotes", {}),
+  cardState: store.get("cardState", {}), flagged: new Set(store.get("flagged", [])),
+  autoHl: false, chat: [], progress: store.get("progress", 0), noteFilter: "",
+};
+const byId = new Map(D.blocks.map(b => [b.i, b]));
+const refs = new Map();
+D.blocks.filter(b => b.type === "ref_text").forEach(b => { const m = b.text.match(/^\[(\d+)\]/); if (m) refs.set(+m[1], b); });
+const preread = new Map(D.background.prereading.map(p => [p.ref, p]));
+const hlByBlock = new Map();
+D.highlights.forEach(h => { if (!hlByBlock.has(h.b)) hlByBlock.set(h.b, []); hlByBlock.get(h.b).push(h); });
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pageOf = b => (byId.get(b)?.page ?? 0) + 1;
+const isBody = b => b.type === "text" && b.text && !b.level && b.i >= 11;
+
+/* ---------- 文本渲染 ---------- */
+const termEntries = D.glossary.map((g, idx) => ({ ...g, idx, res: g.en.map(p => new RegExp("^" + p + "$", "i")) }));
+const termRe = new RegExp("\\b(" + D.glossary.flatMap(g => g.en).sort((a, b) => b.length - a.length).join("|") + ")\\b", "gi");
+const zhSorted = D.glossary.map((g, idx) => ({ zh: g.zh, idx })).filter(g => /[一-鿿]/.test(g.zh) && g.zh.length >= 3).sort((a, b) => b.zh.length - a.zh.length);
+const zhRe = new RegExp("(" + zhSorted.map(g => g.zh.replace(/-/g, "\\-")).join("|") + ")", "g");
+function tex(src, display) {
+  if (window.katex) { try { return katex.renderToString(src, { throwOnError: false, displayMode: display }); } catch { /* 原样显示 */ } }
+  return `<code>${esc(src)}</code>`;
+}
+function renderPlain(text, opts) {
+  const seen = opts.seen || new Set();
+  let s = esc(text.replace(/<sup>(.*?)<\/sup>/g, "$1").replace(/<[^>]+>/g, ""));
+  if (opts.terms && S.terms) s = s.replace(termRe, m => {
+    const e = termEntries.find(t => t.res.some(r => r.test(m)));
+    if (!e || seen.has(e.idx)) return m;
+    seen.add(e.idx); return `<span class="term" data-g="${e.idx}">${m}</span>`;
+  });
+  if (opts.zh && S.terms) s = s.replace(zhRe, m => {
+    const g = zhSorted.find(z => z.zh === m);
+    if (seen.has("zh" + g.idx)) return m;
+    seen.add("zh" + g.idx); return `<span class="term-zh" data-g="${g.idx}">${m}</span>`;
+  });
+  s = s.replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, list) => "[" + list.split(/\s*,\s*/).map(n => {
+    const p = preread.get(+n);
+    return `<button class="cite" data-ref="${n}"${p ? ` data-s="${p.status}"` : ""}>${n}</button>`;
+  }).join(", ") + "]");
+  return s.replace(//g, "<sup>").replace(//g, "</sup>");
+}
+function renderRich(text, opts = {}) {
+  return text.split(/(\$\$[\s\S]+?\$\$|\$[^$]+\$)/).map(part => {
+    if (part.startsWith("$$")) return tex(part.slice(2, -2), true);
+    if (part.startsWith("$") && part.length > 1) return tex(part.slice(1, -1), false);
+    return renderPlain(part, opts);
+  }).join("");
+}
+const sentSpans = (b, side, opts) => D.sentences[b].map((s, k) => `<span class="s" data-k="${b}:${k}">${renderRich(s[side], opts)}</span>`).join(side === "en" ? " " : "");
+function sanitizeTable(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const ok = new Set(["TABLE", "THEAD", "TBODY", "TR", "TD", "TH"]);
+  const build = node => {
+    if (node.nodeType === 3) return renderRich(node.textContent);
+    if (node.nodeType !== 1) return "";
+    const inner = [...node.childNodes].map(build).join("");
+    if (!ok.has(node.tagName)) return inner;
+    const attrs = ["rowspan", "colspan"].filter(a => node.hasAttribute(a)).map(a => ` ${a}="${parseInt(node.getAttribute(a), 10) || 1}"`).join("");
+    const tag = node.tagName.toLowerCase();
+    return `<${tag}${attrs}>${inner}</${tag}>`;
+  };
+  return [...doc.body.childNodes].map(build).join("");
+}
+function markInDom(root, quote, cls) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest(".katex, .side") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = []; let all = "";
+  for (let n; (n = walker.nextNode());) { nodes.push({ n, start: all.length }); all += n.nodeValue; }
+  let flat = ""; const map = [];
+  for (let k = 0; k < all.length; k++) {
+    const ws = /\s/.test(all[k]);
+    if (ws && (!flat || flat.endsWith(" "))) continue;
+    flat += ws ? " " : all[k]; map.push(k);
+  }
+  const needle = quote.replace(/\s+/g, " ").trim();
+  const hit = needle ? flat.indexOf(needle) : -1;
+  if (hit < 0) return false;
+  const at = map[hit], end = map[hit + needle.length - 1] + 1;
+  for (const { n, start } of nodes) {
+    const a = Math.max(at, start), b = Math.min(end, start + n.nodeValue.length);
+    if (a >= b) continue;
+    const r = document.createRange(); r.setStart(n, a - start); r.setEnd(n, b - start);
+    const m = document.createElement("mark"); m.className = cls; r.surroundContents(m);
+  }
+  return true;
+}
+
+/* ---------- 原版视图（页面图片 + pdf.js 文字层） ---------- */
+let pdfDoc = null;
+function loadPdf() {
+  if (pdfDoc || !window.pdfjsLib) return Promise.resolve(pdfDoc);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  return pdfjsLib.getDocument("paper.pdf").promise.then(d => (pdfDoc = d));
+}
+async function addTextLayer(pageEl) {
+  const doc = await loadPdf();
+  if (!doc || !pageEl.isConnected || pageEl.querySelector(".textLayer")) return;
+  const page = await doc.getPage(+pageEl.dataset.p + 1);
+  const scale = pageEl.clientWidth / PAGE_W;
+  const layer = document.createElement("div");
+  layer.className = "textLayer";
+  layer.style.setProperty("--scale-factor", scale);
+  pageEl.appendChild(layer);
+  const textContent = await page.getTextContent();
+  await pdfjsLib.renderTextLayer({ textContentSource: textContent, container: layer, viewport: page.getViewport({ scale }), textDivs: [] }).promise;
+}
+const pct = v => (v / 10).toFixed(2) + "%";
+function renderPdf() {
+  const rows = D.pages.map((src, p) => {
+    const ovs = D.blocks.filter(b => b.page === p && b.bbox && b.type !== "ref_text").map(b => {
+      const [x0, y0, x1, y1] = b.bbox;
+      const facet = (hlByBlock.get(b.i) || []).find(h => S.facets.has(h.facet));
+      const acts = isBody(b) ? `<div class="acts"><button data-act="tr" data-b="${b.i}">译</button><button data-act="ask" data-b="${b.i}">问</button><button data-act="note" data-b="${b.i}">记</button></div>` : "";
+      const pop = S.open.has(b.i) && !S.bi ? `<div class="pop" style="top:calc(100% + 8px)"><button class="x" data-act="tr" data-b="${b.i}" aria-label="关闭">×</button>${paraZh(b.i)}</div>` : "";
+      return `<div class="ov ${facet ? "f-" + facet.facet : ""}${pop ? " has-pop" : ""}" id="o-${b.i}" data-b="${b.i}" style="left:${pct(x0)};top:${pct(y0)};width:${pct(x1 - x0)};height:${pct(y1 - y0)}">${acts}${pop}</div>`;
+    }).join("");
+    const uhl = S.notes.filter(n => n.page === p && n.rects).flatMap(n => n.rects.map(r => `<div class="uhl" style="left:${pct(r[0])};top:${pct(r[1])};width:${pct(r[2])};height:${pct(r[3])}"></div>`)).join("");
+    const col = S.bi ? `<div class="trans-col" data-p="${p}"></div>` : "";
+    return `<div class="page-row"><div class="page" data-p="${p}"><img src="${src}" alt="第 ${p + 1} 页">${uhl}${ovs}<span class="no">第 ${p + 1} 页</span></div>${col}</div>`;
+  }).join("");
+  $("#doc").innerHTML = `<div class="pages">${rows}</div>`;
+  document.querySelectorAll(".page").forEach(pg => {
+    const img = pg.querySelector("img");
+    const ready = () => { addTextLayer(pg); if (S.bi) layoutTransCol(pg); };
+    img.complete ? ready() : img.addEventListener("load", ready, { once: true });
+  });
+}
+function paraZh(bid) {
+  if (!D.sentences[bid]) return '<div class="tag">演示中未预置这段的译文。正式版会即时翻译这一段（约 1 秒）。</div>';
+  return `<div style="font-size:14.5px;line-height:1.75">${sentSpans(bid, "zh", { zh: true })}</div><div class="tag" style="margin-top:4px">按课题术语表翻译 · 已缓存</div>`;
+}
+function layoutTransCol(pageEl) {
+  const col = pageEl.nextElementSibling, p = +pageEl.dataset.p, h = pageEl.clientHeight;
+  if (!pageEl.isConnected || !col?.classList.contains("trans-col")) return; // 页面已被重新渲染
+  col.innerHTML = D.blocks.filter(b => b.page === p && isBody(b) && b.bbox).map(b => D.sentences[b.i]
+    ? `<div class="tb" data-b="${b.i}" data-y="${b.bbox[1]}">${sentSpans(b.i, "zh", { zh: true })}</div>`
+    : `<div class="tb missing" data-b="${b.i}" data-y="${b.bbox[1]}">演示未预置这段译文</div>`).join("");
+  let bottom = 0;
+  col.querySelectorAll(".tb").forEach(el => { const top = Math.max(+el.dataset.y / 1000 * h, bottom + 10); el.style.top = top + "px"; bottom = top + el.offsetHeight; });
+  col.style.height = Math.max(h, bottom) + "px";
+}
+function pageHit(pageEl, ev) {
+  const r = pageEl.getBoundingClientRect();
+  const x = (ev.clientX - r.left) / r.width * 1000, y = (ev.clientY - r.top) / r.height * 1000;
+  const p = +pageEl.dataset.p;
+  return D.blocks.find(b => b.page === p && isBody(b) && b.bbox && x >= b.bbox[0] - 10 && x <= b.bbox[2] + 90 && y >= b.bbox[1] - 6 && y <= b.bbox[3] + 6);
+}
+
+/* ---------- 段落视图 ---------- */
+const headingLevel = t => { const m = t.match(/^(\d+(?:\.\d+)*)\s/); return m ? Math.min(m[1].split(".").length + 1, 4) : 2; };
+function figureHtml(b) {
+  const [x0, y0, x1, y1] = b.bbox, w = x1 - x0, h = y1 - y0;
+  const ratio = (h / 1000 * PAGE_H) / (w / 1000 * PAGE_W) * 100;
+  return `<figure class="fig" id="b-${b.i}"><div class="crop" style="padding-top:${ratio.toFixed(2)}%;background-image:url(${D.pages[b.page]});background-size:${(1000 / w * 100).toFixed(2)}% auto;background-position:${(x0 / (1000 - w) * 100).toFixed(2)}% ${(y0 / (1000 - h) * 100).toFixed(2)}%"></div><figcaption>${renderRich(b.text)}</figcaption></figure>`;
+}
+function renderFlow() {
+  const P = D.paper, gaps = D.blocks.filter(b => b.type === "text" && !b.text).length;
+  let html = `<article class="flow ${S.bi ? "bi" : ""}"><h1>${esc(P.title)}</h1><div class="meta">${esc(P.authors)} · ${esc(P.venue)} · ${esc(P.tier)}</div>`;
+  if (gaps) html += `<div class="degraded">结构识别不完整：有 ${gaps} 处内容没有解析出来（多为公式或表格），已在原位标出，以原版视图为准。</div>`;
+  let started = false, seen = new Set(), seenZh = new Set();
+  for (const b of D.blocks) {
+    if (b.i === 10) started = true;
+    if (!started || b.type === "ref_text" || b.type === "page_footnote") continue;
+    if (b.type === "text" && b.level) {
+      const lv = b.text === "Abstract" ? 2 : headingLevel(b.text);
+      const hz = S.bi && D.heading_zh[b.i] ? `<span class="hz">${esc(D.heading_zh[b.i].replace(/^[\d.]+\s*/, ""))}</span>` : "";
+      seen = new Set(); seenZh = new Set();
+      html += `<h${lv} id="b-${b.i}" class="hd">${esc(b.text)}${hz}</h${lv}>`;
+      if (b.text === "References") break;
+      continue;
+    }
+    if (b.type === "image" || b.type === "chart") { html += figureHtml(b); continue; }
+    if (b.type === "table") { html += `<figure class="tbl" id="b-${b.i}"><figcaption>${renderRich(b.text)}</figcaption>${sanitizeTable(b.table)}</figure>`; continue; }
+    if (b.type === "equation") { html += `<div class="eq" id="b-${b.i}">${renderRich(b.text)}</div>`; continue; }
+    if (!b.text) { html += `<div class="blk" id="b-${b.i}"><div class="gap-note">此处有内容未能解析（第 ${b.page + 1} 页）。<button data-act="topdf" data-b="${b.i}">在原版中查看</button></div></div>`; continue; }
+    const has = !!D.sentences[b.i];
+    const en = has ? sentSpans(b.i, "en", { terms: true, seen }) : renderRich(b.text, { terms: true, seen });
+    const side = `<div class="side">${S.bi ? "" : `<button data-act="tr" data-b="${b.i}" title="翻译这段">译</button>`}<button data-act="ask" data-b="${b.i}">问</button><button data-act="note" data-b="${b.i}">记</button></div>`;
+    if (S.bi) {
+      const zh = has ? `<div class="zhcol">${sentSpans(b.i, "zh", { zh: true, seen: seenZh })}</div>` : `<div class="zhcol missing">演示未预置这段译文</div>`;
+      html += `<div class="blk" id="b-${b.i}" data-b="${b.i}">${side}<div class="bi-row"><div class="en">${en}</div>${zh}</div></div>`;
+    } else {
+      const zh = S.open.has(b.i) ? `<div class="zh-inline">${has ? sentSpans(b.i, "zh", { zh: true, seen: seenZh }) : "演示中未预置这段的译文。"}<span class="tag">按课题术语表翻译 · 已缓存</span></div>` : "";
+      html += `<div class="blk" id="b-${b.i}" data-b="${b.i}">${side}<div class="en">${en}</div>${zh}</div>`;
+    }
+  }
+  $("#doc").innerHTML = html + "</article>";
+  for (const [bid, list] of hlByBlock) {
+    const el = document.querySelector(`#b-${bid} .en`);
+    if (el) list.filter(h => S.facets.has(h.facet)).forEach(h => markInDom(el, h.q, `hl hl-${h.facet}`));
+  }
+  S.notes.forEach(n => { const el = document.querySelector(`#b-${n.b} .en`); if (el && n.quote) markInDom(el, n.quote, "hl hl-user"); });
+}
+function renderToc() {
+  $("#toc").innerHTML = D.blocks.filter(b => b.type === "text" && b.level && b.i >= 10)
+    .map(h => `<a class="l${h.text === "Abstract" ? 2 : headingLevel(h.text)}" data-b="${h.i}">${esc(h.text)}</a>`).join("");
+}
+
+/* ---------- 选中文字：找到句子并翻译 ---------- */
+const normEn = s => s.normalize("NFKC").replace(/\$[^$]*\$/g, " ").replace(/<[^>]+>/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function sentencesForSelection(bid, range, text) {
+  const sents = D.sentences[bid];
+  if (!sents) return [];
+  const spans = [...document.querySelectorAll(`.s[data-k^="${bid}:"]`)].filter(el => el.closest(".en") && range.intersectsNode(el));
+  if (spans.length) return [...new Set(spans.map(el => +el.dataset.k.split(":")[1]))];
+  const norms = sents.map(s => normEn(s.en));
+  let joined = ""; const offs = [];
+  norms.forEach(n => { offs.push(joined.length); joined += n; });
+  const needle = normEn(text);
+  let at = joined.indexOf(needle), len = needle.length;
+  if (at < 0 && needle.length > 24) { at = joined.indexOf(needle.slice(0, 24)); len = 24; }
+  if (at < 0) return [];
+  const end = at + len;
+  return offs.map((o, k) => [o, o + norms[k].length, k]).filter(([a, b]) => a < end && b > at).map(x => x[2]);
+}
+function blockForSelection(range) {
+  const host = range.commonAncestorContainer.parentElement?.closest(".blk[data-b]") || range.startContainer.parentElement?.closest(".blk[data-b]");
+  if (host) return +host.dataset.b;
+  const pageEl = range.startContainer.parentElement?.closest(".page");
+  if (!pageEl) return null;
+  const r = range.getClientRects()[0] || range.getBoundingClientRect();
+  return pageHit(pageEl, { clientX: r.left + 2, clientY: r.top + r.height / 2 })?.i ?? null;
+}
+function showSelPop(bid, text, ks, at) {
+  const pop = $("#selpop");
+  let body;
+  if (bid == null) body = '<div class="tag">没能定位到所在段落。</div>';
+  else if (!ks.length) body = `<div class="src">“${esc(text.slice(0, 160))}”</div><div class="tag">演示中未预置这段的译文。正式版会即时翻译选中内容（约 1 秒），并按课题术语表统一译名。</div>`;
+  else body = ks.map(k => { const s = D.sentences[bid][k]; return `<div class="src">${renderRich(s.en)}</div><div class="zhs">${renderRich(s.zh, { zh: true })}</div>`; }).join("");
+  pop.innerHTML = `<button class="x" aria-label="关闭">×</button><div class="tag" style="margin-bottom:6px">${ks.length > 1 ? `所选内容跨 ${ks.length} 句` : "所选内容所在句"} · 第 ${bid == null ? "?" : pageOf(bid)} 页</div>${body}
+    <div class="row">${bid != null && D.sentences[bid] ? `<button class="ghost" data-act="tr" data-b="${bid}">整段译文</button>` : ""}<button class="ghost" data-pop="ask">问这句</button><button class="ghost" data-pop="note">记下来</button></div>
+    <div class="tag" style="margin-top:6px">按课题术语表翻译 · 演示为预置译文</div>`;
+  pop.classList.remove("hidden");
+  pop.dataset.b = bid ?? ""; pop.dataset.q = text;
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(12, Math.min(at.x - w / 2, innerWidth - w - 12)) + "px";
+  pop.style.top = (at.y + h + 20 > innerHeight ? Math.max(12, at.top - h - 10) : at.y + 12) + "px";
+}
+
+
+/* ---------- 原理动画：步骤和引用来自 augment.json（构建时核验），数值由代码计算 ---------- */
+const PR = D.principle;
+const mm = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, v, k) => s + v * B[k][j], 0)));
+const tr = A => A[0].map((_, j) => A.map(r => r[j]));
+const softmax = r => { const m = Math.max(...r), e = r.map(v => Math.exp(v - m)), s = e.reduce((a, b) => a + b, 0); return e.map(v => v / s); };
+const dk = PR.K[0].length;
+const SC = mm(PR.Q, tr(PR.K)), SS = SC.map(r => r.map(v => v / Math.sqrt(dk))), W = SS.map(softmax), O = mm(W, PR.V);
+const A = { step: 0, timer: null, playing: false, mode: store.get("principle", null), renderer: store.get("renderer", "code") };
+const fmt = v => Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(2).replace(/^0\./, ".");
+function heat(v, max) { const a = Math.max(0, Math.min(1, v / (max || 1))); return `rgba(106, 79, 196, ${(0.08 + a * 0.62).toFixed(2)})`; }
+function matrix(M, { name, rows = PR.tokens, cols, max, focusRow = -1, focusCol = -1, hot = true }) {
+  const n = M[0].length;
+  const head = `<span></span>${(cols || M[0].map((_, j) => j + 1)).map(c => `<span class="h">${esc(String(c))}</span>`).join("")}`;
+  const body = M.map((r, i) => `<span class="rl">${esc(rows[i])}</span>${r.map((v, j) => `<span class="c ${(i === focusRow || j === focusCol) && focusRow + focusCol > -2 && (focusRow < 0 || i === focusRow) && (focusCol < 0 || j === focusCol) ? "f" : ""}" style="${hot ? `background:${heat(v, max ?? Math.max(...M.flat()))}` : ""}">${fmt(v)}</span>`).join("")}`).join("");
+  return `<div class="mx" style="grid-template-columns:auto repeat(${n}, auto)">${head}${body}<span class="cap">${name}</span></div>`;
+}
+function bars(rows, labelA, labelB) {
+  return `<div class="bars">${PR.tokens.map((tk, j) => `<span class="t">${esc(tk)}</span><span><div class="bar alt" style="width:${(rows[0][j] * 100).toFixed(1)}%"></div><div class="bar" style="width:${(rows[1][j] * 100).toFixed(1)}%;margin-top:2px"></div></span><span class="t">${fmt(rows[1][j])}</span>`).join("")}</div><div class="note"><span style="color:var(--faint)">■</span> ${labelA}　<span style="color:var(--accent)">■</span> ${labelB}</div>`;
+}
+function stageHtml(key) {
+  const f = PR.focus, ft = PR.tokens[f], tok = PR.tokens;
+  if (key === "qkv") return matrix(PR.Q, { name: "Q 查询", hot: false }) + matrix(PR.K, { name: "K 键", hot: false }) + matrix(PR.V, { name: "V 值", hot: false })
+    + `<div class="note">玩具例子：4 个词元，每个向量 d<sub>k</sub> = ${dk} 维</div>`;
+  if (key === "scores") return matrix(PR.Q, { name: "Q", hot: false, focusRow: f }) + `<span class="op">×</span>` + matrix(tr(PR.K), { name: "Kᵀ", rows: [1, 2, 3, 4], cols: tok, hot: false })
+    + `<span class="op">=</span>` + matrix(SC, { name: "QKᵀ 分数", cols: tok, focusRow: f })
+    + `<div class="note">“${esc(ft)}”的查询和“${esc(tok[3])}”的键点积 = ${fmt(SC[f][3])}，相关度最高</div>`;
+  if (key === "scale") return matrix(SC, { name: "QKᵀ", cols: tok, focusRow: f }) + `<span class="op">÷ √${dk}</span>` + matrix(SS, { name: "缩放后", cols: tok, focusRow: f })
+    + bars([softmax(SC[f]), W[f]], "不缩放直接 softmax", "缩放后再 softmax") + `<div class="note">“${esc(ft)}”这一行：不缩放时权重几乎全压在一个词上（${fmt(Math.max(...softmax(SC[f])))}）</div>`;
+  if (key === "softmax") return matrix(W, { name: "softmax 权重（每行和为 1）", cols: tok, max: 1, focusRow: f })
+    + `<div class="note">“${esc(ft)}”把 ${(W[f][3] * 100).toFixed(0)}% 的注意力给了“${esc(tok[3])}”</div>`;
+  if (key === "output") return matrix([W[f]], { name: `“${ft}”的权重`, rows: [ft], cols: tok, max: 1 }) + `<span class="op">×</span>` + matrix(PR.V, { name: "V", hot: false })
+    + `<span class="op">=</span>` + matrix([O[f]], { name: "输出", rows: [ft], max: 1 }) + `<div class="note">输出主要来自“${esc(tok[3])}”的值，也混入了一点其他词</div>`;
+  if (key === "multi") {
+    const head = h => `<div class="headbox">${W.map((r, i) => r.map((_, j) => `<i style="background:${heat(W[(i + h) % 4][(j + h * 3) % 4], 1)}"></i>`).join("")).join("")}</div>`;
+    return `<div class="heads">${[0, 1, 2, 3, 4, 5, 6, 7].map(head).join("")}</div><span class="op">→ 拼接 → ×W<sup>O</sup></span><div class="note">本文 h = 8 个头，各自学到不同的关注模式（示意图，非真实权重）</div>`;
+  }
+  return "";
+}
+function principleHtml(big) {
+  const st = PR.steps[A.step];
+  return `<div class="anim ${big ? "big" : ""}" data-anim="${big ? "big" : "small"}"><h5>${esc(PR.title)}</h5><div class="sub">${esc(PR.subtitle)}</div>
+    <div class="eqline">${tex(PR.tex, false)}</div>
+    <div class="stage">${stageHtml(st.key)}</div>
+    <div class="ctl"><button data-anim-act="prev" aria-label="上一步">◀</button><button data-anim-act="toggle">${A.playing ? "暂停" : "播放"}</button><button data-anim-act="next" aria-label="下一步">▶</button><div class="prog"><i style="width:${(A.step + 1) / PR.steps.length * 100}%"></i></div>${big ? "" : '<button data-anim-act="big">放大</button>'}</div>
+    <div class="stepcap">${"①②③④⑤⑥"[A.step]} ${esc(st.cap)}</div>${quoteHtml(st.quote)}
+    <div class="foot"><span>数值由代码按公式计算 · 玩具数据</span><span>原理演示</span></div></div>`;
+}
+function principleSection() {
+  if (A.mode === "code") return principleHtml(false) + '<div class="row"><button class="linkbtn" data-anim-act="off">关闭原理动画</button></div>';
+  if (A.mode === "gif") return `<div class="anim"><h5>${esc(PR.title)}</h5><div class="sub">${esc(PR.subtitle)}</div>
+    <div class="stage" style="min-height:160px;background:var(--surface-2);border-radius:8px;flex-direction:column;text-align:center;font-size:13px;color:var(--muted)">演示版未接入图像模型。<br>正式版在这里显示 GPT Image 根据分镜生成的 GIF 动图。</div>
+    <div class="warnbox" style="font-size:12px">AI 生成动图，图中文字和数值未经核验，以原文为准。动图不作为证据，不进入读后卡片和导出。</div>
+    <div class="lbl">分镜引用的原文</div>${PR.steps.map((s, i) => `<div class="tag">${"①②③④⑤⑥"[i]} ${esc(s.cap)}</div>${quoteHtml(s.quote)}`).join("")}
+    <div class="row"><button class="linkbtn" data-anim-act="off">关闭原理动画</button></div></div>`;
+  const opt = (v, label, desc) => `<label style="display:flex;gap:6px;align-items:flex-start;margin:4px 0;font-size:13px"><input type="radio" name="renderer" value="${v}" ${A.renderer === v ? "checked" : ""}><span><b>${label}</b><br><span class="tag">${desc}</span></span></label>`;
+  return `<div class="anim"><div class="sub" style="margin-bottom:8px">用一个小例子分步演示这篇论文的核心机制。生成分镜要消耗较多 token，不同模型效果差距大，所以默认关闭。</div>
+    ${opt("code", "代码动画（推荐）", "数值按论文公式由代码计算，可以暂停、单步、放大")}
+    ${opt("gif", "AI 动图（GPT Image）", "由图像模型生成 GIF，图中文字和数值可能出错，需要自己核对")}
+    <div class="row"><button class="primary sm" data-anim-act="gen">生成原理动画</button><span class="tag">预计 ¥0.05${A.renderer === "gif" ? " + 动图约 ¥0.30" : ""}（演示数据）</span></div></div>`;
+}
+function refreshAnim() {
+  document.querySelectorAll("[data-anim]").forEach(el => { el.outerHTML = principleHtml(el.dataset.anim === "big"); });
+}
+function animTick(delta = 1) { A.step = (A.step + delta + PR.steps.length) % PR.steps.length; refreshAnim(); }
+function animPlay(on) {
+  A.playing = on; clearInterval(A.timer);
+  if (on) A.timer = setInterval(() => { if (document.querySelector("[data-anim]")) animTick(1); }, 4200);
+  refreshAnim();
+}
+/* ---------- 侧栏 ---------- */
+const quoteHtml = (q, label = true) => `<blockquote class="author">${label ? '<span class="badge b-author">作者原话</span> ' : ""}“${esc(q.q)}”<button class="pg" data-jump="${q.b}" data-q="${esc(q.q)}">第 ${pageOf(q.b)} 页 ↗</button></blockquote>`;
+const hashKey = s => { let h = 0; for (const c of s) h = (h * 31 + c.codePointAt(0)) | 0; return "m" + (h >>> 0).toString(36); };
+function modelHtml(text, kind = "model") {
+  const k = hashKey(text), bad = S.flagged.has(k);
+  const badge = kind === "inferred" ? '<span class="badge b-infer">模型推断</span>' : '<span class="badge b-model">模型概括</span>';
+  return `<div class="${kind === "inferred" ? "infer" : "model"}${bad ? " flagged" : ""}">${badge} <span class="mt">${esc(text)}</span><button class="flag" data-flag="${k}">${bad ? "已标为有误 · 撤销" : "标为有误"}</button></div>`;
+}
+const goalText = id => D.profile.goals.find(g => g.id === id)?.text ?? id;
+function guideTab() {
+  const B = D.background;
+  return `
+  <div class="sec"><h4>原理动画 <span class="tag">默认关闭</span></h4>${principleSection()}</div>
+  <div class="sec"><h4>这篇要解决什么</h4>${modelHtml(B.problem.text)}${B.problem.quotes.map(q => quoteHtml(q)).join("")}</div>
+  <div class="sec"><h4>建议阅读路线</h4>${modelHtml(B.route)}</div>
+  <div class="sec"><h4>先懂这几个概念</h4><ul class="list">${B.concepts.map(c => `<li><span class="link" data-jump="${c.b}">${esc(c.name)}</span><div class="tag">${esc(c.why)}</div></li>`).join("")}</ul></div>
+  <div class="sec"><h4>符号表 <span class="badge b-model">模型整理</span></h4><table class="symtab">${D.symbols.map(s => `<tr><td><code>${esc(s.sym)}</code></td><td>${esc(s.def)}</td><td><button class="pg" data-jump="${s.b}">第 ${pageOf(s.b)} 页</button></td></tr>`).join("")}</table></div>
+  <div class="sec"><h4>章节导读 <span class="badge b-model">模型概括</span></h4><ul class="list">${B.sections.map(s => `<li><span class="link" data-jump="${s.b}">${esc(byId.get(s.b).text)}</span><div>${esc(s.gist)}</div>${s.ask ? `<div class="tag">带着问题读：${esc(s.ask)}</div>` : ""}</li>`).join("")}</ul></div>
+  <div class="sec"><h4>前置阅读 <span class="tag">结合你的文库</span></h4><ul class="list">${B.prereading.map(p => `<li><span class="pill s-${p.status}">${REF_STATUS[p.status]}</span> <span class="tag">[${p.ref}]</span> ${esc((refs.get(p.ref)?.text || "").replace(/^\[\d+\]\s*/, "").slice(0, 90))}…<div>${esc(p.why)}</div></li>`).join("")}</ul></div>`;
+}
+/* 读后卡片：先写 → 看 AI 的分析 → 比较异同 */
+function aiAnalysis(key) {
+  const C = D.card;
+  if (["problem", "prior_gap", "approach", "claims", "innovation"].includes(key)) {
+    const f = C[key];
+    let html = modelHtml(f.model) + f.quotes.map(q => quoteHtml(q)).join("");
+    if (key === "claims") html += `<div class="warnbox">⚠ ${esc(C.check.text)}</div>` + C.check.quotes.map(q => quoteHtml(q)).join("");
+    return html;
+  }
+  if (key === "limitations") return C.limitations.map(l => modelHtml(l.text, l.kind === "author" ? "model" : "inferred") + quoteHtml(l)).join("");
+  if (key === "goals") return C.goal_links.map(g => `<div style="margin-top:6px"><span class="goal">${g.goal}</span> <span class="tag">${esc(goalText(g.goal))}</span>${modelHtml(g.text, g.inferred ? "inferred" : "model")}${g.quotes.map(q => quoteHtml(q)).join("")}</div>`).join("");
+  if (key === "questions") return C.questions.map(q => `<div style="margin-top:6px"><b>问：${esc(q.q)}</b>${modelHtml(q.a)}${q.quotes.map(x => quoteHtml(x)).join("")}</div>`).join("");
+  return "";
+}
+function compare(item, mine) {
+  const low = mine.toLowerCase();
+  const covered = item.points.filter(p => p.k.some(k => low.includes(k.toLowerCase())));
+  const missed = item.points.filter(p => !covered.includes(p));
+  const allKeys = item.points.flatMap(p => p.k.map(k => k.toLowerCase()));
+  const own = mine.split(/[。；;！？!?\n]+/).map(s => s.replace(/^[·\s]+/, "").trim()).filter(s => s.length >= 4 && !s.includes("采纳 AI") && !allKeys.some(k => s.toLowerCase().includes(k)));
+  return { covered, missed, own };
+}
+function compareHtml(item, mine) {
+  const { covered, missed, own } = compare(item, mine);
+  const li = (cls, mark, text, extra = "") => `<li><span class="k ${cls}">${mark}</span><span>${esc(text)}</span>${extra}</li>`;
+  return `<div class="cmp">
+    <div class="lbl" style="margin-top:0">比较异同</div>
+    ${covered.length ? `<div class="tag">你和 AI 都提到了</div><ul>${covered.map(p => li("k-same", "✓", p.t)).join("")}</ul>` : ""}
+    ${missed.length ? `<div class="tag">AI 提到、你没写的（核对原文后再决定要不要补）</div><ul>${missed.map(p => li("k-ai", "＋", p.t, `<button class="adopt" data-adopt="${item.key}" data-t="${esc(p.t)}">补进我的判断</button>`)).join("")}</ul>` : ""}
+    ${own.length ? `<div class="tag">你写到、AI 没提的（可能是你的独到之处，也可能需要核对）</div><ul>${own.map(s => li("k-you", "★", s)).join("")}</ul>` : ""}
+    ${!missed.length && !own.length ? '<div class="tag">你的判断覆盖了 AI 的全部要点。</div>' : ""}
+    <div class="tag" style="margin-top:4px">演示按关键词比较；正式版由模型逐条比较，并指出你和 AI 的分歧。</div></div>`;
+}
+function cardTab() {
+  const items = D.card_flow, done = items.filter(i => S.cardState[i.key]).length;
+  const steps = items.map((item, n) => {
+    const st = S.cardState[item.key], mine = S.fieldNotes[item.key] || "";
+    const head = `<h4><span class="num">${st ? "✓" : n + 1}</span>${esc(item.title)}</h4><div class="prompt">${esc(item.prompt)}</div>`;
+    const ta = `<textarea class="usernote" data-field="${item.key}" placeholder="先写下你自己的判断，写完再看 AI 的分析">${esc(mine)}</textarea>`;
+    if (!st) return `<div class="step">${head}${ta}<div class="row"><button class="primary sm" data-compare="${item.key}" ${mine.trim().length < 4 ? "disabled" : ""}>写好了，看 AI 的分析</button><button class="linkbtn" data-skip="${item.key}">跳过，直接看</button></div></div>`;
+    const yours = st === "skip" ? `<div class="tag">你跳过了这一项。<button class="linkbtn" data-rewrite="${item.key}">补写我的判断</button></div>` : ta;
+    return `<div class="step done">${head}<div class="lbl"><span class="badge b-user">你</span>你的判断</div>${yours}<div class="lbl"><span class="badge b-model">AI</span>AI 的分析</div>${aiAnalysis(item.key)}${st === "compare" && mine.trim() ? compareHtml(item, mine) : ""}</div>`;
+  }).join("");
+  return `<div class="cardhead"><b>读后卡片</b><span class="tag">已完成 ${done}/${items.length} 项 · 每项先写自己的判断，再和 AI 的分析对照</span><div class="meter"><i style="width:${done / items.length * 100}%"></i></div>
+    <button class="primary sm" data-act="export">导出组会提纲</button><button class="ghost" data-act="done">标记为已读</button></div>${steps}`;
+}
+function qaTab() {
+  const presets = D.qa.map((x, i) => `<button class="chip" aria-pressed="true" data-preset="${i}">${esc(x.q)}</button>`).join("");
+  const msgs = S.chat.map(m => m.role === "user" ? `<div class="msg user">${esc(m.text)}</div>` : `<div class="msg bot">${m.html}</div>`).join("");
+  return `<div class="presets">${presets}</div><div class="msgs">${msgs || '<div class="tag">回答会引用原文并标明页码；没有原文依据的部分标为“模型推断”。</div>'}</div>`;
+}
+function notesTab() {
+  const q = S.noteFilter.toLowerCase();
+  const list = S.notes.filter(n => !q || (n.quote + n.text).toLowerCase().includes(q));
+  return `<input class="search" id="noteSearch" placeholder="搜索笔记和高亮" value="${esc(S.noteFilter)}">
+  ${list.length ? `<ul class="list">${list.map(n => `<li>${n.quote ? `<blockquote class="author">“${esc(n.quote)}”<button class="pg" data-jump="${n.b}" data-q="${esc(n.quote)}">第 ${pageOf(n.b)} 页 ↗</button></blockquote>` : `<div class="tag">第 ${pageOf(n.b)} 页 <span class="link" data-jump="${n.b}">跳转 ↗</span></div>`}${n.text ? `<div class="model" style="border-color:var(--user);background:var(--user-soft)"><span class="badge b-user">你</span> ${esc(n.text)}</div>` : ""}<button class="ghost" data-del="${n.id}" style="font-size:12px;margin-top:4px">删除</button></li>`).join("")}</ul>` : '<div class="tag">选中文字可以高亮或记笔记；悬停段落点“记”也可以。</div>'}`;
+}
+function renderPanel() {
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === S.tab)));
+  const body = $("#tabbody"), top = body.scrollTop;
+  body.innerHTML = { guide: guideTab, card: cardTab, qa: qaTab, notes: notesTab }[S.tab]();
+  body.scrollTop = top;
+  $("#askbar").classList.toggle("hidden", S.tab !== "qa");
+}
+
+/* ---------- 交互 ---------- */
+function toast(text) { const t = document.createElement("div"); t.className = "toast"; t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 1900); }
+function jump(bid, quote) {
+  const target = document.getElementById((S.view === "flow" ? "b-" : "o-") + bid);
+  if (!target) { if (S.view === "flow") { setView("pdf"); return setTimeout(() => jump(bid), 60); } return; }
+  const doc = $("#doc"), r = target.getBoundingClientRect(), d = doc.getBoundingClientRect();
+  doc.scrollTo({ top: doc.scrollTop + r.top - d.top - (doc.clientHeight - Math.min(r.height, doc.clientHeight)) / 2, behavior: "smooth" });
+  target.classList.add("focus"); setTimeout(() => target.classList.remove("focus"), 1800);
+  if (quote && S.view === "flow") { const en = target.querySelector(".en"); if (en) markInDom(en, quote, "flash"); }
+}
+function setView(v) { S.view = v; store.set("view", v); renderDoc(); }
+function renderDoc() {
+  document.querySelectorAll("#viewSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.view)));
+  document.querySelectorAll("#transSeg button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.t === "bi") === S.bi)));
+  document.querySelectorAll("#facetChips .chip").forEach(b => b.setAttribute("aria-pressed", String(S.facets.has(b.dataset.f))));
+  $("#termChip").setAttribute("aria-pressed", String(S.terms));
+  $(".layout").classList.toggle("wide", S.bi);
+  const top = $("#doc").scrollTop;
+  S.view === "pdf" ? renderPdf() : renderFlow();
+  $("#doc").scrollTop = top;
+}
+function addNote(note) { S.notes.unshift({ id: Date.now().toString(36), time: new Date().toISOString(), quote: "", text: "", ...note }); store.set("notes", S.notes); }
+function answer(i) {
+  const item = D.qa[i];
+  S.chat.push({ role: "user", text: item.q });
+  S.chat.push({ role: "bot", html: item.parts.map(p => p.kind === "author" ? quoteHtml(p) : modelHtml(p.text, p.kind === "inferred" ? "inferred" : "model")).join("") });
+  renderPanel(); const body = $("#tabbody"); body.scrollTop = body.scrollHeight;
+}
+function ask(text) {
+  if (!text.trim()) return;
+  S.chat.push({ role: "user", text });
+  S.chat.push({ role: "bot", html: '<div class="model"><span class="badge b-model">演示</span> 演示版没有接入模型。正式版会结合你选中的内容、所在章节和研究画像回答，每句附原文页码并核验引用。可以先试试上面的预置问题。</div>' });
+  $("#askInput").value = ""; renderPanel();
+}
+function goAsk(prefill) { S.tab = "qa"; renderPanel(); const i = $("#askInput"); i.value = prefill; i.focus(); }
+function showTip(html, x, y) {
+  const tip = $("#tip"); tip.innerHTML = html; tip.classList.remove("hidden");
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.max(8, Math.min(x, innerWidth - r.width - 12)) + "px";
+  tip.style.top = (y + 18 + r.height > innerHeight ? y - r.height - 10 : y + 18) + "px";
+}
+function termTip(idx) {
+  const g = D.glossary[idx];
+  const src = g.src ? `<blockquote class="author" style="font-size:13px"><span class="badge b-author">原文定义</span> “${esc(g.src.q)}”<button class="pg" data-jump="${g.src.b}" data-q="${esc(g.src.q)}">第 ${pageOf(g.src.b)} 页 ↗</button></blockquote>` : '<div class="tag">本文没有给出定义，以下为通用释义。</div>';
+  return `<div class="zhname">${esc(g.zh)} <span class="tag">${esc(g.en[0].replace(/[?()|\\[\]]/g, ""))}</span></div><div class="model" style="margin:6px 0"><span class="badge b-model">模型释义</span> ${esc(g.def)}</div>${src}<div class="tag">来自课题术语表 · 可在设置中修改译名</div>`;
+}
+function citeTip(n) {
+  const r = refs.get(n), p = preread.get(n);
+  return `<div>${esc(r ? r.text : "[" + n + "]")}</div>${p ? `<div style="margin-top:6px"><span class="pill s-${p.status}">${REF_STATUS[p.status]}</span> ${esc(p.why)}</div>` : '<div class="tag" style="margin-top:6px">不在你的库里</div>'}`;
+}
+function hideSel() { $("#selbar").classList.add("hidden"); }
+let lastRange = null;
+function highlightSelection(bid, text) {
+  const pageEl = S.view === "pdf" && lastRange ? lastRange.startContainer.parentElement?.closest(".page") : null;
+  if (pageEl) {
+    const pr = pageEl.getBoundingClientRect();
+    const rects = [...lastRange.getClientRects()].filter(r => r.width > 1).map(r => [(r.left - pr.left) / pr.width * 1000, (r.top - pr.top) / pr.height * 1000, r.width / pr.width * 1000, r.height / pr.height * 1000]);
+    addNote({ b: bid ?? 0, quote: text, page: +pageEl.dataset.p, rects });
+  } else {
+    if (bid == null) return toast("没能定位到所在段落");
+    const probe = document.querySelector(`#b-${bid} .en`)?.cloneNode(true);
+    const ok = !!probe && markInDom(probe, text, "x");
+    addNote(ok ? { b: bid, quote: text } : { b: bid, text });
+    if (!ok) toast("含公式的选区暂不支持高亮，已存为笔记");
+  }
+  getSelection().removeAllRanges(); renderDoc(); if (S.tab === "notes") renderPanel(); toast("已高亮");
+}
+
+function bind() {
+  $("#back").onclick = showInbox;
+  $("#viewSeg").onclick = e => { const v = e.target.dataset.v; if (v) setView(v); };
+  $("#transSeg").onclick = e => { const t = e.target.dataset.t; if (t) { S.bi = t === "bi"; store.set("bi", S.bi); renderDoc(); } };
+  $("#facetChips").innerHTML = FACETS.map(f => `<button class="chip" data-f="${f.key}"><i style="background:var(--${f.key}-bar)"></i>${f.label}</button>`).join("");
+  $("#facetChips").onclick = e => { const f = e.target.closest(".chip")?.dataset.f; if (!f) return; S.facets.has(f) ? S.facets.delete(f) : S.facets.add(f); store.set("facets", [...S.facets]); renderDoc(); };
+  $("#termChip").onclick = () => { S.terms = !S.terms; store.set("terms", S.terms); renderDoc(); };
+  $("#pure").onclick = pure;
+  $("#help").onclick = () => modal(`<h3 style="margin-top:0">快捷键</h3><pre>选中文字   翻译 / 高亮 / 记笔记 / 提问\n1 / 2      原版 / 段落视图\nT          原文 ↔ 双语对照\nH          高亮全开 / 全关\n/          聚焦提问框\nEsc        关闭浮层；再按回到纯原文</pre>`);
+  $("#tabs").onclick = e => { const t = e.target.dataset.tab; if (t) { S.tab = t; renderPanel(); } };
+  $("#askBtn").onclick = () => ask($("#askInput").value);
+  $("#askInput").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(e.target.value); } };
+
+  document.addEventListener("click", e => {
+    if (e.target.closest("#selpop .x")) return $("#selpop").classList.add("hidden");
+    const an = e.target.closest("[data-anim-act]");
+    if (an) {
+      const act = an.dataset.animAct;
+      if (act === "prev" || act === "next") { animPlay(false); return animTick(act === "next" ? 1 : -1); }
+      if (act === "toggle") return animPlay(!A.playing);
+      if (act === "big") { modal(principleHtml(true)).querySelector(".box").style.maxWidth = "820px"; return; }
+      if (act === "gen") { A.mode = A.renderer; store.set("principle", A.mode); toast("已生成（演示为预置分镜）"); renderPanel(); if (A.mode === "code") animPlay(true); return; }
+      if (act === "off") { A.mode = null; store.set("principle", null); animPlay(false); return renderPanel(); }
+    }
+    const pp = e.target.closest("[data-pop]");
+    if (pp) {
+      const pop = $("#selpop"), b = pop.dataset.b === "" ? null : +pop.dataset.b, q = pop.dataset.q;
+      pop.classList.add("hidden");
+      if (pp.dataset.pop === "ask") goAsk(`关于“${q.slice(0, 80)}”：`);
+      if (pp.dataset.pop === "note") { const text = prompt("笔记：", ""); if (text) { addNote({ b: b ?? 0, quote: q, text }); toast("已记到笔记"); if (S.tab === "notes") renderPanel(); } }
+      return;
+    }
+    const t = e.target.closest("[data-act],[data-jump],[data-preset],[data-del],[data-flag],[data-compare],[data-skip],[data-rewrite],[data-adopt],#toc a");
+    if (!t) { if (!e.target.closest("#selpop, #selbar")) $("#selpop").classList.add("hidden"); return; }
+    if (t.matches("#toc a")) return jump(+t.dataset.b);
+    if (t.dataset.jump) { $("#tip").classList.add("hidden"); return jump(+t.dataset.jump, t.dataset.q); }
+    if (t.dataset.preset) return answer(+t.dataset.preset);
+    if (t.dataset.del) { S.notes = S.notes.filter(n => n.id !== t.dataset.del); store.set("notes", S.notes); renderPanel(); return renderDoc(); }
+    if (t.dataset.flag) { const k = t.dataset.flag; S.flagged.has(k) ? S.flagged.delete(k) : S.flagged.add(k); store.set("flagged", [...S.flagged]); toast(S.flagged.has(k) ? "已标为有误。正式版会记录这条反馈，用于校准" : "已撤销"); return renderPanel(); }
+    if (t.dataset.compare || t.dataset.skip) { S.cardState[t.dataset.compare || t.dataset.skip] = t.dataset.compare ? "compare" : "skip"; store.set("cardState", S.cardState); return renderPanel(); }
+    if (t.dataset.rewrite) { delete S.cardState[t.dataset.rewrite]; store.set("cardState", S.cardState); return renderPanel(); }
+    if (t.dataset.adopt) { const k = t.dataset.adopt; S.fieldNotes[k] = ((S.fieldNotes[k] || "").trim() + `\n· ${t.dataset.t}（采纳 AI，待核对）`).trim(); store.set("fieldNotes", S.fieldNotes); return renderPanel(); }
+    const b = +t.dataset.b, act = t.dataset.act;
+    if (act === "tr") { $("#selpop").classList.add("hidden"); if (S.bi) return; S.open.has(b) ? S.open.delete(b) : S.open.add(b); renderDoc(); }
+    if (act === "ask") goAsk(`关于第 ${pageOf(b)} 页这段：`);
+    if (act === "note") { const text = prompt("给这段记一条笔记："); if (text) { addNote({ b, text }); toast("已记到笔记"); if (S.tab === "notes") renderPanel(); } }
+    if (act === "topdf") { setView("pdf"); setTimeout(() => jump(b), 60); }
+    if (act === "export") exportOutline();
+    if (act === "done") { S.progress = 100; store.set("progress", 100); toast("已标记为已读，读后卡片已存入笔记库"); }
+  });
+  document.addEventListener("input", e => {
+    if (e.target.matches(".usernote")) {
+      const k = e.target.dataset.field; S.fieldNotes[k] = e.target.value; store.set("fieldNotes", S.fieldNotes);
+      const btn = document.querySelector(`[data-compare="${k}"]`); if (btn) btn.disabled = e.target.value.trim().length < 4;
+    }
+    if (e.target.id === "noteSearch") { S.noteFilter = e.target.value; const pos = e.target.selectionStart; renderPanel(); const el = $("#noteSearch"); el.focus(); el.setSelectionRange(pos, pos); }
+  });
+  document.addEventListener("change", e => { if (e.target.name === "renderer") { A.renderer = e.target.value; store.set("renderer", A.renderer); renderPanel(); } });
+  document.addEventListener("change", e => { if (e.target.matches(".usernote") && S.cardState[e.target.dataset.field] === "compare") renderPanel(); });
+  let hideTimer;
+  document.addEventListener("mouseover", e => {
+    const term = e.target.closest(".term, .term-zh"), cite = e.target.closest(".cite");
+    if (term || cite) { clearTimeout(hideTimer); const r = (term || cite).getBoundingClientRect(); showTip(term ? termTip(+term.dataset.g) : citeTip(+cite.dataset.ref), r.left, r.bottom - 14); }
+    else if (!e.target.closest("#tip")) hideTimer = setTimeout(() => $("#tip").classList.add("hidden"), 250);
+    const s = e.target.closest(".s");
+    document.querySelectorAll(".s.pair").forEach(x => x.classList.remove("pair"));
+    if (s) document.querySelectorAll(`.s[data-k="${s.dataset.k}"]`).forEach(x => x.classList.add("pair"));
+    const tb = e.target.closest(".trans-col .tb");
+    document.querySelectorAll(".ov.focus").forEach(x => x.classList.remove("focus"));
+    if (tb) document.getElementById("o-" + tb.dataset.b)?.classList.add("focus");
+  });
+  let hovered = null;
+  $("#doc").addEventListener("mousemove", e => {
+    const pageEl = e.target.closest(".page");
+    const b = pageEl ? pageHit(pageEl, e) : null;
+    const el = b ? document.getElementById("o-" + b.i) : null;
+    if (el === hovered) return;
+    hovered?.classList.remove("hov"); el?.classList.add("hov"); hovered = el;
+    document.querySelectorAll(".trans-col .tb.pair").forEach(x => x.classList.remove("pair"));
+    if (b) document.querySelector(`.trans-col .tb[data-b="${b.i}"]`)?.classList.add("pair");
+  });
+  $("#doc").addEventListener("mouseleave", () => { hovered?.classList.remove("hov"); hovered = null; });
+  document.addEventListener("mouseup", e => {
+    if (e.target.closest("#selbar, #selpop, aside, header")) return;
+    setTimeout(() => {
+      const sel = getSelection(), text = sel.toString().replace(/\s+/g, " ").trim();
+      if (!text || !sel.rangeCount || !$("#doc").contains(sel.anchorNode)) return hideSel();
+      const range = sel.getRangeAt(0); lastRange = range.cloneRange();
+      const bid = blockForSelection(range);
+      if (S.autoHl) { hideSel(); return highlightSelection(bid, text); }
+      const r = range.getBoundingClientRect(), bar = $("#selbar");
+      bar.dataset.b = bid ?? ""; bar.dataset.q = text;
+      bar.classList.remove("hidden");
+      bar.style.left = Math.max(8, Math.min(r.left + r.width / 2 - bar.offsetWidth / 2, innerWidth - bar.offsetWidth - 8)) + "px";
+      bar.style.top = Math.max(8, r.top - 44) + "px";
+      bar.querySelector('[data-a="auto"]').classList.toggle("on", S.autoHl);
+    }, 0);
+  });
+  $("#selbar").onclick = e => {
+    const a = e.target.dataset.a; if (!a) return;
+    const bar = $("#selbar"), bid = bar.dataset.b === "" ? null : +bar.dataset.b, q = bar.dataset.q;
+    hideSel();
+    if (a === "tr") { const r = lastRange.getBoundingClientRect(); showSelPop(bid, q, bid == null ? [] : sentencesForSelection(bid, lastRange, q), { x: r.left + r.width / 2, y: r.bottom, top: r.top }); }
+    if (a === "hl") highlightSelection(bid, q);
+    if (a === "note") { const text = prompt("笔记：", ""); if (text) { addNote({ b: bid ?? 0, quote: q, text }); toast("已记到笔记"); if (S.tab === "notes") renderPanel(); } }
+    if (a === "ask") goAsk(`关于“${q.slice(0, 80)}”：`);
+    if (a === "auto") { S.autoHl = true; highlightSelection(bid, q); toast("连续高亮已开启：选中即高亮，按 Esc 关闭"); }
+  };
+  document.addEventListener("keydown", e => {
+    if (e.target.matches("textarea, input")) return;
+    if (e.key === "1") setView("pdf");
+    if (e.key === "2") setView("flow");
+    if (e.key === "t" || e.key === "T") { S.bi = !S.bi; store.set("bi", S.bi); renderDoc(); }
+    if (e.key === "h" || e.key === "H") { S.facets = S.facets.size ? new Set() : new Set(FACETS.map(f => f.key)); store.set("facets", [...S.facets]); renderDoc(); }
+    if (e.key === "/") { e.preventDefault(); goAsk(""); }
+    if (e.key === "Escape") {
+      if (document.querySelector(".modal")) return document.querySelector(".modal").remove();
+      if (!$("#selpop").classList.contains("hidden") || !$("#selbar").classList.contains("hidden")) { $("#selpop").classList.add("hidden"); return hideSel(); }
+      if (S.autoHl) { S.autoHl = false; return toast("已关闭连续高亮"); }
+      pure();
+    }
+  });
+  $("#doc").addEventListener("scroll", () => {
+    $("#selpop").classList.add("hidden"); hideSel();
+    const doc = $("#doc"), p = Math.round(doc.scrollTop / Math.max(1, doc.scrollHeight - doc.clientHeight) * 100);
+    if (p > S.progress) { S.progress = p; store.set("progress", p); }
+    if (S.view === "flow") {
+      const cur = [...document.querySelectorAll(".flow .hd")].filter(h => h.getBoundingClientRect().top < 160).pop();
+      document.querySelectorAll("#toc a").forEach(a => a.classList.toggle("active", !!cur && a.dataset.b === cur.id.slice(2)));
+    }
+  }, { passive: true });
+  let resizeTimer;
+  addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (S.view === "pdf") renderDoc(); }, 200); });
+}
+function pure() { S.bi = false; S.facets = new Set(); S.terms = false; S.open.clear(); renderDoc(); toast("已回到纯原文，可以随时重新打开各项增强"); }
+function modal(html) { const m = document.createElement("div"); m.className = "modal"; m.innerHTML = `<div class="box">${html}<div style="text-align:right;margin-top:12px"><button class="ghost" data-close>关闭</button></div></div>`; m.onclick = e => { if (e.target === m || e.target.dataset.close !== undefined) m.remove(); }; document.body.appendChild(m); return m; }
+function exportOutline() {
+  const P = D.paper;
+  const parts = D.card_flow.map((item, n) => {
+    const mine = (S.fieldNotes[item.key] || "").trim();
+    const { missed } = compare(item, mine);
+    return `## ${n + 1}. ${item.title}\n- 我的判断：${mine || "（未写）"}${missed.length ? "\n- AI 补充（待核对原文）：" + missed.map(p => p.t).join("；") : ""}`;
+  }).join("\n\n");
+  const md = `# 组会汇报：${P.title}\n${P.venue} · ${P.tier}\n\n${parts}\n\n> 注意：${D.card.check.text}\n`;
+  const m = modal(`<h3 style="margin-top:0">组会汇报提纲（Markdown）</h3><div class="tag">以你自己写的判断为主，AI 补充单独列出并标为待核对；不生成成段正文。</div><pre id="outline"></pre><button class="primary" id="copyOutline">复制</button>`);
+  m.querySelector("#outline").textContent = md;
+  m.querySelector("#copyOutline").onclick = () => navigator.clipboard?.writeText(md).then(() => toast("已复制"), () => toast("复制失败，请手动选择"));
+}
+
+/* ---------- 收件箱 ---------- */
+function showInbox() {
+  $("#reader").classList.add("hidden"); const box = $("#inbox"); box.classList.remove("hidden");
+  box.innerHTML = `<div class="inbox"><h1>今天的推荐</h1><div class="tag">从飞书卡片点“去读”会直接打开对应论文；这里是同一份推荐的本地收件箱。</div>
+  <div class="profile"><b>课题：</b>${esc(D.profile.name)}<ul style="padding-left:18px;margin:6px 0 0">${D.profile.goals.map(g => `<li><span class="goal">${g.id}</span> ${esc(g.text)}</li>`).join("")}</ul></div>
+  ${D.inbox.map(c => `<div class="card ${c.open ? "" : "off"}"><div class="row">${c.score ? `<span class="score">${c.score}</span>` : ""}<span class="lvl">${esc(c.level)}</span><span>${esc(c.tag)}</span><span>${esc(c.venue)}</span>${c.open && S.progress ? `<span class="progress">已读 ${S.progress}%</span>` : ""}</div><h3>${esc(c.title)}</h3><div class="model" style="margin:6px 0"><span class="badge b-model">为什么推给你</span> ${esc(c.reason)}</div>${c.open ? `<div class="row"><button class="primary" data-open>${S.progress ? "继续读" : "去读"}</button><button class="ghost" data-later>稍后读</button></div>` : ""}</div>`).join("")}</div>`;
+  box.querySelector("[data-open]").onclick = showReader;
+  box.querySelector("[data-later]").onclick = () => toast("已加入待读（演示）");
+}
+function showReader() {
+  $("#inbox").classList.add("hidden"); $("#reader").classList.remove("hidden");
+  $("#ptitle").innerHTML = `${esc(D.paper.title)}<small>${esc(D.paper.venue)} · ${esc(D.paper.tier)} · ${esc(D.paper.fulltext)}</small>`;
+  renderToc(); renderDoc(); renderPanel();
+}
+bind();
+if (A.mode === "code") animPlay(true);
+addEventListener("load", () => { if (!$("#reader").classList.contains("hidden")) renderDoc(); });
+showInbox();
+</script>
+</body>
+</html>

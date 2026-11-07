@@ -8,7 +8,8 @@ import httpx
 import pytest
 import yaml
 
-from litfactory.bootstrap import FULLTEXT, SOURCES, build_context
+from litfactory.adapters.llm.base import HttpLLM
+from litfactory.bootstrap import FULLTEXT, LLMS, SOURCES, build_context
 from litfactory.domain.errors import ConfigError
 from litfactory.infra.config import load_config
 
@@ -20,6 +21,10 @@ ENV = {
     "SEMANTIC_SCHOLAR_API_KEY": "s2-key",
     "NCBI_API_KEY": "ncbi-key",
     "ZOTERO_API_KEY": "zotero-key",
+    "ANTHROPIC_API_KEY": "anthropic-key",
+    "OPENAI_API_KEY": "openai-key",
+    "GEMINI_API_KEY": "gemini-key",
+    "COMPAT_API_KEY": "compat-key",
 }
 
 
@@ -87,4 +92,55 @@ def test_unpaywall_without_contact_email_is_a_config_error(config: Path, monkeyp
     _enable_everything(config)
     monkeypatch.delenv("LITFACTORY_CONTACT_EMAIL")
     with pytest.raises(ConfigError, match="unpaywall"):
+        build_context(load_config(config))
+
+
+def _edit_llm(config: Path, change) -> None:
+    path = config / "llm.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    change(data)
+    path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+
+
+def _enable_llms(data: dict) -> None:
+    for entry in data["providers"].values():
+        entry["enabled"] = True
+
+
+def test_llm_template_covers_every_registered_protocol_and_builds(config: Path):
+    _edit_llm(config, _enable_llms)
+    providers = yaml.safe_load((config / "llm.yaml").read_text())["providers"]
+    real = {name for name in LLMS if not name.startswith("fake_")}
+    assert {entry["adapter"] for entry in providers.values()} >= real
+    build_context(load_config(config))
+
+
+def test_task_on_real_provider_builds_when_model_has_price(config: Path):
+    def route(data: dict) -> None:
+        _enable_llms(data)
+        data["tasks"]["triage"] = {
+            "provider": "anthropic",
+            "model": "claude-haiku-5-5",
+            "prompt": "triage",
+        }
+
+    _edit_llm(config, route)
+    ctx = build_context(load_config(config))
+    assert isinstance(ctx.llm.routes["triage"].llm, HttpLLM)
+
+
+def test_task_model_without_price_is_a_config_error(config: Path):
+    def route(data: dict) -> None:
+        _enable_llms(data)
+        data["tasks"]["assess"] = {"provider": "openai", "model": "some-model", "prompt": "assess"}
+
+    _edit_llm(config, route)
+    with pytest.raises(ConfigError, match="prices"):
+        build_context(load_config(config))
+
+
+def test_declared_llm_key_missing_is_a_config_error(config: Path, monkeypatch):
+    _edit_llm(config, _enable_llms)
+    monkeypatch.delenv("GEMINI_API_KEY")
+    with pytest.raises(ConfigError, match="GEMINI_API_KEY"):
         build_context(load_config(config))

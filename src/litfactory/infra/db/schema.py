@@ -231,3 +231,29 @@ llm_call = Table(
     Column("ok", Boolean, nullable=False),
     Column("created_at", String, nullable=False, index=True),
 )
+
+# 反馈只追加。external_id 是渠道给的事件编号，同一次点击重复送达时靠它去重。
+feedback = Table(
+    "feedback",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("paper_id", String, ForeignKey("paper.id"), nullable=False, index=True),
+    Column("digest_id", String),
+    Column("channel", String, nullable=False),
+    Column("action", String, nullable=False),
+    Column("actor", String),
+    Column("external_id", String, unique=True),
+    Column("created_at", String, nullable=False),
+)
+
+# 已经写进文献库的论文。有这一行就不再写，Zotero 重启也不会重复。
+library_entry = Table(
+    "library_entry",
+    metadata,
+    Column("paper_id", String, ForeignKey("paper.id"), primary_key=True),
+    Column("library", String, primary_key=True),
+    Column("item_key", String, nullable=False),
+    Column("created", Boolean, nullable=False),
+    Column("warnings", Text),
+    Column("saved_at", String, nullable=False),
+)

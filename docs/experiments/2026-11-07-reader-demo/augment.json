@@ -1,0 +1,1166 @@
+{
+  "paper": {
+    "id": "arxiv-1706.03762v7",
+    "title": "Attention Is All You Need",
+    "authors": "Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin",
+    "venue": "NeurIPS 2017",
+    "tier": "CCF-A",
+    "doi": "10.48550/arXiv.1706.03762",
+    "score": 84,
+    "level": "必读",
+    "source": "入门清单 · 高被引经典",
+    "fulltext": "开放获取（arXiv）"
+  },
+  "profile": {
+    "name": "EEG 基础模型的跨通道迁移",
+    "goals": [
+      {
+        "id": "g1",
+        "text": "设计能适配不同电极通道配置的预训练模型"
+      },
+      {
+        "id": "g2",
+        "text": "高效建模长时程 EEG 信号"
+      },
+      {
+        "id": "g3",
+        "text": "用线性探测或 LoRA 低成本迁移到下游任务"
+      }
+    ]
+  },
+  "glossary": [
+    {
+      "en": [
+        "scaled dot-product attention"
+      ],
+      "zh": "缩放点积注意力",
+      "def": "先算查询和键的点积，除以 √d_k 缩放，再经 softmax 得到权重，对值加权求和。",
+      "src": {
+        "b": 41,
+        "q": "We compute the dot products of the query with all keys"
+      }
+    },
+    {
+      "en": [
+        "dot[- ]product attention"
+      ],
+      "zh": "点积注意力",
+      "def": "用查询和键的点积衡量相关程度的注意力，计算快，可以直接用矩阵乘法实现。",
+      "src": {
+        "b": 44,
+        "q": "dot-product attention is much faster and more space-efficient in practice"
+      }
+    },
+    {
+      "en": [
+        "additive attention"
+      ],
+      "zh": "加性注意力",
+      "def": "用一个单隐藏层的前馈网络计算查询与键的相关程度，来自 Bahdanau 等人 [2]。",
+      "src": {
+        "b": 44,
+        "q": "Additive attention computes the compatibility function using a feed-forward network with a single hidden layer."
+      }
+    },
+    {
+      "en": [
+        "multi-head(ed)? attention"
+      ],
+      "zh": "多头注意力",
+      "def": "把查询、键、值投影成 h 组分别做注意力，再拼接起来，让模型同时关注不同子空间的信息。",
+      "src": {
+        "b": 53,
+        "q": "Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions."
+      }
+    },
+    {
+      "en": [
+        "self-attention"
+      ],
+      "zh": "自注意力",
+      "def": "同一个序列内部的注意力：每个位置都去关注本序列的所有位置，用来计算这个序列的表示。",
+      "src": {
+        "b": 24,
+        "q": "an attention mechanism relating different positions of a single sequence in order to compute a representation of the sequence"
+      }
+    },
+    {
+      "en": [
+        "attention mechanisms?"
+      ],
+      "zh": "注意力机制",
+      "def": "处理某个位置时，按相关程度给其他位置分配权重并加权汇总的方法。",
+      "src": {
+        "b": 36,
+        "q": "The output is computed as a weighted sum of the values"
+      }
+    },
+    {
+      "en": [
+        "attention"
+      ],
+      "zh": "注意力",
+      "def": "见“注意力机制”。",
+      "src": null
+    },
+    {
+      "en": [
+        "sequence transduction"
+      ],
+      "zh": "序列转导",
+      "def": "把一个序列变换成另一个序列的任务，例如把英文句子翻译成德文句子。",
+      "src": null
+    },
+    {
+      "en": [
+        "encoder-decoder"
+      ],
+      "zh": "编码器-解码器",
+      "def": "编码器把输入变成中间表示，解码器再据此逐个生成输出的两段式结构。",
+      "src": {
+        "b": 28,
+        "q": "Most competitive neural sequence transduction models have an encoder-decoder structure"
+      }
+    },
+    {
+      "en": [
+        "encoders?"
+      ],
+      "zh": "编码器",
+      "def": "把输入序列映射为连续表示的部分。",
+      "src": {
+        "b": 28,
+        "q": "the encoder maps an input sequence of symbol representations"
+      }
+    },
+    {
+      "en": [
+        "decoders?"
+      ],
+      "zh": "解码器",
+      "def": "根据编码器的表示，一次生成一个输出符号的部分。",
+      "src": {
+        "b": 28,
+        "q": "the decoder then generates an output sequence"
+      }
+    },
+    {
+      "en": [
+        "quer(y|ies)"
+      ],
+      "zh": "查询",
+      "def": "注意力中“我要找什么”的向量，和每个键比较得到权重。",
+      "src": {
+        "b": 36,
+        "q": "mapping a query and a set of key-value pairs to an output"
+      }
+    },
+    {
+      "en": [
+        "keys?"
+      ],
+      "zh": "键",
+      "def": "注意力中供查询比较的向量，每个键对应一个值。",
+      "src": {
+        "b": 36,
+        "q": "mapping a query and a set of key-value pairs to an output"
+      }
+    },
+    {
+      "en": [
+        "values?"
+      ],
+      "zh": "值",
+      "def": "注意力中被加权求和的内容向量。",
+      "src": {
+        "b": 36,
+        "q": "The output is computed as a weighted sum of the values"
+      }
+    },
+    {
+      "en": [
+        "positional encodings?"
+      ],
+      "zh": "位置编码",
+      "def": "Transformer 没有循环和卷积，看不出顺序，需要把位置信息编码成向量加到输入上。",
+      "src": {
+        "b": 71,
+        "q": "we must inject some information about the relative or absolute position of the tokens in the sequence"
+      }
+    },
+    {
+      "en": [
+        "residual connections?"
+      ],
+      "zh": "残差连接",
+      "def": "把子层的输入直接加到输出上（x + Sublayer(x)），让深层网络更容易训练，来自 ResNet [11]。",
+      "src": {
+        "b": 33,
+        "q": "LayerNorm(x + Sublayer(x))"
+      }
+    },
+    {
+      "en": [
+        "layer normalization"
+      ],
+      "zh": "层归一化",
+      "def": "对每个样本的特征做归一化，稳定训练，来自 [1]。",
+      "src": null
+    },
+    {
+      "en": [
+        "auto-regressive"
+      ],
+      "zh": "自回归",
+      "def": "每一步都把之前生成的结果当作输入，再生成下一个。",
+      "src": {
+        "b": 28,
+        "q": "consuming the previously generated symbols as additional input when generating the next"
+      }
+    },
+    {
+      "en": [
+        "feed-forward networks?"
+      ],
+      "zh": "前馈网络",
+      "def": "这里指对每个位置单独施加的两层全连接网络，中间用 ReLU。",
+      "src": {
+        "b": 63,
+        "q": "This consists of two linear transformations with a ReLU activation in between."
+      }
+    },
+    {
+      "en": [
+        "recurrent neural networks?"
+      ],
+      "zh": "循环神经网络",
+      "def": "按时间步依次处理序列、把上一步隐藏状态传给下一步的网络，难以并行。",
+      "src": {
+        "b": 19,
+        "q": "This inherently sequential nature precludes parallelization within training examples"
+      }
+    },
+    {
+      "en": [
+        "recurrent"
+      ],
+      "zh": "循环",
+      "def": "见“循环神经网络”。",
+      "src": null
+    },
+    {
+      "en": [
+        "convolutional"
+      ],
+      "zh": "卷积",
+      "def": "用滑动的局部卷积核提取特征，可以并行，但远距离位置要堆很多层才能关联。",
+      "src": {
+        "b": 23,
+        "q": "This makes it more difficult to learn dependencies between distant positions"
+      }
+    },
+    {
+      "en": [
+        "long short-term memory"
+      ],
+      "zh": "长短期记忆",
+      "def": "LSTM，带门控的循环神经网络 [13]。",
+      "src": null
+    },
+    {
+      "en": [
+        "embeddings?"
+      ],
+      "zh": "嵌入",
+      "def": "把离散的词元映射成向量。",
+      "src": null
+    },
+    {
+      "en": [
+        "BLEU"
+      ],
+      "zh": "BLEU",
+      "def": "机器翻译常用的自动评价指标，0–100，越高说明译文越接近参考译文。",
+      "src": null
+    },
+    {
+      "en": [
+        "softmax"
+      ],
+      "zh": "softmax",
+      "def": "把一组分数变成和为 1 的概率分布。",
+      "src": null
+    }
+  ],
+  "symbols": [
+    {
+      "sym": "d_model",
+      "def": "模型各层输出的维度，本文为 512",
+      "b": 33
+    },
+    {
+      "sym": "d_k, d_v",
+      "def": "每个注意力头中键（查询）和值的维度",
+      "b": 41
+    },
+    {
+      "sym": "h",
+      "def": "注意力头数，本文为 8",
+      "b": 56
+    },
+    {
+      "sym": "N",
+      "def": "编码器和解码器各堆叠的层数，本文为 6",
+      "b": 33
+    }
+  ],
+  "translations": {
+    "11": "主流的序列转导模型基于复杂的循环或卷积神经网络，包含一个编码器和一个解码器。性能最好的模型还通过注意力机制把编码器和解码器连接起来。我们提出一种新的简单网络架构 Transformer，它完全基于注意力机制，彻底舍弃了循环和卷积。在两个机器翻译任务上的实验表明，这类模型质量更好，同时更易并行，训练时间也明显更短。我们的模型在 WMT 2014 英德翻译任务上取得 28.4 BLEU，比包括集成模型在内的现有最好结果高出 2 BLEU 以上。在 WMT 2014 英法翻译任务上，我们的模型在 8 块 GPU 上训练 3.5 天后，取得 41.8 的单模型最佳 BLEU，训练成本只是文献中最好模型的一小部分。我们还把 Transformer 成功用于英语成分句法分析，无论训练数据多还是少都表现良好，说明它能很好地泛化到其他任务。",
+    "18": "循环神经网络，尤其是长短期记忆 [13] 和门控循环 [7] 神经网络，已经确立为序列建模和转导问题（如语言建模和机器翻译）上的最先进方法 [35, 2, 5]。此后，大量工作持续推进循环语言模型和编码器-解码器架构的边界 [38, 24, 15]。",
+    "19": "循环模型通常沿输入和输出序列的符号位置分解计算。它把位置与计算时间步对齐，生成一串隐藏状态 $h _ { t }$，每个状态由前一个隐藏状态 $h _ { t - 1 }$ 和位置 t 的输入决定。这种固有的顺序性使同一训练样本内部无法并行；序列越长，问题越严重，因为内存限制了跨样本的批处理。近期工作通过分解技巧 [21] 和条件计算 [32] 显著提升了计算效率，后者还提升了模型性能。但顺序计算这一根本约束仍然存在。",
+    "20": "注意力机制已经成为各类任务中优秀序列建模和转导模型不可或缺的部分，它能建模依赖关系，而不受依赖双方在输入或输出序列中距离的影响 [2, 19]。不过除少数情况 [27] 外，这些注意力机制都与循环网络结合使用。",
+    "21": "在这项工作中，我们提出 Transformer：一种摒弃循环、完全依靠注意力机制来建立输入与输出之间全局依赖的模型架构。Transformer 的并行程度大幅提高，在 8 块 P100 GPU 上只训练 12 小时，翻译质量就能达到新的最先进水平。",
+    "23": "减少顺序计算这一目标，同样是 Extended Neural GPU [16]、ByteNet [18] 和 ConvS2S [9] 的出发点，它们都以卷积神经网络为基本构件，对所有输入和输出位置并行计算隐藏表示。在这些模型中，关联任意两个输入或输出位置所需的操作数随两者距离增长：ConvS2S 线性增长，ByteNet 对数增长。这使得学习远距离位置之间的依赖更加困难 [12]。在 Transformer 中，这一操作数降为常数，代价是对注意力加权的位置做平均会降低有效分辨率；我们用 3.2 节介绍的多头注意力来抵消这种影响。",
+    "24": "自注意力（有时称为内部注意力）是一种把单个序列中不同位置关联起来、从而计算该序列表示的注意力机制。自注意力已成功用于阅读理解、生成式摘要、文本蕴含以及学习与任务无关的句子表示等多种任务 [4, 27, 28, 22]。",
+    "26": "然而据我们所知，Transformer 是第一个完全依靠自注意力来计算输入和输出表示、不使用序列对齐的 RNN 或卷积的转导模型。接下来几节将介绍 Transformer，说明使用自注意力的动机，并讨论它相对于 [17, 18] 和 [9] 等模型的优势。",
+    "28": "最具竞争力的神经序列转导模型大多采用编码器-解码器结构 [5, 2, 35]。其中编码器把符号表示的输入序列 $( x _ { 1 } , . . . , x _ { n } )$ 映射为连续表示序列 $\\textbf { z } = ~ ( z _ { 1 } , . . . , z _ { n } )$。给定 z，解码器每次生成一个符号，得到输出序列 $\\left( y _ { 1 } , . . . , y _ { m } \\right)$。每一步模型都是自回归的 [10]：生成下一个符号时，把之前生成的符号作为额外输入。",
+    "31": "Transformer 沿用这一整体架构，编码器和解码器都由堆叠的自注意力层和逐位置的全连接层组成，分别对应图 1 的左半部分和右半部分。",
+    "33": "编码器：编码器由 $N = 6$ 个相同的层堆叠而成。每层有两个子层。第一个是多头自注意力机制，第二个是简单的逐位置全连接前馈网络。我们在两个子层外各加一个残差连接 [11]，随后做层归一化 [1]。也就是说，每个子层的输出是 LayerNorm(x + Sublayer(x))，其中 Sublayer(x) 是该子层自身实现的函数。为了便于做残差连接，模型中所有子层以及嵌入层的输出维度都是 $d _ { \\mathrm { m o d e l } } = 5 1 2$。",
+    "34": "解码器：解码器同样由 $N = 6$ 个相同的层堆叠而成。除了编码器层中的两个子层，解码器还插入第三个子层，对编码器栈的输出执行多头注意力。与编码器类似，我们在每个子层外加残差连接，随后做层归一化。我们还修改了解码器栈中的自注意力子层，防止某个位置关注其后的位置。这种掩码，加上输出嵌入整体偏移一个位置，保证位置 i 的预测只能依赖于位置小于 i 的已知输出。",
+    "36": "注意力函数可以描述为：把一个查询和一组键-值对映射为输出，其中查询、键、值和输出都是向量。输出是值的加权和，分配给每个值的权重由查询与对应键的兼容性函数计算得到。",
+    "41": "我们把这种注意力称为“缩放点积注意力”（图 2）。输入包括维度为 $d _ { k }$ 的查询和键，以及维度为 $d _ { v }$ 的值。我们计算查询与所有键的点积，各除以 $\\sqrt { d _ { k } }$，再用 softmax 函数得到值上的权重。",
+    "44": "最常用的两种注意力函数是加性注意力 [2] 和点积（乘法）注意力。点积注意力与我们的算法相同，只是少了缩放因子 $\\frac { 1 } { \\sqrt { d _ { k } } }$。加性注意力用一个单隐藏层的前馈网络计算兼容性函数。两者理论复杂度相近，但点积注意力在实践中快得多、也更省内存，因为它可以用高度优化的矩阵乘法代码实现。",
+    "45": "当 $d _ { k }$ 取值较小时，两种机制表现相近；但当 $d _ { k }$ 取值较大时，不带缩放的点积注意力不如加性注意力 [3]。我们推测，$d _ { k }$ 取值很大时点积的数值会变得很大，把 softmax 函数推入梯度极小的区域 <sup>4</sup>。为抵消这种影响，我们把点积乘以 $\\frac { 1 } { \\sqrt { d _ { k } } }$ 进行缩放。",
+    "47": "我们发现，与其用 $d _ { \\mathrm { m o d e l } }$ 维的键、值和查询执行单个注意力函数，不如用 h 组不同的可学习线性投影，把查询、键和值分别投影到 $d _ { k } , d _ { k }$ 和 $d _ { v }$ 维。在每组投影后的查询、键和值上并行执行注意力函数，得到 $d _ { v }$ 维的输出值。把这些输出拼接起来再投影一次，就得到最终的值，如图 2 所示。",
+    "53": "多头注意力让模型能够同时关注来自不同表示子空间、不同位置的信息。如果只有一个注意力头，平均操作会抑制这一点。",
+    "60": "• 编码器包含自注意力层。在自注意力层中，所有的键、值和查询都来自同一处，在这里是编码器上一层的输出。编码器中的每个位置都可以关注编码器上一层的所有位置。",
+    "71": "由于模型既没有循环也没有卷积，为了让模型利用序列的顺序，必须注入一些关于词元在序列中相对或绝对位置的信息。为此，我们在编码器和解码器栈底部的输入嵌入上加上“位置编码”。位置编码与嵌入的维度相同，都是 $d _ { \\mathrm { m o d e l } }$，因此两者可以直接相加。位置编码有许多选择，包括可学习的和固定的 [9]。",
+    "103": "在 WMT 2014 英德翻译任务上，大模型（表 2 中的 Transformer (big)）比此前报告的最好模型（包括集成模型）高出 2.0 BLEU 以上，创下 28.4 的新最佳 BLEU。该模型的配置列在表 3 最后一行。在 8 块 P100 GPU 上训练了 3.5 天。即使是我们的基础模型，也超过了此前发表的所有模型和集成模型，训练成本只是任何有竞争力模型的一小部分。",
+    "104": "在 WMT 2014 英法翻译任务上，我们的大模型取得 41.0 BLEU，超过此前发表的所有单模型，训练成本不到此前最佳模型的 1/4。用于英法翻译的 Transformer (big) 模型使用的 dropout 率是 $P _ { d r o p } = 0 . 1$，而不是 0.3。",
+    "125": "在这项工作中，我们提出了 Transformer：第一个完全基于注意力的序列转导模型，用多头自注意力取代了编码器-解码器架构中最常用的循环层。",
+    "126": "在翻译任务上，Transformer 的训练速度明显快于基于循环层或卷积层的架构。在 WMT 2014 英德和英法两个翻译任务上，我们都取得了新的最佳结果。在前一个任务中，我们最好的模型甚至超过了此前报告的所有集成模型。",
+    "127": "我们对基于注意力的模型的前景感到兴奋，并计划把它们用于其他任务。我们计划把 Transformer 扩展到文本以外的输入和输出模态，并研究局部的、受限的注意力机制，以高效处理图像、音频和视频等大规模输入和输出。让生成过程不那么依赖顺序，也是我们的研究目标之一。"
+  },
+  "highlights": [
+    {
+      "facet": "goal",
+      "b": 19,
+      "q": "This inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples."
+    },
+    {
+      "facet": "goal",
+      "b": 23,
+      "q": "This makes it more difficult to learn dependencies between distant positions [12]."
+    },
+    {
+      "facet": "novelty",
+      "b": 21,
+      "q": "In this work we propose the Transformer, a model architecture eschewing recurrence and instead relying entirely on an attention mechanism to draw global dependencies between input and output."
+    },
+    {
+      "facet": "novelty",
+      "b": 26,
+      "q": "To the best of our knowledge, however, the Transformer is the first transduction model relying entirely on self-attention to compute representations of its input and output without using sequencealigned RNNs or convolution."
+    },
+    {
+      "facet": "method",
+      "b": 36,
+      "q": "The output is computed as a weighted sum of the values, where the weight assigned to each value is computed by a compatibility function of the query with the corresponding key."
+    },
+    {
+      "facet": "method",
+      "b": 53,
+      "q": "Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions."
+    },
+    {
+      "facet": "method",
+      "b": 71,
+      "q": "To this end, we add \"positional encodings\" to the input embeddings at the bottoms of the encoder and decoder stacks."
+    },
+    {
+      "facet": "result",
+      "b": 103,
+      "q": "outperforms the best previously reported models (including ensembles) by more than 2.0 BLEU, establishing a new state-of-the-art BLEU score of 28.4"
+    },
+    {
+      "facet": "result",
+      "b": 113,
+      "q": "While single-head attention is 0.9 BLEU worse than the best setting, quality also drops off with too many heads."
+    },
+    {
+      "facet": "result",
+      "b": 122,
+      "q": "despite the lack of task-specific tuning our model performs surprisingly well"
+    }
+  ],
+  "background": {
+    "problem": {
+      "text": "循环神经网络必须按时间步逐个计算，训练难以并行，远距离的依赖也难学。作者想要一个既能并行、又能直接关联任意两个位置的序列模型。",
+      "quotes": [
+        {
+          "b": 19,
+          "q": "This inherently sequential nature precludes parallelization within training examples"
+        },
+        {
+          "b": 23,
+          "q": "This makes it more difficult to learn dependencies between distant positions"
+        }
+      ]
+    },
+    "concepts": [
+      {
+        "name": "编码器-解码器",
+        "why": "整篇论文的骨架，3.1 节在它上面搭积木。",
+        "b": 28
+      },
+      {
+        "name": "注意力机制",
+        "why": "本文唯一的核心构件，3.2 节先读它的一句话定义。",
+        "b": 36
+      },
+      {
+        "name": "循环神经网络为什么慢",
+        "why": "理解作者的动机：顺序计算无法并行。",
+        "b": 19
+      },
+      {
+        "name": "残差连接与层归一化",
+        "why": "每个子层都套着它们，知道作用即可，不必深究。",
+        "b": 33
+      },
+      {
+        "name": "BLEU",
+        "why": "第 6 节所有结果都用它衡量。",
+        "b": 103
+      }
+    ],
+    "route": "第一遍约 20 分钟：摘要 → 图 1 → 3.2 注意力 → 表 2 → 结论。第二遍再读 3.1、3.5 和第 4 节。",
+    "sections": [
+      {
+        "b": 17,
+        "gist": "为什么要抛弃循环：顺序计算是根本瓶颈。",
+        "ask": "循环网络到底慢在哪？"
+      },
+      {
+        "b": 22,
+        "gist": "之前的并行方案（卷积）为何还不够：远距离位置要很多步才能关联。",
+        "ask": "ConvS2S 和 ByteNet 的问题是什么？"
+      },
+      {
+        "b": 27,
+        "gist": "模型怎么搭：编码器、解码器、三种注意力、前馈层、位置编码。重点读 3.2。",
+        "ask": "图 1 的每个方块分别对应哪一小节？"
+      },
+      {
+        "b": 76,
+        "gist": "为什么选自注意力：从每层计算量、可并行程度、最长路径三方面对比（表 1）。",
+        "ask": "自注意力在什么情况下反而更慢？"
+      },
+      {
+        "b": 85,
+        "gist": "训练细节：数据、硬件、优化器、正则化。复现时再细读。",
+        "ask": ""
+      },
+      {
+        "b": 101,
+        "gist": "结果：两个翻译任务刷新纪录；表 3 的消融说明哪些设计重要；句法分析验证泛化。",
+        "ask": "去掉多头会差多少？"
+      },
+      {
+        "b": 124,
+        "gist": "结论与展望：计划扩展到图像、音频、视频，并研究受限注意力。",
+        "ask": ""
+      }
+    ],
+    "prereading": [
+      {
+        "ref": 2,
+        "status": "suggest",
+        "why": "注意力机制的起源（加性注意力），本文 3.2 节直接与它对比。读它的第 3 节即可。"
+      },
+      {
+        "ref": 35,
+        "status": "inlib",
+        "why": "seq2seq 编码器-解码器的经典形式，你的库里已有。"
+      },
+      {
+        "ref": 11,
+        "status": "read",
+        "why": "残差连接的出处，你已经读过。"
+      },
+      {
+        "ref": 9,
+        "status": "optional",
+        "why": "ConvS2S：表 2 的主要对比基线，可学习位置编码也来自它。"
+      },
+      {
+        "ref": 1,
+        "status": "skip",
+        "why": "层归一化，只需知道它用来稳定训练。"
+      }
+    ]
+  },
+  "card": {
+    "problem": {
+      "model": "循环网络逐步计算，无法在样本内部并行，长序列训练慢。",
+      "quotes": [
+        {
+          "b": 19,
+          "q": "The fundamental constraint of sequential computation, however, remains."
+        }
+      ]
+    },
+    "prior_gap": {
+      "model": "卷积方案能并行，但关联远距离位置所需的操作数随距离增长；注意力此前几乎总是和循环网络绑在一起用。",
+      "quotes": [
+        {
+          "b": 23,
+          "q": "the number of operations required to relate signals from two arbitrary input or output positions grows in the distance between positions"
+        },
+        {
+          "b": 20,
+          "q": "such attention mechanisms are used in conjunction with a recurrent network"
+        }
+      ]
+    },
+    "approach": {
+      "model": "完全用注意力搭建编码器-解码器：多头自注意力 + 逐位置前馈网络，外加残差连接、层归一化和正弦位置编码。",
+      "quotes": [
+        {
+          "b": 21,
+          "q": "relying entirely on an attention mechanism to draw global dependencies between input and output"
+        },
+        {
+          "b": 33,
+          "q": "The first is a multi-head self-attention mechanism, and the second is a simple, positionwise fully connected feed-forward network."
+        }
+      ]
+    },
+    "claims": {
+      "model": "两个翻译任务都达到当时最佳，训练成本低一个数量级；在句法分析上不调参也表现良好。",
+      "quotes": [
+        {
+          "b": 103,
+          "q": "establishing a new state-of-the-art BLEU score of 28.4"
+        },
+        {
+          "b": 122,
+          "q": "despite the lack of task-specific tuning our model performs surprisingly well"
+        }
+      ]
+    },
+    "check": {
+      "text": "英法翻译的 BLEU 前后不一致：摘要和表 2 写 41.8，6.1 节正文写 41.0。原文没有解释，组会引用时以表 2 为准并说明这一点。",
+      "quotes": [
+        {
+          "b": 11,
+          "q": "a new single-model state-of-the-art BLEU score of 41.8"
+        },
+        {
+          "b": 104,
+          "q": "our big model achieves a BLEU score of 41.0"
+        }
+      ]
+    },
+    "innovation": {
+      "model": "第一个完全不用循环和卷积、只靠自注意力的序列转导模型。",
+      "quotes": [
+        {
+          "b": 26,
+          "q": "the Transformer is the first transduction model relying entirely on self-attention"
+        }
+      ]
+    },
+    "limitations": [
+      {
+        "kind": "author",
+        "text": "对注意力加权的位置做平均会降低有效分辨率（作者用多头注意力缓解）。",
+        "b": 23,
+        "q": "at the cost of reduced effective resolution due to averaging attention-weighted positions"
+      },
+      {
+        "kind": "author",
+        "text": "序列很长时计算量大，作者提出以后研究只关注邻域的受限自注意力。",
+        "b": 80,
+        "q": "self-attention could be restricted to considering only a neighborhood of size r in the input sequence"
+      },
+      {
+        "kind": "inferred",
+        "text": "实验只覆盖文本任务（翻译、句法分析），其他模态的效果文中没有证据。",
+        "b": 127,
+        "q": "We plan to extend the Transformer to problems involving input and output modalities other than text"
+      }
+    ],
+    "goal_links": [
+      {
+        "goal": "g1",
+        "text": "自注意力里每个位置都能关注所有位置，不要求固定的输入个数。把每个电极通道当作一个词元，就能自然处理通道数变化；但要像位置编码那样，把通道的空间位置注入进去。",
+        "inferred": true,
+        "quotes": [
+          {
+            "b": 60,
+            "q": "Each position in the encoder can attend to all positions in the previous layer of the encoder."
+          },
+          {
+            "b": 71,
+            "q": "we must inject some information about the relative or absolute position of the tokens in the sequence"
+          }
+        ]
+      },
+      {
+        "goal": "g2",
+        "text": "EEG 时间点很多，自注意力的计算量随序列长度平方增长；作者自己也提出用受限邻域注意力处理长序列。做 EEG 时需要先按时间分块再做注意力。",
+        "inferred": true,
+        "quotes": [
+          {
+            "b": 80,
+            "q": "self-attention layers are faster than recurrent layers when the sequence length n is smaller than the representation dimensionality d"
+          }
+        ]
+      },
+      {
+        "goal": "g3",
+        "text": "本文没有涉及预训练后的迁移方法，对这个目标没有直接帮助。",
+        "inferred": false,
+        "quotes": []
+      }
+    ],
+    "questions": [
+      {
+        "q": "为什么要除以 √d_k？",
+        "a": "d_k 大时点积数值变大，softmax 会进入梯度极小的区域，缩放用来抵消。注意原文写的是“我们推测”。",
+        "quotes": [
+          {
+            "b": 45,
+            "q": "We suspect that for large values of"
+          }
+        ]
+      },
+      {
+        "q": "没有循环，模型怎么知道词的顺序？",
+        "a": "在输入嵌入上加位置编码；正弦版本和可学习版本效果几乎相同，作者选正弦是希望能外推到更长的序列。",
+        "quotes": [
+          {
+            "b": 75,
+            "q": "found that the two versions produced nearly identical results"
+          },
+          {
+            "b": 75,
+            "q": "We chose the sinusoidal version because it may allow the model to extrapolate to sequence lengths longer than the ones encountered during training."
+          }
+        ]
+      },
+      {
+        "q": "多头注意力真的有用吗？",
+        "a": "表 3 (A)：单头比最佳设置低 0.9 BLEU，但头数太多质量也会下降。",
+        "quotes": [
+          {
+            "b": 113,
+            "q": "single-head attention is 0.9 BLEU worse than the best setting"
+          }
+        ]
+      }
+    ]
+  },
+  "qa": [
+    {
+      "q": "为什么要除以 √d_k？",
+      "parts": [
+        {
+          "kind": "author",
+          "b": 45,
+          "q": "We suspect that for large values of"
+        },
+        {
+          "kind": "model",
+          "text": "d_k 越大，点积的方差越大，数值容易很大，softmax 输出接近 one-hot，梯度几乎为零。除以 √d_k 把数值拉回合适范围。原文只说是“推测”，脚注 4 给了方差推导。"
+        }
+      ]
+    },
+    {
+      "q": "这个结构能处理通道数不固定的 EEG 吗？",
+      "parts": [
+        {
+          "kind": "author",
+          "b": 60,
+          "q": "Each position in the encoder can attend to all positions in the previous layer of the encoder."
+        },
+        {
+          "kind": "inferred",
+          "text": "原文没有讨论 EEG。从机制上看，自注意力对输入个数没有要求，把通道当词元可以处理不同的通道数；但模型会因此“看不出”通道在头皮上的位置，需要设计通道位置编码。这一步是模型推断，需要用 EEG 领域的论文核实。"
+        }
+      ]
+    },
+    {
+      "q": "摘要和正文的英法 BLEU 为什么不一样？",
+      "parts": [
+        {
+          "kind": "author",
+          "b": 11,
+          "q": "a new single-model state-of-the-art BLEU score of 41.8"
+        },
+        {
+          "kind": "author",
+          "b": 104,
+          "q": "our big model achieves a BLEU score of 41.0"
+        },
+        {
+          "kind": "model",
+          "text": "摘要和表 2 是 41.8，6.1 节正文是 41.0。原文没有解释差异，我也无法从文中判断哪个是笔误。引用时以表 2 为准，并在组会上说明。"
+        }
+      ]
+    }
+  ],
+  "inbox": [
+    {
+      "id": "arxiv-1706.03762v7",
+      "title": "Attention Is All You Need",
+      "venue": "NeurIPS 2017 · CCF-A",
+      "score": 84,
+      "level": "必读",
+      "tag": "入门清单",
+      "reason": "g1：自注意力不要求固定输入个数，是“通道当词元”做法的基础。",
+      "open": true
+    },
+    {
+      "id": "demo-2",
+      "title": "Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI",
+      "venue": "ICLR 2024",
+      "score": null,
+      "level": "演示",
+      "tag": "演示条目",
+      "reason": "演示中未包含这篇的正文和评分。",
+      "open": false
+    },
+    {
+      "id": "demo-3",
+      "title": "BIOT: Biosignal Transformer for Cross-data Learning in the Wild",
+      "venue": "NeurIPS 2023",
+      "score": null,
+      "level": "演示",
+      "tag": "演示条目",
+      "reason": "演示中未包含这篇的正文和评分。",
+      "open": false
+    }
+  ],
+  "heading_zh": {
+    "10": "摘要",
+    "17": "1 引言",
+    "22": "2 背景",
+    "27": "3 模型架构",
+    "32": "3.1 编码器栈与解码器栈",
+    "35": "3.2 注意力",
+    "40": "3.2.1 缩放点积注意力",
+    "46": "3.2.2 多头注意力",
+    "57": "3.2.3 注意力在模型中的三种用法",
+    "62": "3.3 逐位置前馈网络",
+    "66": "3.4 嵌入与 softmax",
+    "70": "3.5 位置编码",
+    "76": "4 为什么用自注意力",
+    "85": "5 训练",
+    "87": "5.1 训练数据与批处理",
+    "89": "5.2 硬件与训练时长",
+    "91": "5.3 优化器",
+    "95": "5.4 正则化",
+    "101": "6 结果",
+    "102": "6.1 机器翻译",
+    "107": "6.2 模型变体",
+    "115": "6.3 英语成分句法分析",
+    "124": "7 结论"
+  },
+  "card_flow": [
+    {
+      "key": "problem",
+      "title": "要解决的问题",
+      "prompt": "用一两句话写：这篇论文要解决什么问题？",
+      "field": "problem",
+      "points": [
+        {
+          "t": "循环网络逐步计算，样本内部无法并行",
+          "k": [
+            "并行",
+            "顺序",
+            "逐步",
+            "串行",
+            "逐个"
+          ]
+        },
+        {
+          "t": "序列越长越慢，受内存限制",
+          "k": [
+            "内存",
+            "长序列",
+            "序列越长",
+            "批"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "prior_gap",
+      "title": "已有方法的不足",
+      "prompt": "以前的方法差在哪里？",
+      "field": "prior_gap",
+      "points": [
+        {
+          "t": "卷积方案关联远距离位置的操作数随距离增长",
+          "k": [
+            "卷积",
+            "远距离",
+            "距离",
+            "ConvS2S",
+            "ByteNet"
+          ]
+        },
+        {
+          "t": "注意力此前几乎总与循环网络一起用",
+          "k": [
+            "和循环",
+            "与循环",
+            "结合",
+            "绑"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "approach",
+      "title": "本文做法",
+      "prompt": "作者是怎么做的？抓住最核心的结构。",
+      "field": "approach",
+      "points": [
+        {
+          "t": "完全用注意力，去掉循环和卷积",
+          "k": [
+            "只用注意力",
+            "完全",
+            "去掉",
+            "抛弃",
+            "不用循环"
+          ]
+        },
+        {
+          "t": "多头自注意力 + 逐位置前馈网络",
+          "k": [
+            "多头",
+            "前馈",
+            "FFN"
+          ]
+        },
+        {
+          "t": "残差连接、层归一化、位置编码",
+          "k": [
+            "残差",
+            "归一化",
+            "位置编码"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "claims",
+      "title": "主要结论",
+      "prompt": "主要结论是什么？证据是什么？",
+      "field": "claims",
+      "points": [
+        {
+          "t": "两个翻译任务达到当时最佳（BLEU）",
+          "k": [
+            "BLEU",
+            "翻译",
+            "最佳",
+            "SOTA",
+            "28.4",
+            "41"
+          ]
+        },
+        {
+          "t": "训练成本低得多",
+          "k": [
+            "成本",
+            "更快",
+            "训练时间",
+            "便宜",
+            "GPU"
+          ]
+        },
+        {
+          "t": "句法分析上不调参也表现好（泛化）",
+          "k": [
+            "句法",
+            "泛化",
+            "parsing"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "innovation",
+      "title": "创新点",
+      "prompt": "你认为最大的创新点是什么？",
+      "field": "innovation",
+      "points": [
+        {
+          "t": "第一个只靠自注意力的序列转导模型",
+          "k": [
+            "第一个",
+            "首个",
+            "只靠",
+            "完全",
+            "自注意力"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "limitations",
+      "title": "局限",
+      "prompt": "你觉得它有什么局限？作者自己承认了哪些？",
+      "points": [
+        {
+          "t": "注意力加权平均降低有效分辨率",
+          "k": [
+            "分辨率",
+            "平均"
+          ]
+        },
+        {
+          "t": "长序列计算量大（平方复杂度）",
+          "k": [
+            "平方",
+            "长序列",
+            "计算量",
+            "复杂度",
+            "很长"
+          ]
+        },
+        {
+          "t": "只在文本任务上验证",
+          "k": [
+            "文本",
+            "其他模态",
+            "图像",
+            "语音",
+            "只在"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "goals",
+      "title": "和我课题的关系",
+      "prompt": "它和你的课题有什么关系？能借鉴什么？",
+      "points": [
+        {
+          "t": "把电极通道当词元，自注意力天然支持通道数变化",
+          "k": [
+            "通道",
+            "词元",
+            "token",
+            "电极"
+          ]
+        },
+        {
+          "t": "需要设计通道的空间位置编码",
+          "k": [
+            "位置编码",
+            "空间位置",
+            "电极位置"
+          ]
+        },
+        {
+          "t": "长时程 EEG 要先分块，否则平方复杂度太高",
+          "k": [
+            "分块",
+            "patch",
+            "平方",
+            "长时程",
+            "长序列"
+          ]
+        },
+        {
+          "t": "对低成本迁移（LoRA/线性探测）没有直接帮助",
+          "k": [
+            "迁移",
+            "LoRA",
+            "线性探测",
+            "没有帮助",
+            "无关"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "questions",
+      "title": "组会上可能被问到",
+      "prompt": "导师可能会问什么？先写下你想到的问题。",
+      "points": [
+        {
+          "t": "为什么要除以 √d_k",
+          "k": [
+            "√",
+            "根号",
+            "缩放",
+            "d_k",
+            "dk"
+          ]
+        },
+        {
+          "t": "没有循环怎么知道顺序",
+          "k": [
+            "顺序",
+            "位置"
+          ]
+        },
+        {
+          "t": "多头比单头好多少",
+          "k": [
+            "多头",
+            "单头",
+            "头数"
+          ]
+        }
+      ]
+    }
+  ],
+  "principle": {
+    "title": "缩放点积注意力：一步步算出“该看谁”",
+    "subtitle": "每个词元用自己的查询去和所有键比相关度，再按权重汇总值",
+    "tex": "\\mathrm{Attention}(Q,K,V)=\\mathrm{softmax}\\left(\\frac{QK^{T}}{\\sqrt{d_k}}\\right)V",
+    "tokens": [
+      "The",
+      "animal",
+      "was",
+      "tired"
+    ],
+    "focus": 1,
+    "Q": [
+      [
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        2
+      ],
+      [
+        1,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        1
+      ]
+    ],
+    "K": [
+      [
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        2
+      ]
+    ],
+    "V": [
+      [
+        0.9,
+        0.1,
+        0.0,
+        0.2
+      ],
+      [
+        0.1,
+        0.8,
+        0.3,
+        0.0
+      ],
+      [
+        0.2,
+        0.1,
+        0.7,
+        0.1
+      ],
+      [
+        0.0,
+        0.6,
+        0.2,
+        0.9
+      ]
+    ],
+    "steps": [
+      {
+        "key": "qkv",
+        "cap": "每个词元都有自己的查询 Q、键 K、值 V",
+        "quote": {
+          "b": 36,
+          "q": "mapping a query and a set of key-value pairs to an output"
+        }
+      },
+      {
+        "key": "scores",
+        "cap": "查询和每个键做点积，得到相关度分数 QKᵀ",
+        "quote": {
+          "b": 41,
+          "q": "We compute the dot products of the query with all keys"
+        }
+      },
+      {
+        "key": "scale",
+        "cap": "除以 √d_k，防止分数太大、softmax 过于尖锐",
+        "quote": {
+          "b": 45,
+          "q": "We suspect that for large values of"
+        }
+      },
+      {
+        "key": "softmax",
+        "cap": "每行做 softmax，变成和为 1 的注意力权重",
+        "quote": {
+          "b": 41,
+          "q": "apply a softmax function to obtain the weights on the values"
+        }
+      },
+      {
+        "key": "output",
+        "cap": "用权重对值加权求和，得到这个词元的输出",
+        "quote": {
+          "b": 36,
+          "q": "The output is computed as a weighted sum of the values"
+        }
+      },
+      {
+        "key": "multi",
+        "cap": "多头：h 组投影各做一次注意力，再拼接起来",
+        "quote": {
+          "b": 53,
+          "q": "Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions."
+        }
+      }
+    ]
+  }
+}

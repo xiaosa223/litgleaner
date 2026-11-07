@@ -1,7 +1,59 @@
 # 初筛用便宜模型，提取和评估用强模型。
+# providers 定义“怎么连”（协议、地址、密钥、价格），tasks 定义“哪个任务用哪个模型”。
+# 真实提供方默认关闭；启用后把 tasks 里的 provider 和 model 换掉即可，流程代码不用动。
+#
+# 协议（adapter）：
+#   anthropic_messages  Anthropic Messages API；base_url 写到域名为止，不带 /v1
+#   openai_chat         OpenAI Chat Completions；国内厂商和中转站的“OpenAI 兼容”接口一般用这个
+#   openai_responses    OpenAI Responses API
+#   gemini              Gemini generateContent
+#   base_url 写到 /v1（Gemini 写到 /v1beta）为止。
+#
+# 通用 options：
+#   prices              必填。美元 / 百万 token，[输入, 输出]。tasks 用到的模型缺价格时启动报错，否则每日预算无效
+#   base_url            省略时用官方地址；中转站或本地服务改这里
+#   max_output_tokens   默认 4000，含思考 token
+#   max_tokens_field    请求体里输出上限的字段名，默认按协议；部分兼容接口只认 max_tokens
+#   structured          native（默认，用接口自带的 JSON Schema 约束）或 prompt（把结构写进提示词，
+#                       给不支持结构化输出的接口用）。两种模式下网关都会在本地按完整结构校验
+#   extra_body          深度合并进请求体，放各家专有参数，例如思考强度
+#   headers             不含密钥的附加请求头
+#   timeout_seconds     默认 180
+# credentials_env 只写一个环境变量名（本地服务可以不写）。声明了却没有值，启动时报错。
 providers:
   main:
     adapter: fake_llm
+  anthropic:
+    adapter: anthropic_messages
+    enabled: false
+    credentials_env: [ANTHROPIC_API_KEY]
+    options:
+      prices:  # claude-api 技能 2026-10-06 价格表；Batches API 另有五折，这里按标准价记
+        claude-haiku-5-5: [0.10, 0.50]
+        claude-sonnet-5-5: [2.0, 10.0]
+        claude-opus-5-5: [4.0, 20.0]
+      extra_body: { output_config: { effort: low } }
+  openai:
+    adapter: openai_responses
+    enabled: false
+    credentials_env: [OPENAI_API_KEY]
+    options:
+      prices: {}  # 按官方价格页填写，例如 <模型名>: [输入价, 输出价]
+  gemini:
+    adapter: gemini
+    enabled: false
+    credentials_env: [GEMINI_API_KEY]
+    options:
+      prices: {}
+  compat:  # OpenAI 兼容接口：国内厂商、中转站、本地推理服务
+    adapter: openai_chat
+    enabled: false
+    credentials_env: [COMPAT_API_KEY]
+    options:
+      base_url: https://api.example.com/v1
+      prices: {}
+      # structured: prompt          # 接口不支持 json_schema 时打开
+      # max_tokens_field: max_tokens
 tasks:
   triage: { provider: main, model: demo-cheap, prompt: triage }
   extract: { provider: main, model: demo-strong, prompt: extract }

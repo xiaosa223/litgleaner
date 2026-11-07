@@ -38,3 +38,11 @@ parser:
 #     language: ch                   # ch 同时覆盖中英文
 #     timeout_seconds: 600
 # 不耗额度的备选：adapter: pdf_text（英文论文效果接近，中文期刊明显较差）
+# 加入文献库：推送卡片上点“加入 Zotero”或运行 litfactory zotero add <DOI> 后写进本机 Zotero。
+# 需要 Zotero 10 以上并开着；第一次先运行 litfactory zotero authorize。说明见 docs/CHANNELS.md。
+# library:
+#   adapter: zotero_local
+#   options:
+#     collection: 论文工厂       # 放进这个分组，没有就自动创建
+#     tags: [论文工厂]           # 另外会自动加上主题名和推送等级
+#     attach_pdf: true           # 已经取到的 PDF 一起放进 Zotero（只存在本机）

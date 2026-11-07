@@ -1,7 +1,9 @@
 """推送内容。公开卡片是字段白名单：新字段默认不会公开。"""
 
 import re
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from typing import Literal
 
 _URL = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
 _URL_REMOVED = "[链接已移除]"
@@ -67,6 +69,10 @@ def to_public_card(card: PaperCard) -> PublicCard:
     )
 
 
+# 用户对每篇论文做过什么：已加入文献库、已选择但还在写入、不感兴趣。没操作过的不出现。
+PaperState = Literal["saved", "queued", "dismissed"]
+
+
 @dataclass(frozen=True)
 class DigestView:
     digest_id: str
@@ -74,3 +80,4 @@ class DigestView:
     period: str
     visibility: str
     cards: tuple[PaperCard | PublicCard, ...]
+    states: Mapping[str, PaperState] = field(default_factory=dict)  # 键是 paper_id

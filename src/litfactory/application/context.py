@@ -12,6 +12,7 @@ from litfactory.domain.rubric import Rubric
 from litfactory.domain.topic import Topic
 from litfactory.ports.blobstore import BlobStore
 from litfactory.ports.fulltext import FullTextProvider
+from litfactory.ports.library import ReferenceLibrary
 from litfactory.ports.parser import Parser
 from litfactory.ports.publisher import Publisher, Renderer
 from litfactory.ports.source import Source
@@ -52,6 +53,7 @@ class AppContext:
     journal_sets: Mapping[str, tuple[str, ...]]
     rubrics: Mapping[str, Rubric]
     routes: tuple[Route, ...]
+    library: ReferenceLibrary | None = None
 
     def now_iso(self) -> str:
         return self.clock().isoformat()

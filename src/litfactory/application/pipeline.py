@@ -12,6 +12,7 @@ from litfactory.application.stages.base import Stage
 from litfactory.application.stages.discover import DiscoverStage
 from litfactory.application.stages.extract import ExtractStage
 from litfactory.application.stages.fulltext import AcquireStage, ParseStage
+from litfactory.application.stages.library_save import LibrarySaveStage
 from litfactory.application.stages.publish import PublishStage
 from litfactory.application.stages.score import ScoreStage
 from litfactory.application.stages.select import SelectStage
@@ -40,6 +41,7 @@ STAGES: tuple[Stage, ...] = (
     ArchiveStage(),
     SelectStage(),
     PublishStage(),
+    LibrarySaveStage(),
 )
 STAGE_NAMES: tuple[str, ...] = tuple(stage.name for stage in STAGES)
 
