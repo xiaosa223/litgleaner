@@ -1,6 +1,6 @@
 # 推送渠道与加入 Zotero
 
-选中的论文推送到飞书卡片。点「加入 Zotero」，论文就进入你本机的 Zotero，并附带推荐理由笔记；系统已经取到的 PDF 也会一起放进去，可以直接在 Zotero 里精读和批注。没有飞书时，用命令行 `litfactory zotero add` 完成同样的操作。
+选中的论文推送到飞书卡片。点「加入 Zotero」，论文就进入你本机的 Zotero，并附带推荐理由笔记；系统已经取到的 PDF 也会一起放进去，可以直接在 Zotero 里精读和批注。没有飞书时，用命令行 `litgleaner zotero add` 完成同样的操作。
 
 ```text
 推送卡片 ──点击──▶ feishu listen ──记下──▶ feedback 表 ──▶ library 阶段 ──▶ 本机 Zotero
@@ -15,20 +15,20 @@
 
 1. 在 Zotero 里打开 **设置 → 高级 → 允许此计算机上的其他应用程序与 Zotero 通信**。
 2. 在 `config/app.yaml` 里打开 `library`，示例见文件末尾。
-3. 运行 `litfactory zotero authorize`，在 Zotero 的弹窗里点 **始终允许**。
-   - key 会写进 `~/.config/litfactory/zotero-local-key`，权限是 600，命令行不会打印它。
+3. 运行 `litgleaner zotero authorize`，在 Zotero 的弹窗里点 **始终允许**。
+   - key 会写进 `~/.config/litgleaner/zotero-local-key`，权限是 600，命令行不会打印它。
    - 如果点的是「允许」，拿到的是一次性 key，命令会要求你重新授权。
-4. 运行 `litfactory zotero status` 检查，这个命令只读，不会写入。
-5. 运行 `litfactory zotero add 10.xxxx/yyyy`，可以是 DOI、doi.org 链接、arXiv 编号或论文编号。只能加入论文工厂已经发现过的论文。
+4. 运行 `litgleaner zotero status` 检查，这个命令只读，不会写入。
+5. 运行 `litgleaner zotero add 10.xxxx/yyyy`，可以是 DOI、doi.org 链接、arXiv 编号或论文编号。只能加入拾穗已经发现过的论文。
 
 写进去的内容：
 
 | 内容 | 说明 |
 |---|---|
 | 条目 | 有 arXiv 编号、没有期刊的论文建成预印本，其余建成期刊论文 |
-| 分组 | `collection`（默认「论文工厂」），没有就自动创建 |
+| 分组 | `collection`（默认「拾穗」），没有就自动创建 |
 | 标签 | `tags`，加上主题名和推送等级（如「必读」） |
-| 子笔记 | 阅读价值分、一句话总结、创新点、结论、不足，末尾有论文工厂编号 |
+| 子笔记 | 阅读价值分、一句话总结、创新点、结论、不足，末尾有拾穗编号 |
 | PDF | 系统已经取到的全文；`attach_pdf: false` 时不放。开了 Zotero 文件同步时，会按你自己的同步设置上传 |
 
 不会重复写入：
@@ -37,7 +37,7 @@
 - 写成功后记进 `library_entry` 表。之后再点「加入」，或者 Zotero 重启后，都不会再写。
 
 已知限制：
-- Zotero 的快速搜索不检索 DOI 字段。如果你库里这篇的标题和论文工厂里的差别很大，查重会找不到它，结果是建出第二条。
+- Zotero 的快速搜索不检索 DOI 字段。如果你库里这篇的标题和拾穗里的差别很大，查重会找不到它，结果是建出第二条。
 - 只写「我的文库」，不写群组文库。
 - 写进去的论文下次运行时会被 `zotero` 信号源重新看到。它按 DOI 合并回同一篇，不会重复推送。
 
@@ -55,25 +55,25 @@
 4. **事件与回调 → 回调配置**：
    - 订阅方式选 **使用长连接接收回调**。
    - 添加回调 **卡片回传交互**（`card.action.trigger`）。
-   - 保存时，飞书要求长连接已经在线，所以要先跑一次下面第 4 步的 `litfactory feishu listen`。
+   - 保存时，飞书要求长连接已经在线，所以要先跑一次下面第 4 步的 `litgleaner feishu listen`。
 5. 创建版本并发布。应用可用范围要包含你自己。
 6. 获取自己的 open_id，例如在开放平台的 API 调试台里调用「获取用户信息」。
 
 以上权限名称和控制台路径来自飞书开放平台文档，控制台改版后名称可能不同。
 
-### 接入论文工厂
+### 接入拾穗
 
 1. 安装可选依赖：`uv sync --extra feishu`。
 2. 把应用凭据放进环境变量，`.env.example` 里有从钥匙串读取的示例：
 
    ```bash
-   security add-generic-password -U -a "$USER" -s feishu.litfactory.app_id -w
-   security add-generic-password -U -a "$USER" -s feishu.litfactory.app_secret -w
+   security add-generic-password -U -a "$USER" -s feishu.litgleaner.app_id -w
+   security add-generic-password -U -a "$USER" -s feishu.litgleaner.app_secret -w
    ```
 
 3. 在 `config/channels.yaml` 加飞书渠道。可以照着文件末尾的示例，并把路由的 `channel` 指向它。
-4. 常驻运行 `litfactory feishu listen --channel feishu_me`，用来接收按钮点击。可以交给 launchd、pm2 或 agent-autoloop 守护。
-5. `litfactory run` 推送后，在卡片上点按钮：
+4. 常驻运行 `litgleaner feishu listen --channel feishu_me`，用来接收按钮点击。可以交给 launchd、pm2 或 agent-autoloop 守护。
+5. `litgleaner run` 推送后，在卡片上点按钮：
    - 立刻会看到提示「已收到，正在加入 Zotero」。
    - 写完后，卡片上这一篇会变成「✅ 已加入 Zotero」。
    - Zotero 没开时，会显示「⏳ 已记下，等待加入 Zotero」，打开 Zotero 后下一次运行时自动加入。这之后卡片不会再自动更新。

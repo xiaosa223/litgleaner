@@ -6,19 +6,19 @@ from typing import Any
 
 import pytest
 
-from litfactory.application.delivery_ops import resolve_delivery, unresolved_deliveries
-from litfactory.application.pipeline import run_stage
-from litfactory.application.rubric_ops import rescore
-from litfactory.application.stages.base import Stage
-from litfactory.application.topics import activate_topic, pause_topic
-from litfactory.domain.errors import (
+from litgleaner.application.delivery_ops import resolve_delivery, unresolved_deliveries
+from litgleaner.application.pipeline import run_stage
+from litgleaner.application.rubric_ops import rescore
+from litgleaner.application.stages.base import Stage
+from litgleaner.application.topics import activate_topic, pause_topic
+from litgleaner.domain.errors import (
     ConfigError,
     PermanentError,
     RateLimited,
     SchemaChanged,
     StillProcessing,
 )
-from litfactory.ports.store import JobSpec
+from litgleaner.ports.store import JobSpec
 from tests.e2e.conftest import Harness, paper
 
 

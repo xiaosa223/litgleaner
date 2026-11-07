@@ -2,8 +2,8 @@
 # 下线信号源：enabled: false，历史记录会保留。
 #
 # 真实来源默认关闭。启用前先设置联系邮箱（所有来源共用，进入各家 API 的礼貌通道）：
-#   export LITFACTORY_CONTACT_EMAIL="you@example.org"
-# 然后把需要的来源改成 enabled: true，执行 litfactory doctor 检查。
+#   export LITGLEANER_CONTACT_EMAIL="you@example.org"
+# 然后把需要的来源改成 enabled: true，执行 litgleaner doctor 检查。
 # 每个来源支持的查询类型、可选项和限额见 docs/SOURCES.md。
 sources:
   demo:

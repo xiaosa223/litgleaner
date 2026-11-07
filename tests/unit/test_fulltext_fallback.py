@@ -2,9 +2,9 @@
 
 import pytest
 
-from litfactory.application.stages.fulltext import first_available
-from litfactory.domain.errors import AuthFailed, RateLimited
-from litfactory.ports.fulltext import FullText, FullTextRequest
+from litgleaner.application.stages.fulltext import first_available
+from litgleaner.domain.errors import AuthFailed, RateLimited
+from litgleaner.ports.fulltext import FullText, FullTextRequest
 
 REQUEST = FullTextRequest("P", "Paper", ())
 PDF = b"%PDF-1.7 body"

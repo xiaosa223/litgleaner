@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from litfactory.adapters.zotero.discovery import discover_data_dir
-from litfactory.domain.errors import ConfigError
+from litgleaner.adapters.zotero.discovery import discover_data_dir
+from litgleaner.domain.errors import ConfigError
 
 
 def write_prefs(profiles: Path, data_dir: str, *, use: bool = True) -> None:

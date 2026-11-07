@@ -11,25 +11,25 @@ from typing import Any
 import pytest
 import requests
 
-from litfactory.adapters.feishu.api import FeishuMessenger, card_response, send_uuid
-from litfactory.adapters.feishu.card import MAX_CARD_BYTES, FeishuCardRenderer, build_card
-from litfactory.adapters.feishu.listener import (
+from litgleaner.adapters.feishu.api import FeishuMessenger, card_response, send_uuid
+from litgleaner.adapters.feishu.card import MAX_CARD_BYTES, FeishuCardRenderer, build_card
+from litgleaner.adapters.feishu.listener import (
     TOAST_FORBIDDEN,
     TOAST_INVALID,
     FeishuListener,
     answerers_from,
     parse_click,
 )
-from litfactory.adapters.feishu.publisher import FeishuPublisher
-from litfactory.domain.digest import DigestView, PaperCard, to_public_card
-from litfactory.domain.errors import (
+from litgleaner.adapters.feishu.publisher import FeishuPublisher
+from litgleaner.domain.digest import DigestView, PaperCard, to_public_card
+from litgleaner.domain.errors import (
     AuthFailed,
     ConfigError,
     PermanentError,
     RateLimited,
     TransientError,
 )
-from litfactory.ports.publisher import Rendered
+from litgleaner.ports.publisher import Rendered
 
 ME = "ou_me"
 

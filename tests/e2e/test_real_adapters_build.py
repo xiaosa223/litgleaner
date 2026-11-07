@@ -8,14 +8,14 @@ import httpx
 import pytest
 import yaml
 
-from litfactory.adapters.llm.base import HttpLLM
-from litfactory.bootstrap import FULLTEXT, LLMS, SOURCES, build_context
-from litfactory.domain.errors import ConfigError
-from litfactory.infra.config import load_config
+from litgleaner.adapters.llm.base import HttpLLM
+from litgleaner.bootstrap import FULLTEXT, LLMS, SOURCES, build_context
+from litgleaner.domain.errors import ConfigError
+from litgleaner.infra.config import load_config
 
 ROOT = Path(__file__).parents[2]
 ENV = {
-    "LITFACTORY_CONTACT_EMAIL": "me@example.org",
+    "LITGLEANER_CONTACT_EMAIL": "me@example.org",
     "CORE_API_KEY": "core-key",
     "OPENALEX_API_KEY": "oa-key",
     "SEMANTIC_SCHOLAR_API_KEY": "s2-key",
@@ -90,7 +90,7 @@ def test_template_covers_every_registered_real_adapter(config: Path):
 
 def test_unpaywall_without_contact_email_is_a_config_error(config: Path, monkeypatch):
     _enable_everything(config)
-    monkeypatch.delenv("LITFACTORY_CONTACT_EMAIL")
+    monkeypatch.delenv("LITGLEANER_CONTACT_EMAIL")
     with pytest.raises(ConfigError, match="unpaywall"):
         build_context(load_config(config))
 

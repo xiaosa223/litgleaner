@@ -12,12 +12,12 @@ import httpx
 import pytest
 from tests.helpers.http import Router, fixture_bytes, fixture_json, public_resolver
 
-from litfactory.adapters.fulltext.europe_pmc import EuropePmcFullText
-from litfactory.adapters.sources.europe_pmc import EuropePmcSource
-from litfactory.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import AuthorWatch, CitationWatch, JournalWatch, KeywordSearch
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.fulltext.europe_pmc import EuropePmcFullText
+from litgleaner.adapters.sources.europe_pmc import EuropePmcSource
+from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import AuthorWatch, CitationWatch, JournalWatch, KeywordSearch
+from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 11, 5)
 PAGE1 = fixture_json("europe_pmc", "search_page1.json")

@@ -1,5 +1,5 @@
 # 一个主题一个文件，文件名必须和 id 一致。
-# 是否启用记录在数据库：litfactory topic activate / pause。
+# 是否启用记录在数据库：litgleaner topic activate / pause。
 id: demo-topic
 name: 演示主题
 description: >

@@ -14,12 +14,12 @@ from typing import Any
 import pytest
 from tests.helpers.http import FIXTURES
 
-from litfactory.adapters.zotero.fulltext import ZoteroFullText
-from litfactory.adapters.zotero.source import ZoteroSource
-from litfactory.domain.errors import ConfigError, SchemaChanged
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import InboxDrain, KeywordSearch
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.zotero.fulltext import ZoteroFullText
+from litgleaner.adapters.zotero.source import ZoteroSource
+from litgleaner.domain.errors import ConfigError, SchemaChanged
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import InboxDrain, KeywordSearch
+from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 11, 5)
 PDF = b"%PDF-1.7\nzotero body"

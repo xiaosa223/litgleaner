@@ -7,12 +7,12 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, inspect
 
-from litfactory.domain.identity import Alias
-from litfactory.domain.paper import Paper
-from litfactory.infra.db.migrate import is_up_to_date, upgrade_database
-from litfactory.infra.db.schema import metadata
-from litfactory.infra.db.store import SqlStore
-from litfactory.ports.store import JobSpec
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.paper import Paper
+from litgleaner.infra.db.migrate import is_up_to_date, upgrade_database
+from litgleaner.infra.db.schema import metadata
+from litgleaner.infra.db.store import SqlStore
+from litgleaner.ports.store import JobSpec
 
 
 @pytest.fixture

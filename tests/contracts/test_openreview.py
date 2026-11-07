@@ -8,9 +8,9 @@ from datetime import date
 import pytest
 from tests.helpers.http import Router, fixture_json
 
-from litfactory.adapters.sources.openreview import OpenReviewSource
-from litfactory.domain.errors import ConfigError, RateLimited, SchemaChanged
-from litfactory.domain.query import AuthorWatch, KeywordSearch
+from litgleaner.adapters.sources.openreview import OpenReviewSource
+from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged
+from litgleaner.domain.query import AuthorWatch, KeywordSearch
 
 SEARCH = fixture_json("openreview", "search.json")
 # 两篇 ICLR 2027 投稿在 2026-10-03 公开，窗口 2026-09-29 至 2026-10-06 只覆盖它们。

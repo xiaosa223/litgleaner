@@ -8,8 +8,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from litfactory.adapters.parsers.mineru_cloud import MinerUCloudParser
-from litfactory.domain.errors import (
+from litgleaner.adapters.parsers.mineru_cloud import MinerUCloudParser
+from litgleaner.domain.errors import (
     AuthFailed,
     ConfigError,
     Deferred,

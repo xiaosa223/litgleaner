@@ -3,10 +3,10 @@
 import pytest
 from tests.helpers.pdf import make_pdf
 
-import litfactory.adapters.parsers.pdf_text as module
-from litfactory.adapters.parsers.pdf_text import PdfTextParser
-from litfactory.domain.chunker import ChunkerConfig, chunk_document
-from litfactory.domain.errors import PermanentError
+import litgleaner.adapters.parsers.pdf_text as module
+from litgleaner.adapters.parsers.pdf_text import PdfTextParser
+from litgleaner.domain.chunker import ChunkerConfig, chunk_document
+from litgleaner.domain.errors import PermanentError
 
 LONG = "This sentence is long enough to look like a normal line of body text in a paper."
 

@@ -6,10 +6,10 @@ import copy
 import pytest
 from tests.helpers.http import Router, fixture_json, public_resolver
 
-from litfactory.adapters.fulltext.unpaywall import UnpaywallFullText
-from litfactory.domain.errors import ConfigError, SchemaChanged
-from litfactory.domain.identity import Alias
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.fulltext.unpaywall import UnpaywallFullText
+from litgleaner.domain.errors import ConfigError, SchemaChanged
+from litgleaner.domain.identity import Alias
+from litgleaner.ports.fulltext import FullTextRequest
 
 PDF = b"%PDF-1.5\nbody"
 ARXIV_COPY = fixture_json("unpaywall", "arxiv_copy.json")

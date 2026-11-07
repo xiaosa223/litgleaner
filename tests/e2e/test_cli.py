@@ -10,7 +10,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from litfactory.cli import app, configure_logging
+from litgleaner.cli import app, configure_logging
 
 ROOT = Path(__file__).parents[2]
 runner = CliRunner()
@@ -102,30 +102,30 @@ def test_doctor_only_warns_about_missing_optional_credentials(config: Path, monk
 
 
 def test_doctor_asks_for_contact_email_when_real_sources_are_enabled(config: Path, monkeypatch):
-    monkeypatch.delenv("LITFACTORY_CONTACT_EMAIL", raising=False)
+    monkeypatch.delenv("LITGLEANER_CONTACT_EMAIL", raising=False)
     path = config / "sources.yaml"
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     data["sources"]["crossref"] = {"adapter": "crossref"}
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     invoke(config, "db", "upgrade")
-    assert "LITFACTORY_CONTACT_EMAIL" in invoke(config, "doctor")
-    monkeypatch.setenv("LITFACTORY_CONTACT_EMAIL", "me@example.org")
-    assert "LITFACTORY_CONTACT_EMAIL" not in invoke(config, "doctor")
+    assert "LITGLEANER_CONTACT_EMAIL" in invoke(config, "doctor")
+    monkeypatch.setenv("LITGLEANER_CONTACT_EMAIL", "me@example.org")
+    assert "LITGLEANER_CONTACT_EMAIL" not in invoke(config, "doctor")
 
 
 def test_doctor_reports_adapter_config_errors_instead_of_crashing(config: Path, monkeypatch):
-    monkeypatch.delenv("LITFACTORY_CONTACT_EMAIL", raising=False)
+    monkeypatch.delenv("LITGLEANER_CONTACT_EMAIL", raising=False)
     path = config / "app.yaml"
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     data["fulltext"] = [{"adapter": "unpaywall"}]
     path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
     invoke(config, "db", "upgrade")
-    assert "LITFACTORY_CONTACT_EMAIL" in invoke(config, "doctor", code=1)
+    assert "LITGLEANER_CONTACT_EMAIL" in invoke(config, "doctor", code=1)
 
 
 def test_second_run_exits_while_lock_is_held(config: Path):
     invoke(config, "db", "upgrade")
-    lock = config.parent / "data" / "demo" / "litfactory.lock"
+    lock = config.parent / "data" / "demo" / "litgleaner.lock"
     lock.parent.mkdir(parents=True, exist_ok=True)
     with lock.open("w") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)

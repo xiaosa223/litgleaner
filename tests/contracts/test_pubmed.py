@@ -10,9 +10,9 @@ from datetime import date
 import pytest
 from tests.helpers.http import Router, fixture_bytes, fixture_json
 
-from litfactory.adapters.sources.pubmed import PubMedSource
-from litfactory.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
-from litfactory.domain.query import AuthorWatch, CitationWatch, JournalWatch, KeywordSearch
+from litgleaner.adapters.sources.pubmed import PubMedSource
+from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
+from litgleaner.domain.query import AuthorWatch, CitationWatch, JournalWatch, KeywordSearch
 
 TODAY = date(2026, 11, 5)
 SEARCH = fixture_json("pubmed", "esearch.json")
@@ -52,7 +52,7 @@ def test_keyword_search_uses_tiab_boolean_and_entrez_date_window():
         "2026/11/05",
     )
     assert (params["db"], params["retmode"], params["retmax"]) == ("pubmed", "json", "500")
-    assert (params["tool"], params["email"]) == ("litfactory", "contact@example.org")
+    assert (params["tool"], params["email"]) == ("litgleaner", "contact@example.org")
     fetch = router.params(1)
     assert fetch["id"] == "41509970,41501994,41502991,3920644,32678530"
     assert fetch["retmode"] == "xml"

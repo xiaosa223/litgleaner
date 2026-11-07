@@ -4,7 +4,7 @@
 缺少必需环境变量的来源会跳过并说明。
 
 用法：
-    export LITFACTORY_CONTACT_EMAIL="you@example.org"
+    export LITGLEANER_CONTACT_EMAIL="you@example.org"
     uv run python scripts/probe_sources.py                       # 全部来源
     uv run python scripts/probe_sources.py --only arxiv pubmed   # 指定来源
     uv run python scripts/probe_sources.py --days 7 --terms "single-cell RNA"
@@ -17,10 +17,10 @@ import sys
 import time
 from pathlib import Path
 
-from litfactory.bootstrap import FULLTEXT, SOURCES, BuildArgs
-from litfactory.domain.errors import LitFactoryError
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import (
+from litgleaner.bootstrap import FULLTEXT, SOURCES, BuildArgs
+from litgleaner.domain.errors import LitGleanerError
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
     InboxDrain,
@@ -28,8 +28,8 @@ from litfactory.domain.query import (
     KeywordSearch,
     Query,
 )
-from litfactory.infra.config import AdapterConfig, load_config
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.infra.config import AdapterConfig, load_config
+from litgleaner.ports.fulltext import FullTextRequest
 
 ROOT = Path(__file__).parents[1]
 # 一篇在 arXiv、Unpaywall、OpenAlex、Semantic Scholar 都有开放 PDF 的论文。
@@ -78,7 +78,7 @@ def probe_source(name: str, config: AdapterConfig, args: argparse.Namespace, roo
         label = f"{name:<18}{type(query).__name__:<15}"
         try:
             result = source.fetch(query, None)
-        except LitFactoryError as error:
+        except LitGleanerError as error:
             print(f"{label}失败  {type(error).__name__}: {str(error)[:120]}")
             continue
         sample = result.records[0].title[:60] if result.records else "-"
@@ -94,7 +94,7 @@ def probe_fulltext(config: AdapterConfig, args: argparse.Namespace, root: Path) 
     label = f"{config.adapter:<18}{'全文':<15}"
     try:
         found = provider.fetch(request)
-    except LitFactoryError as error:
+    except LitGleanerError as error:
         print(f"{label}失败  {type(error).__name__}: {str(error)[:120]}")
         return
     elapsed = time.monotonic() - started

@@ -14,12 +14,12 @@ import httpx
 import pytest
 from tests.helpers.http import Router, fixture_json, public_resolver
 
-from litfactory.adapters.fulltext.core import CoreFullText
-from litfactory.adapters.sources.core import CoreSource
-from litfactory.domain.errors import AuthFailed, ConfigError, RateLimited, SchemaChanged
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import CitationWatch, KeywordSearch
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.fulltext.core import CoreFullText
+from litgleaner.adapters.sources.core import CoreSource
+from litgleaner.domain.errors import AuthFailed, ConfigError, RateLimited, SchemaChanged
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import CitationWatch, KeywordSearch
+from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 11, 5)
 PAGE1 = fixture_json("core", "search_page1.json")

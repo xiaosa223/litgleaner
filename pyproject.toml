@@ -1,7 +1,10 @@
 [project]
-name = "litfactory"
+name = "litgleaner"
 version = "0.1.0"
-description = "每日发现、评估并推送有价值的学术文献"
+description = "拾穗：每日发现、评估并推送值得读的学术文献"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12,<3.15"
 dependencies = [
   "alembic>=1.13",
@@ -16,8 +19,11 @@ dependencies = [
   "zstandard>=0.22",
 ]
 
+[project.urls]
+Repository = "https://github.com/xiaosa223/litgleaner"
+
 [project.scripts]
-litfactory = "litfactory.cli:main"
+litgleaner = "litgleaner.cli:main"
 
 [project.optional-dependencies]
 feishu = [
@@ -41,7 +47,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/litfactory"]
+packages = ["src/litgleaner"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -54,7 +60,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["litfactory"]
+source = ["litgleaner"]
 branch = true
 
 [tool.coverage.report]
@@ -82,12 +88,12 @@ module = ["lark_oapi", "lark_oapi.*", "requests", "requests.*"]
 ignore_missing_imports = true
 
 [tool.importlinter]
-root_package = "litfactory"
+root_package = "litgleaner"
 
 [[tool.importlinter.contracts]]
 name = "依赖方向只能向内"
 type = "layers"
-containers = ["litfactory"]
+containers = ["litgleaner"]
 layers = [
   "cli",
   "cli_library",
@@ -102,20 +108,20 @@ layers = [
 [[tool.importlinter.contracts]]
 name = "适配器不能访问流程和基础设施"
 type = "forbidden"
-source_modules = ["litfactory.adapters"]
-forbidden_modules = ["litfactory.application", "litfactory.infra"]
+source_modules = ["litgleaner.adapters"]
+forbidden_modules = ["litgleaner.application", "litgleaner.infra"]
 
 [[tool.importlinter.contracts]]
 name = "适配器之间互相独立"
 type = "independence"
 modules = [
-  "litfactory.adapters.blobstore",
-  "litfactory.adapters.fakes",
-  "litfactory.adapters.feishu",
-  "litfactory.adapters.fulltext",
-  "litfactory.adapters.llm",
-  "litfactory.adapters.parsers",
-  "litfactory.adapters.renderers",
-  "litfactory.adapters.sources",
-  "litfactory.adapters.zotero",
+  "litgleaner.adapters.blobstore",
+  "litgleaner.adapters.fakes",
+  "litgleaner.adapters.feishu",
+  "litgleaner.adapters.fulltext",
+  "litgleaner.adapters.llm",
+  "litgleaner.adapters.parsers",
+  "litgleaner.adapters.renderers",
+  "litgleaner.adapters.sources",
+  "litgleaner.adapters.zotero",
 ]

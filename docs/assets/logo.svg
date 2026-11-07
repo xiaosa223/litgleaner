@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="title">
+  <title id="title">拾穗 LitGleaner</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2F5D45"/>
+      <stop offset="1" stop-color="#14301F"/>
+    </linearGradient>
+    <linearGradient id="grain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7CB5A"/>
+      <stop offset="1" stop-color="#D38F27"/>
+    </linearGradient>
+    <linearGradient id="picked" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF6D6"/>
+      <stop offset="1" stop-color="#FFD45C"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#FFE48A" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFE48A" stop-opacity="0"/>
+    </radialGradient>
+    <path id="g" d="M0,-46 C18,-34 25,-6 22,14 C19,34 10,46 0,46 C-10,46 -19,34 -22,14 C-25,-6 -18,-34 0,-46 Z"/>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+
+  <!-- 麦穗：右下一格空着，那粒被拾起 -->
+  <g transform="translate(226 268) rotate(-12)">
+    <path d="M0,200 C2,120 0,40 0,-150" fill="none" stroke="#E2A93C" stroke-width="13" stroke-linecap="round"/>
+    <g fill="url(#grain)">
+      <use href="#g" transform="translate(0 -152)"/>
+      <use href="#g" transform="translate(-28 -92) rotate(-26)"/>
+      <use href="#g" transform="translate(28 -92) rotate(26)"/>
+      <use href="#g" transform="translate(-30 -30) rotate(-28)"/>
+      <use href="#g" transform="translate(30 -30) rotate(28)"/>
+      <use href="#g" transform="translate(-30 32) rotate(-30)"/>
+      <use href="#g" transform="translate(30 32) rotate(30)"/>
+      <use href="#g" transform="translate(-30 94) rotate(-32)"/>
+    </g>
+  </g>
+
+  <!-- 拾起的那一粒 -->
+  <circle cx="368" cy="372" r="74" fill="url(#glow)"/>
+  <use href="#g" fill="url(#picked)" transform="translate(368 372) rotate(38) scale(1.08)"/>
+  <path d="M410,282 L416,300 L434,306 L416,312 L410,330 L404,312 L386,306 L404,300 Z" fill="#FFF6D6"/>
+</svg>

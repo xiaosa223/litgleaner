@@ -2,9 +2,9 @@
 
 import pytest
 
-from litfactory.application.library import find_paper, record_action, save_paper
-from litfactory.domain.errors import ConfigError, Deferred
-from litfactory.domain.library import CardAction
+from litgleaner.application.library import find_paper, record_action, save_paper
+from litgleaner.domain.errors import ConfigError, Deferred
+from litgleaner.domain.library import CardAction
 from tests.e2e.conftest import Harness, paper
 
 

@@ -6,10 +6,10 @@
 import json
 from typing import Any
 
-from litfactory.cli_library import _handle_click
-from litfactory.domain.library import decode_action
-from litfactory.infra.config import load_config
-from litfactory.ports.inbound import CardClick
+from litgleaner.cli_library import _handle_click
+from litgleaner.domain.library import decode_action
+from litgleaner.infra.config import load_config
+from litgleaner.ports.inbound import CardClick
 from tests.e2e.conftest import Harness, paper
 
 

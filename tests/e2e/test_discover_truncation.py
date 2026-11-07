@@ -1,9 +1,9 @@
 """信号源达到单次上限时，游标不前进：被截掉的记录下次还能取到，而不是永久丢失。"""
 
-from litfactory.application.stages.discover import DiscoverStage
-from litfactory.domain.paper import SourceRecord
-from litfactory.domain.query import KeywordSearch, Query
-from litfactory.ports.source import FetchResult
+from litgleaner.application.stages.discover import DiscoverStage
+from litgleaner.domain.paper import SourceRecord
+from litgleaner.domain.query import KeywordSearch, Query
+from litgleaner.ports.source import FetchResult
 
 
 class CappedSource:

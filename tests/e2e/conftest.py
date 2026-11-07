@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from litfactory.application.context import AppContext
-from litfactory.application.pipeline import RunReport, run_pipeline
-from litfactory.application.topics import activate_topic
-from litfactory.bootstrap import build_context
-from litfactory.infra.config import load_config
-from litfactory.infra.db.migrate import upgrade_database
+from litgleaner.application.context import AppContext
+from litgleaner.application.pipeline import RunReport, run_pipeline
+from litgleaner.application.topics import activate_topic
+from litgleaner.bootstrap import build_context
+from litgleaner.infra.config import load_config
+from litgleaner.infra.db.migrate import upgrade_database
 
 ROOT = Path(__file__).parents[2]
 
@@ -108,7 +108,7 @@ def _write_config(root: Path) -> None:
     shutil.copytree(ROOT / "prompts", root / "prompts")
     files = {
         "app.yaml": {
-            "database": "data/db/litfactory.db",
+            "database": "data/db/litgleaner.db",
             "blob_root": "data/blobs",
             "archive_dir": "archive",
             "prompts_dir": "prompts",

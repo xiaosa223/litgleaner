@@ -7,18 +7,18 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic import ValidationError
 
-from litfactory.domain.chunker import Chunk
-from litfactory.domain.digest import PaperCard, PublicCard, to_public_card
-from litfactory.domain.evidence import select_chunks, verify_quote, wrap_untrusted
-from litfactory.domain.query import (
+from litgleaner.domain.chunker import Chunk
+from litgleaner.domain.digest import PaperCard, PublicCard, to_public_card
+from litgleaner.domain.evidence import select_chunks, verify_quote, wrap_untrusted
+from litgleaner.domain.query import (
     InboxDrain,
     JournalWatch,
     KeywordSearch,
     plan_queries,
     query_from_payload,
 )
-from litfactory.domain.routing import Route, expand_topics, schedule_slot
-from litfactory.domain.topic import Topic
+from litgleaner.domain.routing import Route, expand_topics, schedule_slot
+from litgleaner.domain.topic import Topic
 
 SH = ZoneInfo("Asia/Shanghai")
 

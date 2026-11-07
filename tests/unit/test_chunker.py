@@ -1,8 +1,8 @@
 """切分器：纯函数、结构优先，真实 IEEE 版式的坑必须覆盖。"""
 
-from litfactory.domain.chunker import ChunkerConfig, chunk_document, estimate_tokens
-from litfactory.domain.document import Block, NormalizedDocument
-from litfactory.domain.sections import split_sections
+from litgleaner.domain.chunker import ChunkerConfig, chunk_document, estimate_tokens
+from litgleaner.domain.document import Block, NormalizedDocument
+from litgleaner.domain.sections import split_sections
 
 
 def block(kind, text, page=0, caption=None):

@@ -1,12 +1,12 @@
-# 论文工厂架构设计
+# 拾穗架构设计
 
-包名 `litfactory`。本文档只描述要实现的功能和设计，是实现的依据；进度和实施顺序见 [ROADMAP.md](ROADMAP.md)，实测记录见 `docs/experiments/`。要改变这里的决策，先改本文档或新增 `docs/adr/` 记录，再改代码。
+包名 `litgleaner`。本文档只描述要实现的功能和设计，是实现的依据；进度和实施顺序见 [ROADMAP.md](ROADMAP.md)，实测记录见 `docs/experiments/`。要改变这里的决策，先改本文档或新增 `docs/adr/` 记录，再改代码。
 
 ## 1. 目标与边界
 
 **目标**：研究者写下研究背景、研究内容和研究目标，系统每天从多个学术来源检索文献，按研究画像筛选、评分、提炼，通过飞书卡片推送给研究者本人或 agent，并在自带的领读器里帮助研究者读懂、记住、用上这些论文。本机 Zotero 作为可选同步。
 
-**目标用户**：学生和研究者，首要是研一和研零。用户在自己的电脑上双击安装运行，进阶用户也可以部署到服务器。项目自包含：推送、按钮回调、阅读、写入 Zotero 等用户功能都由论文工厂自己实现，不依赖使用者本机的其他自动化平台。需求和证据见 [REQUIREMENTS.md](REQUIREMENTS.md)。
+**目标用户**：学生和研究者，首要是研一和研零。用户在自己的电脑上双击安装运行，进阶用户也可以部署到服务器。项目自包含：推送、按钮回调、阅读、写入 Zotero 等用户功能都由拾穗自己实现，不依赖使用者本机的其他自动化平台。需求和证据见 [REQUIREMENTS.md](REQUIREMENTS.md)。
 
 **解决的问题**：
 
@@ -40,7 +40,7 @@
 ## 2. 三条核心原则
 
 1. **事实与判断分离。** 论文的元数据、全文、提取内容、译文是事实，全局只存一份。相关性、分数、是否推送是判断，按“主题 + 评价标准”分别存放。这是切换主题和修改指标不用重来的根本原因。
-2. **一切派生物都带来源指纹。** 每个派生结果都记录“输入哈希 + 生产者版本”。配置变了，系统能算出哪些结果失效（`litfactory stale`），而不是全量重跑，也不静默重跑。
+2. **一切派生物都带来源指纹。** 每个派生结果都记录“输入哈希 + 生产者版本”。配置变了，系统能算出哪些结果失效（`litgleaner stale`），而不是全量重跑，也不静默重跑。
 3. **变化点走接口，其余保持简单。** 只给已知会有多种实现的地方定义接口，其他地方不做抽象（见第 16 节）。
 
 ## 3. 总体流程
@@ -71,7 +71,7 @@
  │ 卡片“去读” → 领读器：背景卡、释义、按需翻译、提问、读后卡片 │
  │ 批注、卡片编辑 → annotation；阅读进度 → reading_state     │
  │ 可选：“加入 Zotero” → library：条目、笔记、PDF           │
- │ 可选：litfactory mcp 给外部 agent 查画像、证据、相关论文    │
+ │ 可选：litgleaner mcp 给外部 agent 查画像、证据、相关论文    │
  └──────────────────────────────────────────────────┘
  审计：覆盖率、漏检、误杀抽查、渠道健康（横切全流程）
 ```
@@ -81,14 +81,14 @@
 ## 4. 模块与依赖规则
 
 ```text
-论文工厂/
+litgleaner/
 ├─ config/
 │  ├─ app.yaml  sources.yaml  channels.yaml  llm.yaml  retention.yaml
 │  ├─ journals/<set>.yaml        # 期刊清单，可被多个主题引用
 │  ├─ topics/<topic-id>.yaml     # 一个研究画像一个文件
 │  └─ rubrics/<rubric-id>.json   # 评价指标，唯一来源
 ├─ prompts/                      # 提示词是文件，不写在代码里
-├─ src/litfactory/
+├─ src/litgleaner/
 │  ├─ domain/       # 模型与纯逻辑：Paper、Rubric 算分、切分器、去重、关键词过滤
 │  ├─ ports/        # 接口，见下表
 │  ├─ application/  # 各阶段、任务调度、选文、周报、导出、给 MCP 用的查询
@@ -178,7 +178,7 @@
 **去重规则**：
 
 - 标识符完全相同才自动合并，新标识符挂到已有论文上。两篇已有论文互相冲突时只记录、不自动合并。
-- 标题加作者的模糊匹配：高置信时合并，否则写入 `merge_candidate`，由 `litfactory merge list / accept / reject` 处理。所有合并都写 `merge_log`，可以撤销。
+- 标题加作者的模糊匹配：高置信时合并，否则写入 `merge_candidate`，由 `litgleaner merge list / accept / reject` 处理。所有合并都写 `merge_log`，可以撤销。
 - **预印本和正式版是同一篇论文。** 信号源同时给出两个标识符（如 OpenAlex、Semantic Scholar 的外部编号，Crossref 的 `is-preprint-of` 关系）时自动关联，元数据以正式版为准。正式版出现不会自动重取全文、重新评估；`stale` 报告会列出这些论文，由用户显式 `reassess`。
 
 ## 6. 信号源与全文
@@ -228,10 +228,10 @@ sources:
 
 - **加来源**：写一个适配器，在 `bootstrap.py` 的注册表里加一行，加配置，录制响应到 `tests/fixtures/<来源>/`，通过 `tests/contracts/` 的统一测试。
 - **减来源**：`enabled: false`。历史 `sighting` 保留，审计时仍能看到它的贡献。
-- **原始响应先落盘，再解析**。解析逻辑修好后用 `litfactory replay <来源> --since` 从落盘数据重放，不必重新抓取。
+- **原始响应先落盘，再解析**。解析逻辑修好后用 `litgleaner replay <来源> --since` 从落盘数据重放，不必重新抓取。
 - 限速、错误分类、密钥脱敏和原始留档由共享 HTTP 客户端（`adapters/common/http.py`）负责，适配器不各写一套；重试和退避由任务调度负责。
 - 游标统一是 ISO 日期，每次与上次窗口重叠几天以接住晚入库的记录（`adapters/common/window.py`）。Zotero 例外：本地模式用加入时间，Web 模式用库版本号。
-- 联系邮箱从 `LITFACTORY_CONTACT_EMAIL` 读取，所有来源共用；可选 key 在配置里用 `optional_env` 声明，缺失时 `doctor` 只警告。
+- 联系邮箱从 `LITGLEANER_CONTACT_EMAIL` 读取，所有来源共用；可选 key 在配置里用 `optional_env` 声明，缺失时 `doctor` 只警告。
 - 同一个 API 的元数据发现和全文获取是两个独立适配器，分别实现 `Source` 和 `FullTextProvider`。
 - 各来源的能力和已知限制见 [SOURCES.md](SOURCES.md)。
 
@@ -296,7 +296,7 @@ public: false                   # 是否允许出现在公开渠道
 研究者通常不擅长写检索式，所以由系统起草、研究者确认：
 
 ```bash
-litfactory topic draft example-topic    # 显式调用 LLM，花少量费用
+litgleaner topic draft example-topic    # 显式调用 LLM，花少量费用
 ```
 
 - 输入：背景、内容、目标，以及种子论文的标题和摘要（DOI 列表 + Zotero 分组，后者通过 `ReferenceLibrary` 读取）。
@@ -315,9 +315,9 @@ litfactory topic draft example-topic    # 显式调用 LLM，花少量费用
 - 新启用的画像同样只处理之后发现的论文，历史论文必须显式回填：
 
 ```bash
-litfactory topic activate example-topic
-litfactory topic backfill example-topic --since 2024-01-01             # 预览数量和费用
-litfactory topic backfill example-topic --since 2024-01-01 --execute   # 确认执行
+litgleaner topic activate example-topic
+litgleaner topic backfill example-topic --since 2024-01-01             # 预览数量和费用
+litgleaner topic backfill example-topic --since 2024-01-01 --execute   # 确认执行
 ```
 
 - `backfill` 先用库内已有元数据重新初筛（只花初筛费用），再向支持历史查询的信号源补查。已有的 PDF、解析结果和提取内容直接复用。暂停的画像不消耗资源，数据全部保留。
@@ -406,14 +406,14 @@ reading_value = round( Σ(weight × level / levels.max) / Σ(weight) × 100 )   
 
 | 修改内容 | 变化的哈希 | 处理方式 | 费用 |
 |---|---|---|---|
-| 权重、门槛、等级线 | `policy_hash` | `litfactory rubric rescore`，用已有维度等级重算 | 零 LLM 费用 |
-| 增删维度、问题、锚点 | `semantic_hash` | `litfactory rubric reassess <主题>` 先预览，加 `--execute` 按范围重评 | 有 LLM 费用 |
+| 权重、门槛、等级线 | `policy_hash` | `litgleaner rubric rescore`，用已有维度等级重算 | 零 LLM 费用 |
+| 增删维度、问题、锚点 | `semantic_hash` | `litgleaner rubric reassess <主题>` 先预览，加 `--execute` 按范围重评 | 有 LLM 费用 |
 
 只有 `semantic_hash` 和 `policy_hash` 都相同的分数才能直接比较。选文只使用当前画像和当前指标下的分数，没有重算的旧分数不参与排序。
 
-**任何配置修改都不会静默产生费用**：改维度定义、研究画像、提示词或模型后，系统不会自动重评已有论文，新论文才用新配置。`litfactory stale` 列出哪些派生结果的指纹与当前配置不一致（零费用），由用户决定是否重做。已归档的论文不会因此被删除，归档文件保留旧结果并标记 `stale: true`。
+**任何配置修改都不会静默产生费用**：改维度定义、研究画像、提示词或模型后，系统不会自动重评已有论文，新论文才用新配置。`litgleaner stale` 列出哪些派生结果的指纹与当前配置不一致（零费用），由用户决定是否重做。已归档的论文不会因此被删除，归档文件保留旧结果并标记 `stale: true`。
 
-`litfactory rubric eval` 用校准集（种子论文）和反馈数据比较修改前后的效果（前 K 篇命中率、必读漏选率）。改指标先看这个结果，不凭感觉。
+`litgleaner rubric eval` 用校准集（种子论文）和反馈数据比较修改前后的效果（前 K 篇命中率、必读漏选率）。改指标先看这个结果，不凭感觉。
 
 ### 8.4 对照研究目标
 
@@ -537,10 +537,10 @@ NormalizedDocument
 | 内容 | 位置 | 能否重建 |
 |---|---|---|
 | 配置、提示词、代码 | 仓库 | — |
-| 数据库 | `<数据目录>/db/litfactory.db` | 否，**最重要的数据**，包括批注、问答、反馈、阅读状态等无法重建的记录 |
+| 数据库 | `<数据目录>/db/litgleaner.db` | 否，**最重要的数据**，包括批注、问答、反馈、阅读状态等无法重建的记录 |
 | JSON 归档 | `<数据目录>/archive/papers/YYYY/MM/<paper_id>.json` | 能，由数据库导出 |
 
-`<数据目录>`：开发时是仓库下的 `data/`；安装版是系统的应用数据目录（macOS 为 `~/Library/Application Support/litfactory`，Windows 为 `%APPDATA%\litfactory`，Linux 为 `$XDG_DATA_HOME/litfactory`），可在设置中更改。下文 `blob://` 地址都相对于它。
+`<数据目录>`：开发时是仓库下的 `data/`；安装版是系统的应用数据目录（macOS 为 `~/Library/Application Support/litgleaner`，Windows 为 `%APPDATA%\litgleaner`，Linux 为 `$XDG_DATA_HOME/litgleaner`），可在设置中更改。下文 `blob://` 地址都相对于它。
 | 原始 API 响应 | `blob://raw/<source>/YYYY/MM/DD.jsonl.zst` | 大多能，但会过期 |
 | PDF | `blob://pdf/ab/cd/<sha256>.pdf` | 开放文献能，付费文献不一定 |
 | 双语 PDF（可选导出） | `blob://translated/ab/cd/<sha256>.<lang>.pdf` | 能，但消耗翻译费用 |
@@ -567,11 +567,11 @@ NormalizedDocument
 | `must_read` 或已加入文献库 | 永久 | 永久 | 永久 | 永久 |
 | 用户上传或付费获取且未归档 | 永久 | 永久 | 90 天 | 90 天 |
 
-元数据和摘要永久保留，切换主题时才有东西可以重新初筛；提取结果体积很小，也永久保留。清理由 `litfactory gc --dry-run` 预览后执行，只有相关 `job` 全部完成后才能删除对应文件。`litfactory stats` 报告条数和文件占用。
+元数据和摘要永久保留，切换主题时才有东西可以重新初筛；提取结果体积很小，也永久保留。清理由 `litgleaner gc --dry-run` 预览后执行，只有相关 `job` 全部完成后才能删除对应文件。`litgleaner stats` 报告条数和文件占用。
 
 ### 10.3 备份
 
-`litfactory backup` 用 `VACUUM INTO` 生成数据库快照，按配置保留若干份，可上传对象存储；`litfactory restore --check <快照>` 在临时目录还原并校验迁移版本和行数，用于定期恢复演练。
+`litgleaner backup` 用 `VACUUM INTO` 生成数据库快照，按配置保留若干份，可上传对象存储；`litgleaner restore --check <快照>` 在临时目录还原并校验迁移版本和行数，用于定期恢复演练。
 
 - 安装版默认每天自动备份到数据目录下的 `backups/`，保留 14 份。
 - 每次升级执行数据库迁移前，必须先自动备份一次。
@@ -629,7 +629,7 @@ routes:
 - 临时分注明“只读了摘要”；`undetermined` 注明哪些维度无法判断。
 - 私有渠道带操作：「去读」（打开领读器中的这篇论文）、「稍后读」「不感兴趣」；开启 Zotero 同步时另有「加入 Zotero」；`need_fulltext` 的论文另有「上传全文」。
 
-「去读」是链接，指向运行论文工厂的那台电脑上的领读器，只在那台电脑上能打开；在手机上看到推送时用「稍后读」按钮，它通过回调记为待读。
+「去读」是链接，指向运行拾穗的那台电脑上的领读器，只在那台电脑上能打开；在手机上看到推送时用「稍后读」按钮，它通过回调记为待读。
 
 ### 11.4 公开和私有的边界
 
@@ -655,7 +655,7 @@ LLM 输出来自不可信的论文内容：所有输出都限制长度；发给�
 - **同一篇论文在同一渠道只推一次**，不分主题；卡片上列出它命中的所有主题。
 - **例外：等级升级补推一次。** 以临时等级（`need_fulltext`）推过的论文，全文评估后进入更高的正式等级（如 `must_read`）时，再推一次并注明“读完全文后升级”。
 - 发送前把状态记为 `sending`。适配器确定发送失败时抛 `TransientError` 或 `PermanentError`，可以重试。
-- 其他异常（如超时、进程崩溃）无法确定对方是否收到：状态保持 `sending`，下次进入死信，**不自动重发**。确认后用 `litfactory delivery resolve` 标记已收到或重发。
+- 其他异常（如超时、进程崩溃）无法确定对方是否收到：状态保持 `sending`，下次进入死信，**不自动重发**。确认后用 `litgleaner delivery resolve` 标记已收到或重发。
 - 渠道支持幂等键时（如飞书消息的 uuid）一律带上。
 
 **推送量受控**：路由的 `limit` 是上限。未读积压（`reading_state=queued` 超过阈值）时，每次推送按比例减少篇数，只保留 `must_read`，并在卡片上注明“你还有 N 篇待读”。推送频率默认每天一次，用户可以改为每周或暂停。
@@ -673,7 +673,7 @@ LLM 输出来自不可信的论文内容：所有输出都限制长度；发给�
 
 ## 12. 领读器与 Zotero
 
-领读器是论文工厂自带的本地网页界面，由常驻服务提供（第 15.5 节）。它是用户每天打开的地方：首页是推荐收件箱和待读队列，点进一篇论文就进入阅读页。
+领读器是拾穗自带的本地网页界面，由常驻服务提供（第 15.5 节）。它是用户每天打开的地方：首页是推荐收件箱和待读队列，点进一篇论文就进入阅读页。
 
 ### 12.1 “好”的标准
 
@@ -754,19 +754,19 @@ LLM 输出来自不可信的论文内容：所有输出都限制长度；发给�
 | 写入内容 | 说明 |
 |---|---|
 | 条目 | 有 arXiv 编号且没有期刊的建成预印本，其余建成期刊论文 |
-| 分组和标签 | 默认分组「论文工厂」；标签含主题名和推送等级 |
-| 笔记 | 读后卡片和用户批注的导出（Markdown 转 HTML），末尾附论文工厂编号 |
+| 分组和标签 | 默认分组「拾穗」；标签含主题名和推送等级 |
+| 笔记 | 读后卡片和用户批注的导出（Markdown 转 HTML），末尾附拾穗编号 |
 | PDF | 系统已经取到的全文；导出过双语 PDF 时一并挂上 |
 
 - 查重：先按标题搜索，再核对 DOI 或 arXiv 编号；已有条目只补分组、标签和缺少的附件。
 - 只写「我的文库」，不写群组文库。
 - 授权：在领读器设置页点“连接 Zotero”，引导用户打开 Zotero 的本地 API 开关并在弹窗中点“始终允许”，本地 key 存入 `SecretStore`。
 - 读取（种子分组、“已读”标签）优先用本地 API；不可用时读 `zotero.sqlite` 的只读副本，绝不直接打开或写入用户的数据库文件。
-- 笔记同步是单向的（论文工厂 → Zotero）。在 Zotero 里改的笔记不会回写，以免两边冲突。
+- 笔记同步是单向的（拾穗 → Zotero）。在 Zotero 里改的笔记不会回写，以免两边冲突。
 
 ### 12.6 给外部 agent 的只读接口
 
-`litfactory mcp` 以 stdio 方式提供只读 MCP 服务，Claude Code、Codex 等都可以挂载：
+`litgleaner mcp` 以 stdio 方式提供只读 MCP 服务，Claude Code、Codex 等都可以挂载：
 
 | 工具 | 返回 |
 |---|---|
@@ -803,9 +803,9 @@ LLM 输出来自不可信的论文内容：所有输出都限制长度；发给�
 ## 14. 方法对比表与引用导出
 
 ```bash
-litfactory export table --topic example-topic --format md|csv [--tier must_read,digest]
-litfactory export refs  --topic example-topic --format bibtex|csl-json|gbt7714 [--read-only]
-litfactory export outline --topic example-topic   # 综述骨架
+litgleaner export table --topic example-topic --format md|csv [--tier must_read,digest]
+litgleaner export refs  --topic example-topic --format bibtex|csl-json|gbt7714 [--read-only]
+litgleaner export outline --topic example-topic   # 综述骨架
 ```
 
 - **对比表**：每行一篇论文，列为方法、数据集、指标与结果、代码是否公开、阅读价值分、对应目标。每个单元格来自 `extraction`，可附页码；`unverified` 的内容标注出来。
@@ -819,14 +819,14 @@ litfactory export outline --topic example-topic   # 综述骨架
 ### 15.1 任务调度
 
 - 用 SQLite 的 `job` 表做任务队列，每个阶段自己定义幂等键。重复运行不会重复处理，也不会重复收费。
-- 阶段顺序：discover → triage → acquire → parse → extract → assess → score → archive → select → publish → library。所有阶段都能单独运行：`litfactory run --stage <name>`。
+- 阶段顺序：discover → triage → acquire → parse → extract → assess → score → archive → select → publish → library。所有阶段都能单独运行：`litgleaner run --stage <name>`。
 - 领读器的讲解、翻译、问答和双语 PDF 导出是按需任务，由用户操作触发，走同一个任务队列和预算；`must_read` 论文的背景卡可按配置在 `archive` 之后预生成。
 - 同一时间只允许一个流程运行（文件锁），定时任务重叠时后者直接退出。
 - 写入集中在常驻服务进程：流水线、渠道监听、领读器都在这个进程里，按任务排队执行，事务保持短小。命令行操作同样先取文件锁。
 - `Deferred`（额度用完、外部任务仍在处理、Zotero 没开）推迟到指定时间再试，不计失败次数。
-- 失败按指数退避重试，超过次数进入死信。`AuthFailed`、`SchemaChanged` 重试也不会成功，直接进入死信。有失败时 `litfactory run` 退出码为 1。
+- 失败按指数退避重试，超过次数进入死信。`AuthFailed`、`SchemaChanged` 重试也不会成功，直接进入死信。有失败时 `litgleaner run` 退出码为 1。
 - 解析或提取彻底失败时，论文退回按摘要评估并标记为临时分，不会从系统里消失。
-- 安装版由常驻服务按配置的时间运行流水线；启动时发现错过了运行时间就补跑一次。服务器部署也可以由 cron 调用 `litfactory run`。
+- 安装版由常驻服务按配置的时间运行流水线；启动时发现错过了运行时间就补跑一次。服务器部署也可以由 cron 调用 `litgleaner run`。
 
 ### 15.2 LLM
 
@@ -856,7 +856,7 @@ budget:
 
 ### 15.3 数据去向
 
-论文工厂不区分内容敏感程度，下表说明每类数据会发到哪里，供使用者自行判断：
+拾穗不区分内容敏感程度，下表说明每类数据会发到哪里，供使用者自行判断：
 
 | 数据 | 发往 | 何时 |
 |---|---|---|
@@ -884,7 +884,7 @@ budget:
 | 形态 | 面向 | 内容 |
 |---|---|---|
 | 桌面安装包（默认） | 普通用户 | macOS `.dmg`、Windows 安装程序；内含 Python 运行时、依赖和构建好的前端；双击启动常驻服务并打开浏览器 |
-| `uv tool install litfactory` | 会用命令行的用户 | `litfactory serve` 启动同一个服务 |
+| `uv tool install litgleaner` | 会用命令行的用户 | `litgleaner serve` 启动同一个服务 |
 | 容器镜像 | 需要全天在线（飞书按钮随时可点）的用户 | 部署到服务器，通过 SSH 隧道或反向代理访问领读器 |
 
 - **常驻服务**（`service.py`）在一个进程里组合：领读器 HTTP 接口、定时调度、飞书长连接、任务执行器。可以在设置中开启登录时自动启动（macOS LaunchAgent、Windows 开机启动项、Linux systemd 用户服务）。
@@ -904,7 +904,7 @@ budget:
 | 流程代码出现具体厂商名 | `tests/architecture/`：`application`、`ports` 中出现信号源、解析器、大模型厂商、飞书、Zotero、BabelDOC 等名字就失败 |
 | 适配器行为不一致 | `tests/contracts/` 统一契约测试，新适配器必须通过 |
 | 外部 API 变化不被发现 | 录制响应做回放测试；线上 `SchemaChanged` 告警 |
-| 配置拼写错误或默默失效 | Pydantic `extra="forbid"`，`litfactory doctor` 启动自检 |
+| 配置拼写错误或默默失效 | Pydantic `extra="forbid"`，`litgleaner doctor` 启动自检 |
 | 数据库结构漂移 | Alembic 迁移，禁止手动改表 |
 | 数据被意外修改 | 领域模型不可变（frozen），`feedback` 等记录只追加 |
 | 文件和函数膨胀 | 文件不超过 400 行，函数不超过 50 行（`tests/architecture/` 检查） |

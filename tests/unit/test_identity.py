@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from litfactory.domain.identity import (
+from litgleaner.domain.identity import (
     Alias,
     ExistingPaper,
     decide_resolution,
@@ -12,7 +12,7 @@ from litfactory.domain.identity import (
     record_aliases,
     title_key,
 )
-from litfactory.domain.paper import SourceRecord
+from litgleaner.domain.paper import SourceRecord
 
 
 @pytest.mark.parametrize(

@@ -5,23 +5,23 @@ from pathlib import Path
 
 import pytest
 
-from litfactory.adapters.blobstore.local import LocalBlobStore
-from litfactory.adapters.fakes.fulltext import FakeFullText
-from litfactory.adapters.fakes.llm import FakeLLM
-from litfactory.adapters.fakes.parser import FakeParser
-from litfactory.adapters.fakes.publisher import FakePublisher
-from litfactory.adapters.fakes.source import FakeSource
-from litfactory.adapters.renderers.plain_text import PlainTextRenderer
-from litfactory.domain.digest import DigestView, PublicCard
-from litfactory.domain.document import NormalizedDocument
-from litfactory.domain.errors import SchemaChanged
-from litfactory.domain.identity import Alias
-from litfactory.domain.paper import SourceRecord
-from litfactory.domain.query import AuthorWatch, KeywordSearch
-from litfactory.ports.fulltext import FullTextRequest
-from litfactory.ports.llm import LLMRequest
-from litfactory.ports.publisher import Rendered
-from litfactory.ports.source import FetchResult, Source
+from litgleaner.adapters.blobstore.local import LocalBlobStore
+from litgleaner.adapters.fakes.fulltext import FakeFullText
+from litgleaner.adapters.fakes.llm import FakeLLM
+from litgleaner.adapters.fakes.parser import FakeParser
+from litgleaner.adapters.fakes.publisher import FakePublisher
+from litgleaner.adapters.fakes.source import FakeSource
+from litgleaner.adapters.renderers.plain_text import PlainTextRenderer
+from litgleaner.domain.digest import DigestView, PublicCard
+from litgleaner.domain.document import NormalizedDocument
+from litgleaner.domain.errors import SchemaChanged
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.paper import SourceRecord
+from litgleaner.domain.query import AuthorWatch, KeywordSearch
+from litgleaner.ports.fulltext import FullTextRequest
+from litgleaner.ports.llm import LLMRequest
+from litgleaner.ports.publisher import Rendered
+from litgleaner.ports.source import FetchResult, Source
 
 RECORDS = [{"title": "One", "doi": "10.1/one"}, {"title": "Two", "doi": "10.1/two"}]
 

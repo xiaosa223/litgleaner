@@ -2,7 +2,7 @@
 
 import json
 
-from litfactory.domain.errors import AuthFailed, TransientError
+from litgleaner.domain.errors import AuthFailed, TransientError
 from tests.e2e.conftest import Harness, paper
 
 

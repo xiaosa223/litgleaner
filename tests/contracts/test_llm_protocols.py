@@ -10,18 +10,18 @@ from typing import Any
 import pytest
 from tests.helpers.http import Router
 
-from litfactory.adapters.llm.anthropic import AnthropicMessagesLLM
-from litfactory.adapters.llm.base import HttpLLM, relax_schema
-from litfactory.adapters.llm.gemini import GeminiLLM
-from litfactory.adapters.llm.openai import OpenAIChatLLM, OpenAIResponsesLLM
-from litfactory.domain.errors import (
+from litgleaner.adapters.llm.anthropic import AnthropicMessagesLLM
+from litgleaner.adapters.llm.base import HttpLLM, relax_schema
+from litgleaner.adapters.llm.gemini import GeminiLLM
+from litgleaner.adapters.llm.openai import OpenAIChatLLM, OpenAIResponsesLLM
+from litgleaner.domain.errors import (
     AuthFailed,
     ConfigError,
     PermanentError,
     RateLimited,
     TransientError,
 )
-from litfactory.ports.llm import LLMRequest
+from litgleaner.ports.llm import LLMRequest
 
 KEY = "sk-test-secret"
 SCHEMA: Mapping[str, Any] = {

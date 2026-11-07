@@ -10,12 +10,12 @@ from datetime import date
 import pytest
 from tests.helpers.http import Router, fixture_bytes, public_resolver
 
-from litfactory.adapters.fulltext.arxiv import ArxivFullText
-from litfactory.adapters.sources.arxiv import ArxivSource
-from litfactory.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import AuthorWatch, JournalWatch, KeywordSearch
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.fulltext.arxiv import ArxivFullText
+from litgleaner.adapters.sources.arxiv import ArxivSource
+from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import AuthorWatch, JournalWatch, KeywordSearch
+from litgleaner.ports.fulltext import FullTextRequest
 
 PDF = b"%PDF-1.5\nbody"
 

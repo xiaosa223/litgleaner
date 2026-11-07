@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-SRC = Path(__file__).parents[2] / "src" / "litfactory"
+SRC = Path(__file__).parents[2] / "src" / "litgleaner"
 MAX_FILE_LINES = 400
 MAX_FUNCTION_LINES = 50
 VENDOR = re.compile(

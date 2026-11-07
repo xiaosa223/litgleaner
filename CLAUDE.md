@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-论文工厂（包名 `litfactory`）：研究者写下研究背景、内容和目标，系统每天从多个学术来源检索文献，筛选、评分、提炼后推送到飞书卡片，并在自带的领读器里帮助研究者阅读、翻译、沉淀笔记；本机 Zotero 是可选同步。发布形态是桌面安装包加常驻服务。项目会分发给其他研究者独立运行：用户功能必须由本项目自己实现，不能依赖本机的 agent-autoloop（它只用于本机运维，见 `scripts/autoloop_run.py`）。
+拾穗 LitGleaner（包名 `litgleaner`）：研究者写下研究背景、内容和目标，系统每天从多个学术来源检索文献，筛选、评分、提炼后推送到飞书卡片，并在自带的领读器里帮助研究者阅读、翻译、沉淀笔记；本机 Zotero 是可选同步。发布形态是桌面安装包加常驻服务。项目会分发给其他研究者独立运行：用户功能必须由本项目自己实现，不能依赖本机的 agent-autoloop（它只用于本机运维，见 `scripts/autoloop_run.py`）。
 
 ## 最高规则：一切增改服从架构设计
 
@@ -27,16 +27,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 uv sync                                    # 安装依赖（含 dev 组）
-uv run litfactory db upgrade               # 跑 Alembic 迁移
-uv run litfactory doctor                   # 配置、密钥、假适配器自检
-uv run litfactory run                      # 跑全部阶段；--stage <name> 只跑一个阶段
+uv run litgleaner db upgrade               # 跑 Alembic 迁移
+uv run litgleaner doctor                   # 配置、密钥、假适配器自检
+uv run litgleaner run                      # 跑全部阶段；--stage <name> 只跑一个阶段
 uv run python scripts/probe_sources.py     # 真实网络联调信号源，不写数据库
 ```
 
 提交前的四项检查（与 README 一致）：
 
 ```bash
-uv run pytest --cov=litfactory             # 覆盖率门槛 80%（pyproject 中 fail_under）
+uv run pytest --cov=litgleaner             # 覆盖率门槛 80%（pyproject 中 fail_under）
 uv run ruff check src tests && uv run ruff format --check src tests
 uv run mypy                                # strict，只检查 src
 uv run lint-imports                        # 依赖方向契约

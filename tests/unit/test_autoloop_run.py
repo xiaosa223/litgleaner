@@ -1,4 +1,4 @@
-"""scripts/autoloop_run.py 把论文工厂的运行结果翻译成 agent-autoloop 回执。
+"""scripts/autoloop_run.py 把拾穗的运行结果翻译成 agent-autoloop 回执。
 
 防的失败方式：
 - 正常跑完也去打扰人，或者同一个问题每天重复报告；
@@ -53,7 +53,7 @@ def test_parse_jobs_and_deliveries_ignore_count_line():
 
 def test_clean_run_stays_quiet():
     message = autoloop_run.daily_message(Cmd(0, OK_SUMMARY, ""), [], [])
-    assert first_line(message).startswith("论文工厂跑完")
+    assert first_line(message).startswith("拾穗跑完")
     assert receipt_of(message) is None
 
 
@@ -84,7 +84,7 @@ def test_dead_letters_emit_one_stable_triage_event():
 
 
 def test_start_failure_is_reported_not_retried():
-    error = "数据库不是最新版本，请先执行：litfactory db upgrade"
+    error = "数据库不是最新版本，请先执行：litgleaner db upgrade"
     message = autoloop_run.daily_message(Cmd(2, "", error), [], [])
     assert not first_line(message).startswith("没跑成"), "配置错误重试也不会好"
     receipt = receipt_of(message)

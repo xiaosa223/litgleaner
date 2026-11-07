@@ -1,4 +1,8 @@
-# 论文工厂
+<p align="center"><img src="docs/assets/logo.svg" width="128" alt="拾穗 LitGleaner 图标"></p>
+
+<h1 align="center">拾穗 LitGleaner</h1>
+
+<p align="center">每天在文献的麦田里，拾起值得读的那几穗。</p>
 
 每天从多个信号源发现文献，按研究主题筛选和评分，把值得读的归档并推送。设计依据见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
@@ -8,9 +12,9 @@
 
 ```bash
 uv sync
-uv run litfactory db upgrade
-uv run litfactory topic activate demo-topic
-uv run litfactory run
+uv run litgleaner db upgrade
+uv run litgleaner topic activate demo-topic
+uv run litgleaner run
 cat data/demo/outbox.jsonl     # 查看推送内容
 ls -R data/demo/archive        # 查看 JSON 归档
 ```
@@ -19,7 +23,7 @@ ls -R data/demo/archive        # 查看 JSON 归档
 
 | 想做什么 | 怎么做 |
 |---|---|
-| 检查配置和密钥 | `litfactory doctor` |
+| 检查配置和密钥 | `litgleaner doctor` |
 | 增减信号源 | 改 `config/sources.yaml`，各来源的能力和限制见 [docs/SOURCES.md](docs/SOURCES.md) |
 | 调整全文来源和顺序 | 改 `config/app.yaml` 的 `fulltext` |
 | 真实网络联调 | `uv run python scripts/probe_sources.py`（不写数据库） |
@@ -46,8 +50,12 @@ ls -R data/demo/archive        # 查看 JSON 归档
 ## 开发检查
 
 ```bash
-uv run pytest --cov=litfactory
+uv run pytest --cov=litgleaner
 uv run ruff check src tests && uv run ruff format --check src tests
 uv run mypy
 uv run lint-imports
 ```
+
+## 许可证
+
+[MIT](LICENSE)

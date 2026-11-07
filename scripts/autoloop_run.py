@@ -1,4 +1,4 @@
-"""agent-autoloop 的接单脚本：跑一遍论文工厂，把结果翻译成回执。
+"""agent-autoloop 的接单脚本：跑一遍拾穗，把结果翻译成回执。
 
 agent-autoloop 把这个脚本当作一个 `command` Agent 启动。它不调用大模型，0 Token：
 - 正常跑完或只有待重试：只写一句结论，不打扰人；
@@ -96,7 +96,7 @@ def _failed_event(kind: str, fingerprint: str, summary: str, detail: str) -> dic
 def _ask_delivery(item: Delivery) -> dict[str, Any]:
     return {
         "title": f"推送结果未知：{item.digest} → {item.channel}",
-        "text": f"论文工厂发出这份推送后没拿到确认。请到 {item.channel} 看一眼有没有收到。",
+        "text": f"拾穗发出这份推送后没拿到确认。请到 {item.channel} 看一眼有没有收到。",
         "options": OPTIONS,
         "key": f"delivery:{item.digest}:{item.channel}",
         "about": json.dumps({"delivery": [item.digest, item.channel]}),
@@ -106,7 +106,7 @@ def _ask_delivery(item: Delivery) -> dict[str, Any]:
 def daily_message(run: Cmd, dead: list[DeadJob], unknown: list[Delivery]) -> str:
     """一次每日运行的最后一条消息：第一行是结局，有事要中台做时附回执。"""
     if run.code == 3:
-        return "没事可做：上一轮论文工厂还在运行\n"
+        return "没事可做：上一轮拾穗还在运行\n"
     receipt: dict[str, Any] = {}
     if run.code not in (0, 1):
         error = (run.stderr or run.stdout).strip()
@@ -115,11 +115,11 @@ def daily_message(run: Cmd, dead: list[DeadJob], unknown: list[Delivery]) -> str
             _failed_event(
                 "start",
                 _fingerprint(str(run.code), first_error),
-                f"论文工厂没能运行：{first_error}",
-                f"litfactory run 退出码 {run.code}\n\n{error}",
+                f"拾穗没能运行：{first_error}",
+                f"litgleaner run 退出码 {run.code}\n\n{error}",
             )
         ]
-        first = f"论文工厂没能运行，已交给排障：{first_error}"
+        first = f"拾穗没能运行，已交给排障：{first_error}"
     elif dead:
         ordered = sorted(dead, key=lambda job: (job.stage, job.key))
         lines = [f"{job.stage}\t{job.attempts}\t{job.key}\t{job.error}" for job in ordered]
@@ -127,17 +127,17 @@ def daily_message(run: Cmd, dead: list[DeadJob], unknown: list[Delivery]) -> str
             _failed_event(
                 "dead",
                 _fingerprint(*(f"{job.stage}:{job.key}" for job in ordered)),
-                f"论文工厂有 {len(dead)} 个死信任务",
+                f"拾穗有 {len(dead)} 个死信任务",
                 "死信（阶段、尝试次数、任务、最后错误）：\n"
                 + "\n".join(lines)
                 + f"\n\n本次运行输出：\n{run.stdout.strip()}",
             )
         ]
-        first = f"论文工厂跑完，有 {len(dead)} 个死信，已交给排障"
+        first = f"拾穗跑完，有 {len(dead)} 个死信，已交给排障"
     elif run.code == 1:
-        first = "论文工厂跑完，有任务待重试，下次运行自动重试"
+        first = "拾穗跑完，有任务待重试，下次运行自动重试"
     else:
-        first = "论文工厂跑完，没有异常"
+        first = "拾穗跑完，没有异常"
     if unknown:
         receipt["ask"] = [_ask_delivery(item) for item in unknown]
     return _message(first, receipt)
@@ -181,8 +181,8 @@ def answers_message(answers: list[dict[str, Any]], resolve: Callable[[str, str, 
     return _message(f"已按你的选择处理 {done} 份推送", receipt)
 
 
-def _litfactory(*args: str) -> Cmd:
-    program = Path(sys.executable).parent / "litfactory"
+def _litgleaner(*args: str) -> Cmd:
+    program = Path(sys.executable).parent / "litgleaner"
     completed = subprocess.run(
         [str(program), *args], cwd=ROOT, capture_output=True, text=True, check=False
     )
@@ -190,7 +190,7 @@ def _litfactory(*args: str) -> Cmd:
 
 
 def _resolve(digest: str, channel: str, resend: bool) -> Cmd:
-    return _litfactory("delivery", "resolve", digest, channel, "--resend" if resend else "--sent")
+    return _litgleaner("delivery", "resolve", digest, channel, "--resend" if resend else "--sent")
 
 
 def _context() -> dict[str, Any]:
@@ -205,9 +205,9 @@ def main() -> int:
     if answers:
         print(answers_message(answers, _resolve), end="")
         return 0
-    run = _litfactory("run")
-    dead = parse_jobs(_litfactory("jobs", "list", "--status", "dead").stdout)
-    unknown = parse_deliveries(_litfactory("delivery", "list").stdout)
+    run = _litgleaner("run")
+    dead = parse_jobs(_litgleaner("jobs", "list", "--status", "dead").stdout)
+    unknown = parse_deliveries(_litgleaner("delivery", "list").stdout)
     print(daily_message(run, dead, unknown), end="")
     return 0
 

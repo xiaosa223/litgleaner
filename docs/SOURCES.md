@@ -4,8 +4,8 @@
 启用前先设置联系邮箱，所有来源共用：
 
 ```bash
-export LITFACTORY_CONTACT_EMAIL="you@example.org"
-litfactory doctor                                # 检查必需和可选的环境变量
+export LITGLEANER_CONTACT_EMAIL="you@example.org"
+litgleaner doctor                                # 检查必需和可选的环境变量
 uv run python scripts/probe_sources.py           # 真实网络联调，不写数据库
 ```
 
@@ -48,7 +48,7 @@ uv run python scripts/probe_sources.py           # 真实网络联调，不写�
 | `zotero` | 你 Zotero 里已有的 PDF | `user_supplied` | `ZOTERO_API_KEY`（仅 web 模式） |
 | `arxiv` | arXiv 编号，或 `10.48550/arXiv.*` 形式的 DOI | `open` | — |
 | `europe_pmc` | PubMed Central 开放获取子集 | `open` | — |
-| `unpaywall` | DOI 的开放获取 PDF | `open` | `LITFACTORY_CONTACT_EMAIL`（必需） |
+| `unpaywall` | DOI 的开放获取 PDF | `open` | `LITGLEANER_CONTACT_EMAIL`（必需） |
 | `openalex` | OpenAlex 记录的开放获取位置 | `open` | `OPENALEX_API_KEY`（可选） |
 | `semantic_scholar` | `openAccessPdf` | `open` | `SEMANTIC_SCHOLAR_API_KEY`（可选） |
 | `core` | CORE 收录的全文 | `open` | `CORE_API_KEY`（必需） |

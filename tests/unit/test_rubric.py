@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from litfactory.domain.rubric import Rubric, apply_fulltext_constraint, compute_score
+from litgleaner.domain.rubric import Rubric, apply_fulltext_constraint, compute_score
 
 DEFAULT = Path(__file__).parents[2] / "config" / "rubrics" / "default.json"
 

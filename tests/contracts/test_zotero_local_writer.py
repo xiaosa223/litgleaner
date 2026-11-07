@@ -16,10 +16,10 @@ from urllib.parse import parse_qs
 import httpx
 import pytest
 
-from litfactory.adapters.zotero.local_api import read_local_key, save_local_key
-from litfactory.adapters.zotero.writer_local import ZoteroLocalLibrary, creator, write_token
-from litfactory.domain.errors import AuthFailed, ConfigError, Deferred, TransientError
-from litfactory.domain.library import LibraryEntry, note_marker
+from litgleaner.adapters.zotero.local_api import read_local_key, save_local_key
+from litgleaner.adapters.zotero.writer_local import ZoteroLocalLibrary, creator, write_token
+from litgleaner.domain.errors import AuthFailed, ConfigError, Deferred, TransientError
+from litgleaner.domain.library import LibraryEntry, note_marker
 
 SERVER_ID = "SRV123456789"
 KEY = "localkey0123456789abcdef01234567"
@@ -163,17 +163,17 @@ def library(fake: FakeZotero, api_key: str | None = KEY, **options: Any) -> Zote
 
 def test_creates_item_in_new_collection_with_note_and_pdf():
     fake = FakeZotero()
-    receipt = library(fake, tags=["论文工厂", "litfactory"]).save(entry())
+    receipt = library(fake, tags=["拾穗", "litgleaner"]).save(entry())
 
     assert receipt.created and receipt.warnings == ()
     (collection,) = fake.collections.values()
-    assert collection["data"]["name"] == "论文工厂"
+    assert collection["data"]["name"] == "拾穗"
     item = fake.objects[receipt.item_key]["data"]
     assert item["itemType"] == "journalArticle"
     assert item["DOI"] == "10.1000/gnn-eeg"
     assert item["publicationTitle"] == "IEEE TNNLS"
     assert item["collections"] == [collection["key"]]
-    assert [t["tag"] for t in item["tags"]] == ["论文工厂", "litfactory", "必读"]
+    assert [t["tag"] for t in item["tags"]] == ["拾穗", "litgleaner", "必读"]
     assert item["creators"] == [
         {"creatorType": "author", "firstName": "Ada", "lastName": "Lovelace"},
         {"creatorType": "author", "name": "张三"},
@@ -202,7 +202,7 @@ def test_every_write_carries_server_id_and_key_and_mtime_is_milliseconds():
 
 def test_existing_item_found_by_doi_is_merged_not_duplicated():
     fake = FakeZotero()
-    fake.collections["C1"] = {"key": "C1", "version": 1, "data": {"name": "论文工厂"}}
+    fake.collections["C1"] = {"key": "C1", "version": 1, "data": {"name": "拾穗"}}
     # 标题写法不同但 DOI 相同（DOI 写在 extra 里），而且已经有 PDF 和我们的笔记。
     key = fake.add_item(
         {
@@ -223,7 +223,7 @@ def test_existing_item_found_by_doi_is_merged_not_duplicated():
     assert len(fake.objects) == before
     data = fake.objects[key]["data"]
     assert data["collections"] == ["OTHER", "C1"]
-    assert [t["tag"] for t in data["tags"]] == ["mine", "论文工厂", "必读"]
+    assert [t["tag"] for t in data["tags"]] == ["mine", "拾穗", "必读"]
 
 
 def test_same_title_with_different_doi_is_a_different_paper():

@@ -6,19 +6,19 @@ import httpx
 import pytest
 from tests.helpers.http import Router, public_resolver
 
-from litfactory.adapters.common.download import PdfDownloader, system_resolver
-from litfactory.adapters.common.http import HttpClient, user_agent
-from litfactory.adapters.common.query import boolean_query, matches_terms
-from litfactory.adapters.common.records import RecordBuilder, ensure_supported
-from litfactory.adapters.common.text import parse_date, strip_markup
-from litfactory.adapters.common.window import next_cursor, window_from_cursor
-from litfactory.domain.errors import (
+from litgleaner.adapters.common.download import PdfDownloader, system_resolver
+from litgleaner.adapters.common.http import HttpClient, user_agent
+from litgleaner.adapters.common.query import boolean_query, matches_terms
+from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
+from litgleaner.adapters.common.text import parse_date, strip_markup
+from litgleaner.adapters.common.window import next_cursor, window_from_cursor
+from litgleaner.domain.errors import (
     AuthFailed,
     RateLimited,
     SchemaChanged,
     TransientError,
 )
-from litfactory.domain.query import AuthorWatch, KeywordSearch
+from litgleaner.domain.query import AuthorWatch, KeywordSearch
 
 PDF = b"%PDF-1.7\n" + b"x" * 100
 
@@ -42,7 +42,7 @@ def test_get_json_returns_body_and_records_raw_page():
     http = client(router)
     assert http.get_json("/works", {"q": "x"}) == {"ok": 1}
     assert b"ok" in http.raw_log()
-    assert router.requests[0].headers["user-agent"].startswith("litfactory/")
+    assert router.requests[0].headers["user-agent"].startswith("litgleaner/")
 
 
 @pytest.mark.parametrize(

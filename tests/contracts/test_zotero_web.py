@@ -14,12 +14,12 @@ import httpx
 import pytest
 from tests.helpers.http import Router, fixture_json, public_resolver
 
-from litfactory.adapters.zotero.fulltext import ZoteroFullText
-from litfactory.adapters.zotero.source import ZoteroSource
-from litfactory.domain.errors import AuthFailed, ConfigError, RateLimited, SchemaChanged
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import InboxDrain, JournalWatch
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.zotero.fulltext import ZoteroFullText
+from litgleaner.adapters.zotero.source import ZoteroSource
+from litgleaner.domain.errors import AuthFailed, ConfigError, RateLimited, SchemaChanged
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import InboxDrain, JournalWatch
+from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 5, 20)
 KEY = "zotero-secret-key-123"

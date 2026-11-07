@@ -5,11 +5,11 @@ import json
 import pytest
 import yaml
 
-from litfactory.application.rubric_ops import reassess, rescore
-from litfactory.application.topics import activate_topic, backfill_topic, pause_topic
-from litfactory.bootstrap import build_context
-from litfactory.domain.errors import ConfigError
-from litfactory.infra.config import load_config
+from litgleaner.application.rubric_ops import reassess, rescore
+from litgleaner.application.topics import activate_topic, backfill_topic, pause_topic
+from litgleaner.bootstrap import build_context
+from litgleaner.domain.errors import ConfigError
+from litgleaner.infra.config import load_config
 from tests.e2e.conftest import Harness, paper
 
 

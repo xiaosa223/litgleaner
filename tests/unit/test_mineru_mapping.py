@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from litfactory.adapters.parsers.mineru_content_list import to_normalized_document
-from litfactory.domain.chunker import ChunkerConfig, chunk_document
-from litfactory.domain.errors import SchemaChanged
+from litgleaner.adapters.parsers.mineru_content_list import to_normalized_document
+from litgleaner.domain.chunker import ChunkerConfig, chunk_document
+from litgleaner.domain.errors import SchemaChanged
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "mineru" / "arxiv-1907.10485v1.content_list.json"
 

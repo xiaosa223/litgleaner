@@ -5,12 +5,12 @@ from datetime import date
 import pytest
 from tests.helpers.http import Router, fixture_bytes, fixture_json, public_resolver
 
-from litfactory.adapters.fulltext.crossref_tdm import CrossrefTdmFullText
-from litfactory.adapters.sources.crossref import CrossrefSource
-from litfactory.domain.errors import ConfigError, RateLimited, SchemaChanged
-from litfactory.domain.identity import Alias
-from litfactory.domain.query import AuthorWatch, JournalWatch, KeywordSearch
-from litfactory.ports.fulltext import FullTextRequest
+from litgleaner.adapters.fulltext.crossref_tdm import CrossrefTdmFullText
+from litgleaner.adapters.sources.crossref import CrossrefSource
+from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged
+from litgleaner.domain.identity import Alias
+from litgleaner.domain.query import AuthorWatch, JournalWatch, KeywordSearch
+from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 11, 5)
 KEYWORD = fixture_json("crossref", "keyword.json")

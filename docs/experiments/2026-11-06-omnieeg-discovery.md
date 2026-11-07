@@ -1,7 +1,7 @@
-# 发现层对比：论文工厂与 agent 直接调研（OmniEEG 初赛）
+# 发现层对比：拾穗与 agent 直接调研（OmniEEG 初赛）
 
 - 日期：2026-11-06
-- 复现：`export LITFACTORY_CONFIG=$PWD/data/exp-omnieeg/config && uv run litfactory run --stage discover`，然后运行 `data/exp-omnieeg/compare.py`（不进 git）
+- 复现：`export LITGLEANER_CONFIG=$PWD/data/exp-omnieeg/config && uv run litgleaner run --stage discover`，然后运行 `data/exp-omnieeg/compare.py`（不进 git）
 - 对照组：`研一/比赛/OmniEEG Challenge 2026/` 下 agent 于 10 月 24 日至 11 月 4 日完成的调研文本、方案与 `proposal/references.bib`（114 条）
 - 原始数据：`data/exp-omnieeg/`（数据库、`bib_vs_factory.csv`、`factory_only_shortlist.csv`）
 

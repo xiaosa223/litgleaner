@@ -20,12 +20,12 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
-from litfactory.adapters.parsers.mineru_cloud import MinerUCloudParser
-from litfactory.adapters.parsers.mineru_content_list import to_normalized_document
-from litfactory.adapters.parsers.pdf_text import PdfTextParser
-from litfactory.domain.chunker import ChunkedDocument, ChunkerConfig, chunk_document
-from litfactory.domain.document import NormalizedDocument
-from litfactory.domain.evidence import select_chunks
+from litgleaner.adapters.parsers.mineru_cloud import MinerUCloudParser
+from litgleaner.adapters.parsers.mineru_content_list import to_normalized_document
+from litgleaner.adapters.parsers.pdf_text import PdfTextParser
+from litgleaner.domain.chunker import ChunkedDocument, ChunkerConfig, chunk_document
+from litgleaner.domain.document import NormalizedDocument
+from litgleaner.domain.evidence import select_chunks
 
 logger = logging.getLogger("probe")
 CJK = re.compile(r"[㐀-鿿]")
