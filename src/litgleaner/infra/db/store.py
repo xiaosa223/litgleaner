@@ -10,7 +10,9 @@ from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
 from litgleaner.infra.db.judgments_repo import SqlJudgmentRepo
 from litgleaner.infra.db.outputs_repo import SqlOutputRepo
 from litgleaner.infra.db.papers_repo import SqlPaperRepo
+from litgleaner.infra.db.reader_repo import SqlReaderRepo
 from litgleaner.infra.db.schema import (
+    annotation,
     artifact,
     assessment,
     delivery,
@@ -20,6 +22,7 @@ from litgleaner.infra.db.schema import (
     fulltext,
     library_entry,
     paper,
+    reading_state,
     score,
     sighting,
     triage,
@@ -37,6 +40,8 @@ _COUNTED = (
     delivery,
     feedback,
     library_entry,
+    reading_state,
+    annotation,
 )
 
 
@@ -49,6 +54,7 @@ class SqlStore:
         self._feedback = SqlFeedbackRepo(self._db)
         self._jobs = SqlJobRepo(self._db)
         self._runs = SqlRunRepo(self._db)
+        self._reader = SqlReaderRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -73,6 +79,10 @@ class SqlStore:
     @property
     def runs(self) -> SqlRunRepo:
         return self._runs
+
+    @property
+    def reader(self) -> SqlReaderRepo:
+        return self._reader
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

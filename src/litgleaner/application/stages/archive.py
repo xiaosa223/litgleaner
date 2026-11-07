@@ -50,6 +50,11 @@ def _topic_entries(ctx: AppContext, paper_id: str) -> tuple[dict[str, dict[str, 
     return entries, kept
 
 
+def assessment_entries(ctx: AppContext, paper_id: str) -> dict[str, dict[str, Any]]:
+    """每个主题下展示用的评估结果：当前标准优先，没有时给旧结果并标记 stale。"""
+    return _topic_entries(ctx, paper_id)[0]
+
+
 def _record(ctx: AppContext, paper: Paper) -> tuple[dict[str, Any], bool]:
     entries, kept = _topic_entries(ctx, paper.id)
     extraction = ctx.store.papers.get_extraction(paper.id)

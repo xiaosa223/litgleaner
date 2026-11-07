@@ -1,6 +1,7 @@
 """命令行共用的参数、错误显示、加载和运行锁。"""
 
 import fcntl
+import os
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from functools import wraps
@@ -10,7 +11,7 @@ from typing import Annotated
 import typer
 
 from litgleaner.application.context import AppContext
-from litgleaner.bootstrap import build_context
+from litgleaner.bootstrap import CONTACT_EMAIL, build_context
 from litgleaner.domain.errors import ConfigError
 from litgleaner.infra.config import LoadedConfig, load_config
 from litgleaner.infra.db.migrate import is_up_to_date
@@ -85,3 +86,46 @@ def try_run_lock(config: LoadedConfig) -> Iterator[bool]:
             yield False
             return
         yield True
+
+
+# doctor 用的配置检查
+_FAKE_PREFIX = "fake_"
+
+
+def enabled_adapters(config: LoadedConfig) -> list[tuple[str, tuple[str, ...]]]:
+    groups = [
+        *config.sources.values(),
+        *config.channels.values(),
+        *config.llm.providers.values(),
+        *config.app.fulltext,
+        config.app.parser,
+    ]
+    return [(item.adapter, item.credentials_env) for item in groups if item.enabled]
+
+
+def missing_optional(config: LoadedConfig) -> list[str]:
+    groups = [*config.sources.values(), *config.app.fulltext]
+    missing = sorted(
+        {name for item in groups if item.enabled for name in item.optional_env}
+        - {name for name in os.environ if os.environ[name]}
+    )
+    real = [i for i in groups if i.enabled and not i.adapter.startswith(_FAKE_PREFIX)]
+    if real and not os.environ.get(CONTACT_EMAIL):
+        missing.append(CONTACT_EMAIL)
+    if not missing:
+        return []
+    return [f"可选环境变量未设置：{', '.join(missing)}。不影响运行，但部分来源额度更低或会跳过"]
+
+
+def missing_credentials(config: LoadedConfig) -> list[str]:
+    return [
+        f"{adapter} 需要环境变量 {name}"
+        for adapter, names in enabled_adapters(config)
+        for name in names
+        if not os.environ.get(name)
+    ]
+
+
+def fake_adapters(config: LoadedConfig) -> list[str]:
+    fakes = sorted({name for name, _ in enabled_adapters(config) if name.startswith(_FAKE_PREFIX)})
+    return [f"正在使用演示用的假适配器：{', '.join(fakes)}，结果不是真实数据"] if fakes else []

@@ -46,5 +46,9 @@ class BudgetExceeded(LitGleanerError):
     """超出 LLM 每日预算。任务保持待处理，第二天继续，不计失败次数。"""
 
 
+class NotFound(LitGleanerError):
+    """要找的论文、批注或文件不存在。"""
+
+
 class ConfigError(LitGleanerError):
     """配置错误，启动时直接报告。"""

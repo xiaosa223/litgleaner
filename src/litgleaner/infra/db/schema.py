@@ -260,3 +260,28 @@ library_entry = Table(
     Column("warnings", Text),
     Column("saved_at", String, nullable=False),
 )
+
+reading_state = Table(
+    "reading_state",
+    metadata,
+    Column("paper_id", String, ForeignKey("paper.id"), primary_key=True),
+    Column("status", String, nullable=False, index=True),
+    Column("position", Text, nullable=True),
+    Column("updated_at", String, nullable=False),
+)
+
+annotation = Table(
+    "annotation",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("paper_id", String, ForeignKey("paper.id"), nullable=False, index=True),
+    Column("kind", String, nullable=False),
+    Column("page", Integer, nullable=True),
+    Column("bbox", Text, nullable=True),
+    Column("quote", Text, nullable=True),
+    Column("body", Text, nullable=True),
+    Column("rects", Text, nullable=True),
+    Column("created_at", String, nullable=False),
+    Column("updated_at", String, nullable=False),
+    Column("deleted_at", String, nullable=True),
+)

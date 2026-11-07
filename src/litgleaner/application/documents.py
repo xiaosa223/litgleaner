@@ -42,9 +42,12 @@ def save_parser_raw(
     return key, len(payload)
 
 
+def load_document(ctx: AppContext, doc_key: str) -> NormalizedDocument:
+    return NormalizedDocument.from_dict(decompress_json(ctx.blobs.get(doc_key)))
+
+
 def load_chunks(ctx: AppContext, doc_key: str) -> ChunkedDocument:
-    document = NormalizedDocument.from_dict(decompress_json(ctx.blobs.get(doc_key)))
-    return chunk_document(document, ctx.settings.chunker)
+    return chunk_document(load_document(ctx, doc_key), ctx.settings.chunker)
 
 
 def full_text_of(chunked: ChunkedDocument) -> str:

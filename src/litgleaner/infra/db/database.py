@@ -1,5 +1,9 @@
-"""SQLite 连接和事务。atomic 内的所有操作共用一个事务，可以嵌套。"""
+"""SQLite 连接和事务。atomic 内的所有操作共用一个事务，可以嵌套。
 
+当前事务按线程隔离：常驻服务里 HTTP 请求和调度在不同线程，彼此不能借用对方的事务。
+"""
+
+import threading
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
@@ -28,10 +32,15 @@ class Database:
         ensure_parent_dir(url)
         self._engine: Engine = create_engine(url)
         event.listen(self._engine, "connect", _set_pragmas)
-        self._active: Connection | None = None
+        self._local = threading.local()
 
     def dispose(self) -> None:
         self._engine.dispose()
+
+    @property
+    def _active(self) -> Connection | None:
+        active: Connection | None = getattr(self._local, "connection", None)
+        return active
 
     @contextmanager
     def atomic(self) -> Iterator[None]:
@@ -39,21 +48,21 @@ class Database:
             yield
             return
         with self._engine.begin() as connection:
-            self._active = connection
+            self._local.connection = connection
             try:
                 yield
             finally:
-                self._active = None
+                self._local.connection = None
 
     def fetch(self, statement: Executable) -> Sequence[Row[Any]]:
-        if self._active is not None:
-            return self._active.execute(statement).all()
+        if (active := self._active) is not None:
+            return active.execute(statement).all()
         with self._engine.begin() as connection:
             return connection.execute(statement).all()
 
     def write(self, statement: Executable) -> int:
         """返回受影响行数。"""
-        if self._active is not None:
-            return self._active.execute(statement).rowcount
+        if (active := self._active) is not None:
+            return active.execute(statement).rowcount
         with self._engine.begin() as connection:
             return connection.execute(statement).rowcount

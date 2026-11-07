@@ -436,7 +436,7 @@ class Block:            # 不可变
     kind: Literal["heading", "text", "table", "equation", "figure", "code", "reference"]
     text: str
     page: int
-    bbox: tuple[int, int, int, int] | None   # 用于从 PDF 恢复高清图和定位证据
+    bbox: tuple[int, int, int, int] | None   # 页面归一化坐标 0–1000，原点在左上，(x0, y0, x1, y1)；用于从 PDF 恢复高清图、定位证据和叠加高亮
     caption: str | None
 
 class NormalizedDocument:

@@ -19,7 +19,7 @@ def _limitation_text(item: Mapping[str, Any]) -> str:
     return text
 
 
-def _tier_label(rubric: Rubric, tier: str) -> str:
+def tier_label(rubric: Rubric, tier: str) -> str:
     labels = {item.key: item.label for item in rubric.tiers}
     return labels.get(tier, "需要全文" if tier == rubric.provisional.tier else tier)
 
@@ -54,7 +54,7 @@ def build_card(
         doi=aliases.get("doi"),
         score=scored.score,
         tier=scored.tier,
-        tier_label=_tier_label(rubric, scored.tier),
+        tier_label=tier_label(rubric, scored.tier),
         provisional=scored.provisional,
         summary=strip_urls(data.get("summary")),
         conclusion=strip_urls(data.get("conclusion")),

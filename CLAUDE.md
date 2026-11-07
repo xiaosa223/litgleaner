@@ -31,6 +31,9 @@ uv run litgleaner db upgrade               # 跑 Alembic 迁移
 uv run litgleaner doctor                   # 配置、密钥、假适配器自检
 uv run litgleaner run                      # 跑全部阶段；--stage <name> 只跑一个阶段
 uv run python scripts/probe_sources.py     # 真实网络联调信号源，不写数据库
+(cd web && pnpm install && pnpm build)     # 构建领读器前端，产物在 src/litgleaner/server/static/
+uv run litgleaner serve                    # 常驻服务：领读器 + 定时运行流程
+(cd web && pnpm typecheck)                 # 前端类型检查
 ```
 
 提交前的四项检查（与 README 一致）：
@@ -55,7 +58,7 @@ uv run pytest tests/architecture
 ### 分层与强制机制
 
 ```text
-入口：service（组合 server、调度、监听，待实现）；cli → cli_library → cli_shared；mcp_server（待实现）
+入口：cli → cli_library → service（组合 server、调度；飞书监听待并入）→ server → cli_shared；mcp_server（待实现）
   → bootstrap → adapters | infra → application → ports → domain
 ```
 

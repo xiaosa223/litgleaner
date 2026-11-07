@@ -1,7 +1,6 @@
 """命令行入口。这里只做参数处理和输出，业务逻辑都在 application。"""
 
 import logging
-import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -19,10 +18,10 @@ from litgleaner.application.topics import (
     backfill_topic,
     pause_topic,
 )
-from litgleaner.bootstrap import CONTACT_EMAIL, build_context, zotero_status
+from litgleaner.bootstrap import build_context, zotero_status
 from litgleaner.cli_library import feishu_app, zotero_app
 from litgleaner.cli_shared import DEFAULT_CONFIG as _DEFAULT_CONFIG
-from litgleaner.cli_shared import ConfigOption
+from litgleaner.cli_shared import ConfigOption, fake_adapters, missing_credentials, missing_optional
 from litgleaner.cli_shared import context_or_exit as _context
 from litgleaner.cli_shared import echo as _echo
 from litgleaner.cli_shared import friendly as _friendly
@@ -32,6 +31,7 @@ from litgleaner.domain.errors import ConfigError, LitGleanerError
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.infra.db.backup import check_snapshot, create_snapshot, upgrade_with_backup
 from litgleaner.infra.db.migrate import is_up_to_date
+from litgleaner.service import Service, open_in_browser
 
 app = typer.Typer(help="拾穗：发现、评估并推送值得读的文献", no_args_is_help=True)
 db_app = typer.Typer(help="数据库", no_args_is_help=True)
@@ -55,7 +55,6 @@ for name, group in (
 SinceOption = Annotated[
     datetime | None, typer.Option(formats=["%Y-%m-%d"], help="只处理此日期之后的论文")
 ]
-_FAKE_PREFIX = "fake_"
 
 
 def _print_plan(plan: WorkPlan, dry_run: bool, action: str) -> None:
@@ -146,11 +145,27 @@ def run(
 
 
 @app.command()
+def serve(
+    config: ConfigOption = _DEFAULT_CONFIG,
+    port: Annotated[int, typer.Option(help="监听端口，0 表示随机", min=0, max=65535)] = 0,
+    open_browser: Annotated[bool, typer.Option("--open/--no-open", help="启动后打开浏览器")] = True,
+) -> None:
+    """启动常驻服务：领读器（只监听本机）加定时运行流程。Ctrl-C 停止。"""
+    loaded = _config(config)
+    service = Service(loaded, _context(config), port=port)
+    service.start()
+    _echo(f"领读器已启动，用这个链接打开（每次启动都会变）：\n{service.launch_url}")
+    if open_browser:
+        open_in_browser(service.launch_url, loaded.database_path.parent)
+    service.wait()
+
+
+@app.command()
 def doctor(config: ConfigOption = _DEFAULT_CONFIG) -> None:
     """检查配置、数据库、密钥和主题状态。"""
     loaded = _config(config)
-    problems = _missing_credentials(loaded)
-    warnings = [*_fake_adapters(loaded), *_missing_optional(loaded)]
+    problems = missing_credentials(loaded)
+    warnings = [*fake_adapters(loaded), *missing_optional(loaded)]
     if not is_up_to_date(loaded.database_url):
         problems.append("数据库不是最新版本，请执行 litgleaner db upgrade")
     else:
@@ -190,45 +205,6 @@ def _library_warnings(config: LoadedConfig) -> list[str]:
     except LitGleanerError as error:
         return [f"Zotero 暂时写不进去（选中的论文会排队等待）：{error}"]
     return [line for line in lines if line.startswith("未授权")]
-
-
-def _enabled_adapters(config: LoadedConfig) -> list[tuple[str, tuple[str, ...]]]:
-    groups = [
-        *config.sources.values(),
-        *config.channels.values(),
-        *config.llm.providers.values(),
-        *config.app.fulltext,
-        config.app.parser,
-    ]
-    return [(item.adapter, item.credentials_env) for item in groups if item.enabled]
-
-
-def _missing_optional(config: LoadedConfig) -> list[str]:
-    groups = [*config.sources.values(), *config.app.fulltext]
-    missing = sorted(
-        {name for item in groups if item.enabled for name in item.optional_env}
-        - {name for name in os.environ if os.environ[name]}
-    )
-    real = [i for i in groups if i.enabled and not i.adapter.startswith(_FAKE_PREFIX)]
-    if real and not os.environ.get(CONTACT_EMAIL):
-        missing.append(CONTACT_EMAIL)
-    if not missing:
-        return []
-    return [f"可选环境变量未设置：{', '.join(missing)}。不影响运行，但部分来源额度更低或会跳过"]
-
-
-def _missing_credentials(config: LoadedConfig) -> list[str]:
-    return [
-        f"{adapter} 需要环境变量 {name}"
-        for adapter, names in _enabled_adapters(config)
-        for name in names
-        if not os.environ.get(name)
-    ]
-
-
-def _fake_adapters(config: LoadedConfig) -> list[str]:
-    fakes = sorted({name for name, _ in _enabled_adapters(config) if name.startswith(_FAKE_PREFIX)})
-    return [f"正在使用演示用的假适配器：{', '.join(fakes)}，结果不是真实数据"] if fakes else []
 
 
 @topic_app.command("list")

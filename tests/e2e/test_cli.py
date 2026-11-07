@@ -189,3 +189,13 @@ def test_upgrade_backs_up_existing_database_first(config: Path):
     assert "升级前已备份到" in invoke(config, "db", "upgrade")
     assert len(list((config.parent / "data" / "demo" / "backups").glob("*pre-upgrade-0002*"))) == 1
     assert "升级前已备份到" not in invoke(config, "db", "upgrade")
+
+
+def test_serve_prints_launch_link_and_stops(config: Path, monkeypatch: pytest.MonkeyPatch):
+    invoke(config, "db", "upgrade")
+    opened: list[str] = []
+    monkeypatch.setattr("litgleaner.service.webbrowser.open", opened.append)
+    monkeypatch.setattr("litgleaner.cli.Service.wait", lambda self: self.stop())
+    output = invoke(config, "serve", "--no-open")
+    assert "http://127.0.0.1:" in output and "/launch?token=" in output
+    assert opened == []

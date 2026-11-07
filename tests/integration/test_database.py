@@ -1,18 +1,20 @@
 """迁移和事务。"""
 
 import sqlite3
+import threading
 from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, insert, inspect, select
 
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.paper import Paper
+from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, is_up_to_date, upgrade_database
-from litgleaner.infra.db.schema import metadata
+from litgleaner.infra.db.schema import metadata, source_cursor
 from litgleaner.infra.db.store import SqlStore
 from litgleaner.ports.store import JobSpec
 
@@ -117,3 +119,30 @@ def test_migration_0004_backfills_provisional_flag_from_cards(tmp_path: Path):
     rows = connection.execute("SELECT provisional FROM digest_item ORDER BY position").fetchall()
     connection.close()
     assert rows == [(1,), (0,)]
+
+
+def test_transaction_in_one_thread_is_invisible_to_another(url: str):
+    """常驻服务里 HTTP 请求和调度在不同线程。一个线程的事务不能被另一个线程借用。"""
+    upgrade_database(url)
+    db = Database(url)
+    in_transaction = threading.Event()
+    checked = threading.Event()
+    seen: list[int] = []
+
+    def writer() -> None:
+        with pytest.raises(RuntimeError), db.atomic():
+            db.write(insert(source_cursor).values(source="s", query_hash="q", updated_at="t"))
+            in_transaction.set()
+            checked.wait(5)
+            raise RuntimeError("回滚")
+
+    thread = threading.Thread(target=writer)
+    thread.start()
+    assert in_transaction.wait(5)
+    seen.append(len(db.fetch(select(source_cursor))))
+    checked.set()
+    thread.join(5)
+
+    assert seen == [0]
+    assert db.fetch(select(source_cursor)) == []
+    db.dispose()

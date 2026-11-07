@@ -17,6 +17,11 @@ __pycache__/
 # 系统文件
 .DS_Store
 
+# 前端：依赖和构建产物（构建产物随 Python 包发布，不进 git）
+web/node_modules/
+web/*.tsbuildinfo
+src/litgleaner/server/static/
+
 # 本地工具产物
 .playwright-mcp/
 .import_linter_cache/

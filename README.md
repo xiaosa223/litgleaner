@@ -19,6 +19,13 @@ cat data/demo/outbox.jsonl     # 查看推送内容
 ls -R data/demo/archive        # 查看 JSON 归档
 ```
 
+领读器（需要 Node.js 和 pnpm 构建前端）：
+
+```bash
+(cd web && pnpm install && pnpm build)
+uv run litgleaner serve        # 只监听本机，打印启动链接并打开浏览器；同时每 5 分钟运行一次流程
+```
+
 ## 常用操作
 
 | 想做什么 | 怎么做 |
@@ -38,6 +45,7 @@ ls -R data/demo/archive        # 查看 JSON 归档
 | 处理发送结果未知的推送 | `delivery list`，确认后执行 `delivery resolve <digest> <渠道> --sent` 或 `--resend` |
 | 重新生成归档 | `archive rebuild` |
 | 备份数据库 | `backup`（保留份数见 `app.yaml` 的 `backup`）；`db upgrade` 迁移前会自动备份 |
+| 阅读、批注、管理待读 | `serve` 后在浏览器里操作；链接每次启动都会变，只能在本机打开 |
 | 恢复演练 | `restore --check <快照>`：在临时目录还原并校验，不改动正在用的数据库 |
 
 ## 解析器

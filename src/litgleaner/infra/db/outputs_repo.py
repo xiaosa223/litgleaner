@@ -8,7 +8,7 @@ from sqlalchemy import select, update
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import delivery, digest, digest_item
-from litgleaner.ports.store import DeliveryStatus, DigestItem, DigestRecord
+from litgleaner.ports.store import DeliveryStatus, DigestItem, DigestRecord, RecentPush
 
 _UNFINISHED = ("pending", "failed", "sending")
 
@@ -64,6 +64,28 @@ class SqlOutputRepo:
             .distinct()
         )
         return frozenset(row.paper_id for row in rows)
+
+    def recent_pushes(self, limit: int) -> tuple[RecentPush, ...]:
+        """最近推送的论文，新的在前。同一篇论文推过多次时都会列出，由调用方去重。"""
+        rows = self._db.fetch(
+            select(
+                digest.c.id,
+                digest.c.topic_id,
+                digest.c.period,
+                digest.c.created_at,
+                digest_item.c.paper_id,
+                digest_item.c.card,
+            )
+            .join(digest_item, digest_item.c.digest_id == digest.c.id)
+            .order_by(digest.c.created_at.desc(), digest.c.id.desc(), digest_item.c.position)
+            .limit(limit)
+        )
+        return tuple(
+            RecentPush(
+                row.id, row.topic_id, row.period, row.created_at, row.paper_id, json.loads(row.card)
+            )
+            for row in rows
+        )
 
     def get_digest(self, digest_id: str) -> DigestRecord | None:
         rows = self._db.fetch(select(digest).where(digest.c.id == digest_id))
