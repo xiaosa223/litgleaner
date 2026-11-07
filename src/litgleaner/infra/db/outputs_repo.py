@@ -8,7 +8,7 @@ from sqlalchemy import select, update
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import delivery, digest, digest_item
-from litgleaner.ports.store import DeliveryStatus, DigestRecord
+from litgleaner.ports.store import DeliveryStatus, DigestItem, DigestRecord
 
 _UNFINISHED = ("pending", "failed", "sending")
 
@@ -27,9 +27,7 @@ class SqlOutputRepo:
         )
         return bool(rows)
 
-    def create_digest(
-        self, record: DigestRecord, items: Iterable[tuple[str, Mapping[str, Any]]], now: str
-    ) -> None:
+    def create_digest(self, record: DigestRecord, items: Iterable[DigestItem], now: str) -> None:
         with self._db.atomic():
             self._db.write(
                 digest.insert().values(
@@ -41,13 +39,14 @@ class SqlOutputRepo:
                     created_at=now,
                 )
             )
-            for position, (paper_id, card) in enumerate(items):
+            for position, item in enumerate(items):
                 self._db.write(
                     digest_item.insert().values(
                         digest_id=record.id,
                         position=position,
-                        paper_id=paper_id,
-                        card=json.dumps(card, ensure_ascii=False, sort_keys=True),
+                        paper_id=item.paper_id,
+                        provisional=item.provisional,
+                        card=json.dumps(item.card, ensure_ascii=False, sort_keys=True),
                     )
                 )
             self._db.write(
@@ -55,6 +54,16 @@ class SqlOutputRepo:
                     digest_id=record.id, channel=record.channel, status="pending", updated_at=now
                 )
             )
+
+    def pushed_in_channel(self, channel: str, paper_ids: Iterable[str]) -> frozenset[str]:
+        """这些论文中，已经进入过该渠道某份 Digest 的。"""
+        rows = self._db.fetch(
+            select(digest_item.c.paper_id)
+            .join(digest, digest.c.id == digest_item.c.digest_id)
+            .where(digest.c.channel == channel, digest_item.c.paper_id.in_(list(paper_ids)))
+            .distinct()
+        )
+        return frozenset(row.paper_id for row in rows)
 
     def get_digest(self, digest_id: str) -> DigestRecord | None:
         rows = self._db.fetch(select(digest).where(digest.c.id == digest_id))

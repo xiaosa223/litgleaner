@@ -38,7 +38,7 @@ class TriageStage(Stage):
             raise ValueError(f"论文不存在：{payload['paper_id']}")
         result = ctx.llm.call(
             "triage",
-            {"topic_description": topic.description},
+            {"topic_profile": topic.profile_text()},
             paper_header(paper),
             TRIAGE_SCHEMA,
         )

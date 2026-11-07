@@ -171,7 +171,9 @@ def _write_config(root: Path) -> None:
         "topics/alpha-topic.yaml": {
             "id": "alpha-topic",
             "name": "Alpha",
-            "description": "alpha research",
+            "background": "alpha background",
+            "content": "alpha research",
+            "goals": [{"id": "g1", "text": "alpha goal"}],
             "query": {"include": ["alpha"]},
             "journal_sets": ["core"],
             "rubric": "default",

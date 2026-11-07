@@ -34,6 +34,8 @@ class PaperCard:
     fulltext_used: bool
     parse_quality: str | None
     tier_label: str = ""
+    undetermined: tuple[str, ...] = ()  # 无法判断的维度名称；不在公开白名单里
+    upgraded: bool = False  # 之前以临时分推过，读完全文后升级再推一次
 
 
 @dataclass(frozen=True)

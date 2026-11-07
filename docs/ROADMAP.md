@@ -8,6 +8,7 @@
 |---|---|
 | 领域模型、数据库与迁移、任务调度、配置校验、rubric 算分、切分器、CLI | 已实现 |
 | 备份：`backup`、`restore --check`、`db upgrade` 迁移前自动备份 | 已实现，见 10.3 节；下表列出未完成的部分 |
+| 修正已知差异：缺全文与无法判断分开（8.2）、按渠道去重和升级补推（11.5）、切分版本计入指纹（9.2）、厂商名检查（16）、主题文件改为背景、内容、目标（7.1） | 已实现；旧主题文件里的 `description` 会报错并提示改写，改写后主题指纹变化，历史论文要显式 `topic backfill` |
 | 解析：`mineru_cloud`、`pdf_text` | 已实现，4 种版式实测 |
 | 信号源 9 个、全文来源 8 个 | 已实现，见 [SOURCES.md](SOURCES.md) |
 | LLM：Anthropic Messages、OpenAI Chat / Responses、Gemini | 已实现，默认关闭 |
@@ -20,11 +21,9 @@
 
 | 文档章节 | 差异 |
 |---|---|
-| 8.2 | 代码没有区分“缺全文”和“无法判断”，任何维度为空都算临时分；门槛维度为空时会放行 |
-| 11.5 | 已推送的去重按“渠道 + 主题”，文档要求按渠道；没有等级升级补推 |
-| 9.2 | `chunker_version` 没有计入提取和评估的输入指纹 |
-| 16 | `tests/architecture/` 的厂商名正则缺少 anthropic、openai、gemini、feishu、lark、babeldoc |
-| 7.1 | 主题文件仍是 `description` 字段，没有 `background`、`content`、`goals` |
+| 8.2 | 门槛维度为空时已不放行，但“进入误杀抽查”要等第 13 步的覆盖率审计；这类论文可从 `score.undetermined` 含门槛维度查出 |
+| 11.3、11.5 | 同一篇论文只在第一个取到它的主题的 Digest 里出现，卡片还没有列出它命中的所有主题 |
+| 7.1 | 主题文件还没有 `seeds.zotero_collection`：第 4 节要求 `domain` 不知道 Zotero，字段名和读取方式在第 7 步做 `topic draft` 时一并确定 |
 | 10.3 | 快照只写本地目录，还不能上传对象存储（要等对象存储的 `BlobStore` 适配器） |
 | 10.3 | 每天自动备份要由常驻服务执行，服务还没实现；目前用 cron 定时执行 `litgleaner backup` |
 | 10.3 | `restore` 只支持 `--check` 演练，真正还原需要停服务后手动把快照复制为数据库文件 |
@@ -34,7 +33,7 @@
 每一步都要能运行和验证，不做只有框架的空壳。
 
 1. ~~**备份**：`backup`、`restore --check`、升级前自动备份。在启用真实飞书反馈之前完成。~~ 已完成。
-2. **修正已知差异**：上表各项。
+2. ~~**修正已知差异**：上表各项。~~ 已完成，剩余部分留在上表，随对应步骤处理。
 3. **领读器设计研究**：
    - 拆解 Semantic Reader 的几个原型（ScholarPhi、Paper Plain、Scim、CiteSee）和常用产品（Zotero 阅读器、小绿鲸、沉浸式翻译、alphaXiv）。
    - 输出 `docs/experiments/` 下的设计参考：每个功能借鉴什么、避开什么。

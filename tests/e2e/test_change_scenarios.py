@@ -6,9 +6,10 @@ import pytest
 import yaml
 
 from litgleaner.application.rubric_ops import reassess, rescore
+from litgleaner.application.stages.extract import extraction_input_hash
 from litgleaner.application.topics import activate_topic, backfill_topic, pause_topic
 from litgleaner.bootstrap import build_context
-from litgleaner.domain.errors import ConfigError
+from litgleaner.domain.errors import ConfigError, TransientError
 from litgleaner.infra.config import load_config
 from tests.e2e.conftest import Harness, paper
 
@@ -32,7 +33,9 @@ def add_topic(harness: Harness, topic_id: str, **extra) -> None:
     data = {
         "id": topic_id,
         "name": topic_id,
-        "description": f"{topic_id} research",
+        "background": f"{topic_id} background",
+        "content": f"{topic_id} research",
+        "goals": [{"id": "g1", "text": f"{topic_id} goal"}],
         "query": {"include": [topic_id]},
         "rubric": "default",
         **extra,
@@ -193,11 +196,11 @@ def test_paused_topic_consumes_nothing(harness: Harness):
     assert harness.llm_calls() == 0
 
 
-def test_editing_topic_description_does_not_bill_history(harness: Harness):
+def test_editing_topic_content_does_not_bill_history(harness: Harness):
     harness.clock.before_push()
     harness.write_papers([paper("Before Edit", 5)])
     harness.run()
-    harness.edit_yaml("topics/alpha-topic.yaml", lambda d: d.update(description="new focus"))
+    harness.edit_yaml("topics/alpha-topic.yaml", lambda d: d.update(content="new focus"))
     harness.rebuild()
     harness.clock.advance(hours=2)
     report = harness.run()
@@ -250,3 +253,58 @@ def test_unknown_adapter_rejected(harness: Harness):
     harness.edit_yaml("sources.yaml", lambda d: d["sources"]["alpha"].update(adapter="nope"))
     with pytest.raises(ConfigError, match="nope"):
         build_context(load_config(harness.root / "config"), clock=harness.clock)
+
+
+def test_chunker_change_enters_fingerprint_but_never_bills_silently(harness: Harness):
+    harness.clock.before_push()
+    harness.write_papers([paper("Chunked", 5)])
+    harness.run()
+    (paper_id,) = harness.ctx.store.judgments.papers_with_scores()
+    state = harness.ctx.store.papers.get_fulltext(paper_id)
+    extraction = harness.ctx.store.papers.get_extraction(paper_id)
+    assert state is not None and state.doc_key and extraction is not None
+    assert extraction.input_hash == extraction_input_hash(
+        state.doc_key, harness.ctx.settings.chunker
+    )
+    calls = (harness.llm_calls("extract"), harness.llm_calls("assess"))
+
+    harness.edit_yaml("app.yaml", lambda d: d.update(chunker={"target_tokens": 400}))
+    harness.rebuild()
+    harness.clock.advance(minutes=5)
+    harness.run()
+
+    assert (harness.llm_calls("extract"), harness.llm_calls("assess")) == calls
+    assert extraction.input_hash != extraction_input_hash(
+        state.doc_key, harness.ctx.settings.chunker
+    )
+    # 指纹变了：显式 reassess 能找到这篇，说明切分版本已计入评估输入
+    assert reassess(harness.ctx, "alpha-topic", since=None, dry_run=True).papers == 1
+
+
+def test_paper_hit_by_two_topics_is_pushed_once_per_channel(harness: Harness):
+    add_topic(harness, "beta-topic")
+    harness.rebuild()
+    activate_topic(harness.ctx, "beta-topic")
+    harness.clock.before_push()
+    harness.write_papers([paper("Shared Hit", 5)])
+    harness.clock.advance(hours=1)
+    harness.run()
+
+    assert harness.llm_calls("assess") == 2  # 两个主题各自评估
+    assert harness.pushed_titles() == ["Shared Hit"]
+
+
+def test_chunker_change_does_not_revive_dead_extract_jobs(harness: Harness):
+    harness.write_papers([paper("Dead Extract", 5)])
+    harness.llm.fail_tasks["extract"] = [TransientError("x") for _ in range(3)]
+    for _ in range(3):
+        harness.run()
+        harness.clock.advance(hours=1)
+    calls = harness.llm_calls("extract")
+    assert [job.stage for job in harness.ctx.store.jobs.list_by_status("dead")] == ["extract"]
+
+    harness.edit_yaml("app.yaml", lambda d: d.update(chunker={"target_tokens": 400}))
+    harness.rebuild()
+    harness.run()
+
+    assert harness.llm_calls("extract") == calls

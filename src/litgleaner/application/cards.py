@@ -24,7 +24,14 @@ def _tier_label(rubric: Rubric, tier: str) -> str:
     return labels.get(tier, "需要全文" if tier == rubric.provisional.tier else tier)
 
 
-def build_card(ctx: AppContext, scored: ScoredAssessment, rubric: Rubric) -> dict[str, Any]:
+def _dimension_labels(rubric: Rubric, keys: tuple[str, ...]) -> tuple[str, ...]:
+    labels = {dim.key: dim.label for dim in rubric.dimensions}
+    return tuple(labels.get(key, key) for key in keys)
+
+
+def build_card(
+    ctx: AppContext, scored: ScoredAssessment, rubric: Rubric, *, upgraded: bool = False
+) -> dict[str, Any]:
     paper_id = scored.assessment.paper_id
     paper = ctx.store.papers.get(paper_id)
     if paper is None:
@@ -57,6 +64,8 @@ def build_card(ctx: AppContext, scored: ScoredAssessment, rubric: Rubric) -> dic
         quotes=tuple(quotes),
         fulltext_used=scored.assessment.fulltext_used,
         parse_quality=fulltext.quality if fulltext else None,
+        undetermined=_dimension_labels(rubric, scored.undetermined),
+        upgraded=upgraded,
     )
     return asdict(card)
 
@@ -68,5 +77,6 @@ def card_from_dict(data: Mapping[str, Any]) -> PaperCard:
             "authors": tuple(data["authors"]),
             "limitations": tuple(data["limitations"]),
             "quotes": tuple(data["quotes"]),
+            "undetermined": tuple(data.get("undetermined", ())),
         }
     )

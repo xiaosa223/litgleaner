@@ -17,6 +17,7 @@ def _entry(scored: ScoredAssessment, stale: bool) -> dict[str, Any]:
         "score": scored.score,
         "tier": scored.tier,
         "provisional": scored.provisional,
+        "undetermined": list(scored.undetermined),
         "fulltext_used": assessment.fulltext_used,
         "levels": dict(assessment.levels),
         "evidence": dict(assessment.evidence),

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+import litgleaner.domain.rubric as module
 from litgleaner.domain.rubric import Rubric, apply_fulltext_constraint, compute_score
 
 DEFAULT = Path(__file__).parents[2] / "config" / "rubrics" / "default.json"
@@ -34,47 +35,73 @@ def levels(rel, nov, evi, reu) -> dict:
     ],
 )
 def test_score_and_tier(given, score, tier):
-    result = compute_score(rubric(), given)
+    result = compute_score(rubric(), given, fulltext_used=True)
     assert (result.score, result.tier, result.provisional, result.gated) == (
         score,
         tier,
         False,
         False,
     )
+    assert result.undetermined == ()
 
 
 def test_gate_failure_drops_even_with_high_other_levels():
-    result = compute_score(rubric(), levels(1, 5, 5, 5))
+    result = compute_score(rubric(), levels(1, 5, 5, 5), fulltext_used=True)
     assert result.gated
     assert result.tier == "drop"
 
 
-def test_null_levels_are_provisional_and_cannot_be_must_read():
-    result = compute_score(rubric(), levels(5, 5, None, None))
+def test_missing_fulltext_is_provisional_and_cannot_be_must_read():
+    result = compute_score(rubric(), levels(5, 5, None, None), fulltext_used=False)
     assert result.score == 100
     assert result.provisional
+    assert result.undetermined == ()
     assert result.tier == "need_fulltext"
 
 
 def test_provisional_below_threshold_is_dropped():
-    result = compute_score(rubric(), levels(2, 2, None, None))
+    result = compute_score(rubric(), levels(2, 2, None, None), fulltext_used=False)
     assert (result.score, result.tier) == (40, "drop")
 
 
 def test_abstract_only_score_uses_available_weights():
-    result = compute_score(rubric(), levels(4, 3, None, None))
+    result = compute_score(rubric(), levels(4, 3, None, None), fulltext_used=False)
     assert result.score == 72
 
 
-def test_unknown_gate_level_does_not_silently_drop():
-    result = compute_score(rubric(), levels(None, 5, 5, 5))
+def test_undetermined_with_fulltext_is_not_provisional_and_keeps_tier():
+    """有全文但模型给不出等级：只按可判断维度算分，不限制等级，记下哪些维度无法判断。"""
+    result = compute_score(rubric(), levels(5, 5, None, 5), fulltext_used=True)
+    assert not result.provisional
+    assert result.undetermined == ("evidence",)
+    assert (result.score, result.tier) == (100, "must_read")
+
+
+def test_undetermined_and_missing_fulltext_are_reported_separately():
+    result = compute_score(rubric(), levels(5, None, None, None), fulltext_used=False)
     assert result.provisional
-    assert not result.gated
-    assert result.tier == "need_fulltext"
+    assert result.undetermined == ("novelty",)
+
+
+def test_empty_gate_dimension_does_not_pass():
+    for fulltext_used in (True, False):
+        result = compute_score(rubric(), levels(None, 5, 5, 5), fulltext_used=fulltext_used)
+        assert result.gated
+        assert result.tier == "drop"
+        assert "relevance" in result.undetermined
+
+
+def test_abstract_only_without_fulltext_dimensions_is_not_provisional():
+    data = raw()
+    for dim in data["dimensions"]:
+        dim["requires_fulltext"] = False
+    result = compute_score(Rubric.model_validate(data), levels(5, 5, 5, 5), fulltext_used=False)
+    assert not result.provisional
+    assert result.tier == "must_read"
 
 
 def test_all_null_is_dropped():
-    result = compute_score(rubric(), levels(None, None, None, None))
+    result = compute_score(rubric(), levels(None, None, None, None), fulltext_used=True)
     assert (result.score, result.tier) == (0, "drop")
 
 
@@ -87,18 +114,23 @@ def test_rounds_half_up_not_bankers():
         dim["weight"] = next(weights)
         dim["anchors"] = {"0": "low"}
     custom = Rubric.model_validate(data)
-    assert compute_score(custom, {"relevance": 2, "novelty": 0}).score == 25
+    assert compute_score(custom, {"relevance": 2, "novelty": 0}, fulltext_used=True).score == 25
     data["levels"]["max"] = 8
-    assert compute_score(Rubric.model_validate(data), {"relevance": 2, "novelty": 0}).score == 13
+    assert (
+        compute_score(
+            Rubric.model_validate(data), {"relevance": 2, "novelty": 0}, fulltext_used=True
+        ).score
+        == 13
+    )
 
 
 def test_rejects_missing_or_out_of_range_levels():
     with pytest.raises(ValueError, match="缺少"):
-        compute_score(rubric(), {"relevance": 5})
+        compute_score(rubric(), {"relevance": 5}, fulltext_used=True)
     with pytest.raises(ValueError, match="范围"):
-        compute_score(rubric(), levels(6, 5, 5, 5))
+        compute_score(rubric(), levels(6, 5, 5, 5), fulltext_used=True)
     with pytest.raises(ValueError, match="未知"):
-        compute_score(rubric(), {**levels(5, 5, 5, 5), "extra": 1})
+        compute_score(rubric(), {**levels(5, 5, 5, 5), "extra": 1}, fulltext_used=True)
 
 
 def test_fulltext_constraint_nulls_only_fulltext_dimensions_and_copies():
@@ -153,3 +185,18 @@ def test_invalid_rubric_fails_fast(mutate, message):
     mutate(data)
     with pytest.raises(ValidationError, match=message):
         Rubric.model_validate(data)
+
+
+def test_gate_on_fulltext_dimension_is_rejected():
+    """门槛维度只读摘要时必然为空，会让所有摘要论文进不了 need_fulltext。"""
+    data = raw()
+    data["gates"] = [{"dimension": "evidence", "min_level": 2}]
+    with pytest.raises(ValidationError, match="requires_fulltext"):
+        Rubric.model_validate(data)
+
+
+def test_scoring_rule_version_is_part_of_policy_hash(monkeypatch):
+    """算分规则本身变了，旧分数要按新规则零费用重算。"""
+    before = rubric().policy_hash
+    monkeypatch.setattr(module, "SCORING_VERSION", module.SCORING_VERSION + 1)
+    assert rubric().policy_hash != before

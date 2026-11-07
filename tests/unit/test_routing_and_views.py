@@ -23,8 +23,21 @@ from litgleaner.domain.topic import Topic
 SH = ZoneInfo("Asia/Shanghai")
 
 
+GOALS = [{"id": "g1", "text": "目标一"}]
+
+
 def topic(id_="t1", **kw):
-    return Topic(**{"id": id_, "name": "n", "description": "d", "rubric": "default", **kw})
+    return Topic(
+        **{
+            "id": id_,
+            "name": "n",
+            "background": "背景",
+            "content": "内容",
+            "goals": GOALS,
+            "rubric": "default",
+            **kw,
+        }
+    )
 
 
 def test_daily_slot_due_only_after_time():
@@ -61,8 +74,31 @@ def test_topic_hash_only_tracks_judgement_fields():
     base = topic()
     assert topic(name="other").topic_hash == base.topic_hash
     assert topic(public=True).topic_hash == base.topic_hash
-    assert topic(description="changed").topic_hash != base.topic_hash
+    assert topic(background="changed").topic_hash != base.topic_hash
+    assert topic(content="changed").topic_hash != base.topic_hash
+    assert topic(goals=[{"id": "g1", "text": "改了"}]).topic_hash != base.topic_hash
+    assert topic(goals=[*GOALS, {"id": "g2", "text": "新目标"}]).topic_hash != base.topic_hash
     assert topic(query={"include": ["x"]}).topic_hash != base.topic_hash
+
+
+def test_topic_profile_lists_background_content_and_goals():
+    profile = topic(goals=[*GOALS, {"id": "g2", "text": "目标二"}]).profile_text()
+    assert "研究背景：背景" in profile
+    assert "研究内容：内容" in profile
+    assert "- g1：目标一" in profile
+    assert "- g2：目标二" in profile
+
+
+def test_topic_rejects_legacy_description_with_migration_hint():
+    with pytest.raises(ValidationError, match="background"):
+        Topic(id="t1", name="n", description="d", rubric="default")
+
+
+def test_topic_goals_need_unique_ids_and_at_least_one():
+    with pytest.raises(ValidationError, match="g1"):
+        topic(goals=[*GOALS, {"id": "g1", "text": "重复"}])
+    with pytest.raises(ValidationError):
+        topic(goals=[])
 
 
 def test_topic_rejects_unsafe_id_and_extra_fields():

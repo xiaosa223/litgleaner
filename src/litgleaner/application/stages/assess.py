@@ -8,13 +8,13 @@ from litgleaner.application.context import AppContext
 from litgleaner.application.documents import full_text_of, load_chunks, paper_text
 from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics
-from litgleaner.domain.chunker import ChunkedDocument
+from litgleaner.domain.chunker import ChunkedDocument, ChunkerConfig
 from litgleaner.domain.evidence import verify_quote
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.rubric import Rubric, apply_fulltext_constraint
 from litgleaner.domain.topic import Topic
-from litgleaner.ports.store import FullTextState, JobSpec, NewAssessment
+from litgleaner.ports.store import AssessmentKey, FullTextState, JobSpec, NewAssessment
 
 _ABSTRACT_ONLY = frozenset({"unavailable", "failed"})
 
@@ -33,12 +33,17 @@ def _is_ready(ctx: AppContext, paper_id: str) -> FullTextState | None:
     return state if _uses_fulltext(state) and has_extraction else None
 
 
-def assessment_input_hash(paper: Paper, topic: Topic, state: FullTextState) -> str:
+def assessment_input_hash(
+    paper: Paper, topic: Topic, state: FullTextState, chunker: ChunkerConfig
+) -> str:
+    """评估输入的指纹。用全文时，切分规则决定送给模型的内容，所以计入切分版本。"""
+    fulltext = _uses_fulltext(state)
     return stable_hash(
         {
             "topic": topic.topic_hash,
             "abstract": paper.abstract,
-            "doc": state.doc_key if _uses_fulltext(state) else None,
+            "doc": state.doc_key if fulltext else None,
+            "chunker": chunker.version if fulltext else None,
         }
     )
 
@@ -52,12 +57,17 @@ def assess_job(paper_id: str, topic: Topic, rubric: Rubric, input_hash: str) -> 
 
 
 def _needs_assessment(
-    keys: tuple[tuple[str, str, str], ...], semantic: str, topic_hash: str, input_hash: str
+    keys: tuple[AssessmentKey, ...], semantic: str, topic_hash: str, fulltext_now: bool
 ) -> bool:
-    """首次评估，或全文到位后的升级。旧标准下已有评估的论文要显式 reassess。"""
-    if (semantic, topic_hash, input_hash) in keys:
-        return False
-    judged_under_old_standard = bool(keys) and not any(key[0] == semantic for key in keys)
+    """只有两种情况自动评估：首次评估，和全文到位后从摘要升级。
+
+    其他输入变化（切分参数、摘要被正式版更新等）只改变指纹，由用户显式 reassess，
+    不能静默产生费用。旧标准下已有评估的论文同样要显式 reassess。
+    """
+    current = [k for k in keys if k.semantic_hash == semantic and k.topic_hash == topic_hash]
+    if current:
+        return fulltext_now and not any(k.fulltext_used for k in current)
+    judged_under_old_standard = bool(keys) and not any(k.semantic_hash == semantic for k in keys)
     return not judged_under_old_standard
 
 
@@ -107,10 +117,11 @@ class AssessStage(Stage):
         paper = ctx.store.papers.get(paper_id)
         if state is None or paper is None:
             return None
-        input_hash = assessment_input_hash(paper, topic, state)
         keys = ctx.store.judgments.assessment_keys(paper_id, topic.id)
-        if not _needs_assessment(keys, rubric.semantic_hash, topic.topic_hash, input_hash):
+        fulltext_now = _uses_fulltext(state)
+        if not _needs_assessment(keys, rubric.semantic_hash, topic.topic_hash, fulltext_now):
             return None
+        input_hash = assessment_input_hash(paper, topic, state, ctx.settings.chunker)
         return assess_job(paper_id, topic, rubric, input_hash)
 
     def process(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
@@ -127,7 +138,7 @@ class AssessStage(Stage):
         result = ctx.llm.call(
             "assess",
             {
-                "topic_description": topic.description,
+                "topic_profile": topic.profile_text(),
                 "rubric_dimensions": _dimension_prompt(rubric),
             },
             paper_text(ctx, paper, chunked),
@@ -142,7 +153,7 @@ class AssessStage(Stage):
                 topic_id=topic.id,
                 topic_hash=topic.topic_hash,
                 semantic_hash=rubric.semantic_hash,
-                input_hash=assessment_input_hash(paper, topic, state),
+                input_hash=assessment_input_hash(paper, topic, state, ctx.settings.chunker),
                 levels=apply_fulltext_constraint(rubric, raw_levels, fulltext_used),
                 evidence=_evidence(dimensions, source),
                 fulltext_used=fulltext_used,

@@ -29,8 +29,11 @@ def _pending_papers(ctx: AppContext, topic_id: str, since: str | None) -> tuple[
         state = ctx.store.papers.get_fulltext(paper_id)
         if paper is None or state is None:
             continue
-        input_hash = assessment_input_hash(paper, topic, state)
-        keys = ctx.store.judgments.assessment_keys(paper_id, topic.id)
+        input_hash = assessment_input_hash(paper, topic, state, ctx.settings.chunker)
+        keys = {
+            (key.semantic_hash, key.topic_hash, key.input_hash)
+            for key in ctx.store.judgments.assessment_keys(paper_id, topic.id)
+        }
         if (semantic, topic.topic_hash, input_hash) not in keys:
             pending.append(_Pending(paper_id, input_hash))
     return tuple(pending)

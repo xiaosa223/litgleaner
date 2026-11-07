@@ -7,6 +7,7 @@ from typing import Any
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import full_text_of, load_chunks, paper_text
 from litgleaner.application.stages.base import Stage
+from litgleaner.domain.chunker import ChunkerConfig
 from litgleaner.domain.evidence import verify_quote
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.ports.store import FullTextState, JobSpec
@@ -45,6 +46,11 @@ def _with_verification(data: Mapping[str, Any], source_text: str) -> dict[str, A
     return {**data, "limitations": limitations}
 
 
+def extraction_input_hash(doc_key: str, chunker: ChunkerConfig) -> str:
+    """提取输入的指纹：统一文档加切分版本。切分规则变了，送给模型的正文也会变。"""
+    return stable_hash({"doc": doc_key, "chunker": chunker.version})
+
+
 class ExtractStage(Stage):
     name = "extract"
 
@@ -52,7 +58,8 @@ class ExtractStage(Stage):
         for paper_id in ctx.store.papers.parsed_without_extraction():
             state = ctx.store.papers.get_fulltext(paper_id)
             if state and state.doc_key:
-                key = f"extract:{paper_id}:{stable_hash(state.doc_key)}"
+                input_hash = extraction_input_hash(state.doc_key, ctx.settings.chunker)
+                key = f"extract:{paper_id}:{input_hash}"
                 yield JobSpec(key, self.name, {"paper_id": paper_id})
 
     def process(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
@@ -67,7 +74,11 @@ class ExtractStage(Stage):
         now = ctx.now_iso()
         with ctx.store.atomic():
             ctx.store.papers.insert_extraction(
-                paper_id, stable_hash(state.doc_key), result.prompt_version, data, now
+                paper_id,
+                extraction_input_hash(state.doc_key, ctx.settings.chunker),
+                result.prompt_version,
+                data,
+                now,
             )
             # 死信任务重试成功时，论文要从“只读摘要”恢复，之后才能按全文重新评估
             ctx.store.papers.save_fulltext(replace(state, status="parsed"), now)

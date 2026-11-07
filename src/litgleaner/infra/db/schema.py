@@ -12,6 +12,7 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    false,
 )
 
 metadata = MetaData()
@@ -158,6 +159,7 @@ score = Table(
     Column("score", Integer, nullable=False),
     Column("tier", String, nullable=False),
     Column("provisional", Boolean, nullable=False),
+    Column("undetermined", Text, nullable=False, server_default="[]"),
     Column("created_at", String, nullable=False),
 )
 
@@ -189,6 +191,7 @@ digest_item = Table(
     Column("position", Integer, primary_key=True),
     Column("paper_id", String, ForeignKey("paper.id"), nullable=False, index=True),
     Column("card", Text, nullable=False),
+    Column("provisional", Boolean, nullable=False, server_default=false()),
 )
 
 delivery = Table(

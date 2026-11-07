@@ -31,5 +31,5 @@ class ScoreStage(Stage):
         if assessment is None:
             raise ValueError(f"评估不存在：{payload['assessment_id']}")
         rubric = ctx.rubrics[ctx.topics[payload["topic_id"]].rubric]
-        result = compute_score(rubric, assessment.levels)
+        result = compute_score(rubric, assessment.levels, fulltext_used=assessment.fulltext_used)
         ctx.store.judgments.save_score(assessment.id, rubric.policy_hash, result, ctx.now_iso())

@@ -399,6 +399,8 @@ reading_value = round( Σ(weight × level / levels.max) / Σ(weight) × 100 )   
 
 - **门槛**：门槛维度低于 `min_level` 时直接归入兜底等级（`drop`）。门槛维度为空时同样不放行，并进入误杀抽查。
 - 启动时校验：权重总和为 100、等级和门槛合法、`tiers` 完整、`provisional.tier` 不与普通等级重名。校验失败直接退出。
+- 门槛维度不能是 `requires_fulltext` 维度：只读摘要时它必然为空，所有摘要论文都会被门槛挡掉，进不了 `need_fulltext`。
+- 算分规则本身（上面的公式和处理方式）有版本号，计入 `policy_hash`。规则变化后已有分数按新规则零费用重算。
 
 ### 8.3 修改指标的两种情况
 

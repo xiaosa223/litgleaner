@@ -11,7 +11,8 @@ MAX_FILE_LINES = 400
 MAX_FUNCTION_LINES = 50
 VENDOR = re.compile(
     r"mineru|telegram|crossref|ieee|arxiv|openalex|unpaywall|pubmed|europe_?pmc"
-    r"|semantic.?scholar|openreview|zotero|core\.ac\.uk",
+    r"|semantic.?scholar|openreview|zotero|core\.ac\.uk"
+    r"|anthropic|claude|openai|gpt|gemini|google|deepseek|qwen|feishu|lark|babeldoc",
     re.IGNORECASE,
 )
 PY_FILES = sorted(p for p in SRC.rglob("*.py") if "migrations" not in p.parts)

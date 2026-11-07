@@ -1,15 +1,17 @@
 """迁移和事务。"""
 
+import sqlite3
 from pathlib import Path
 
 import pytest
+from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, inspect
 
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.paper import Paper
-from litgleaner.infra.db.migrate import is_up_to_date, upgrade_database
+from litgleaner.infra.db.migrate import alembic_config, is_up_to_date, upgrade_database
 from litgleaner.infra.db.schema import metadata
 from litgleaner.infra.db.store import SqlStore
 from litgleaner.ports.store import JobSpec
@@ -92,3 +94,26 @@ def test_due_respects_backoff_and_retry_dead_resets(store: SqlStore):
     store.jobs.mark_dead("k", "err", "2026-01-06")
     assert store.jobs.retry_dead("2026-01-07") == 1
     assert [j.attempts for j in store.jobs.due("stage", "2026-01-07")] == [0]
+
+
+def test_migration_0004_backfills_provisional_flag_from_cards(tmp_path: Path):
+    path = tmp_path / "old.db"
+    url = f"sqlite:///{path}"
+    command.upgrade(alembic_config(url), "0003")
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "INSERT INTO digest VALUES ('D1', 'r', 't', 'me', '2026-11-01', '2026-11-01')"
+        )
+        for position, provisional in enumerate(("true", "false")):
+            connection.execute(
+                "INSERT INTO digest_item VALUES ('D1', ?, 'P', ?)",
+                (position, f'{{"provisional": {provisional}}}'),
+            )
+    connection.close()
+
+    upgrade_database(url)
+
+    connection = sqlite3.connect(path)
+    rows = connection.execute("SELECT provisional FROM digest_item ORDER BY position").fetchall()
+    connection.close()
+    assert rows == [(1,), (0,)]

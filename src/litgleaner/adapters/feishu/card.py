@@ -65,8 +65,13 @@ def _lines(card: PaperCard | PublicCard) -> list[dict[str, Any]]:
             blocks.append(_text(f"{name}：{clipped}"))
     if card.limitations:
         blocks.append(_text("不足：" + "；".join(filter(None, map(_clip, card.limitations[:2])))))
+    if isinstance(card, PaperCard) and card.upgraded:
+        blocks.append(_text("读完全文后升级", "notation", "green"))
     if isinstance(card, PaperCard) and not card.fulltext_used:
         blocks.append(_text("注意：只读了摘要，分数是临时的", "notation", "orange"))
+    if isinstance(card, PaperCard) and card.undetermined:
+        note = "注意：无法判断：" + "、".join(card.undetermined)
+        blocks.append(_text(note, "notation", "orange"))
     return blocks
 
 

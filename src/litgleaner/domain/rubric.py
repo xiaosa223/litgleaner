@@ -11,6 +11,9 @@ from litgleaner.domain.hashing import stable_hash
 
 Levels = Mapping[str, int | None]
 MAX_SCORE = 100
+# 算分规则（compute_score）本身的版本。规则变化时加一：policy_hash 随之变化，
+# 已有维度等级按新规则零费用重算，不需要重评。2：区分缺全文和无法判断，门槛为空不放行
+SCORING_VERSION = 2
 
 
 class Metric(FrozenModel):
@@ -53,8 +56,9 @@ class Provisional(FrozenModel):
 class ScoreResult:
     score: int
     tier: str
-    provisional: bool
+    provisional: bool  # 缺全文：只读了摘要，需要全文的维度没有评
     gated: bool
+    undetermined: tuple[str, ...] = ()  # 有输入但模型给不出等级的维度
 
 
 class Rubric(FrozenModel):
@@ -90,6 +94,13 @@ class Rubric(FrozenModel):
         for gate in self.gates:
             if gate.dimension not in keys or not 0 <= gate.min_level <= self.levels.max:
                 raise ValueError(f"门槛配置无效：{gate.dimension}")
+        fulltext_only = {dim.key for dim in self.dimensions if dim.requires_fulltext}
+        for gate in self.gates:
+            if gate.dimension in fulltext_only:
+                raise ValueError(
+                    f"门槛维度 {gate.dimension} 是 requires_fulltext 维度：只读摘要时它必然为空，"
+                    "所有摘要论文都会被门槛挡掉，进不了需要全文的等级"
+                )
 
     def _check_tiers(self) -> None:
         tier_keys = [tier.key for tier in self.tiers]
@@ -123,6 +134,7 @@ class Rubric(FrozenModel):
         """决定等级如何换算成分数。变化后本地重算，不产生 LLM 费用。"""
         return stable_hash(
             {
+                "scoring_version": SCORING_VERSION,
                 "weights": {dim.key: dim.weight for dim in self.dimensions},
                 "gates": [gate.model_dump() for gate in self.gates],
                 "tiers": [tier.model_dump() for tier in self.tiers],
@@ -194,13 +206,23 @@ def _tier_for(rubric: Rubric, score: int) -> str:
     return max(eligible, key=lambda tier: tier.min_score).key
 
 
-def compute_score(rubric: Rubric, levels: Levels) -> ScoreResult:
+def _undetermined(rubric: Rubric, levels: Levels, fulltext_used: bool) -> tuple[str, ...]:
+    """等级为空、且不是因为缺全文的维度。"""
+    return tuple(
+        dim.key
+        for dim in rubric.dimensions
+        if levels[dim.key] is None and (fulltext_used or not dim.requires_fulltext)
+    )
+
+
+def compute_score(rubric: Rubric, levels: Levels, *, fulltext_used: bool) -> ScoreResult:
+    """维度为空有两种原因：缺全文（临时分，不能必读）和无法判断（不限制等级，只做标记）。"""
     _check_levels(rubric, levels)
     score = _weighted_score(rubric, levels)
-    provisional = any(level is None for level in levels.values())
+    provisional = not fulltext_used and any(dim.requires_fulltext for dim in rubric.dimensions)
+    # 门槛维度为空同样不放行，交给误杀抽查
     gated = any(
-        (level := levels[gate.dimension]) is not None and level < gate.min_level
-        for gate in rubric.gates
+        (level := levels[gate.dimension]) is None or level < gate.min_level for gate in rubric.gates
     )
     if gated:
         tier = rubric.fallback_tier
@@ -209,7 +231,13 @@ def compute_score(rubric: Rubric, levels: Levels) -> ScoreResult:
         tier = rubric.provisional.tier if passes else rubric.fallback_tier
     else:
         tier = _tier_for(rubric, score)
-    return ScoreResult(score=score, tier=tier, provisional=provisional, gated=gated)
+    return ScoreResult(
+        score=score,
+        tier=tier,
+        provisional=provisional,
+        gated=gated,
+        undetermined=_undetermined(rubric, levels, fulltext_used),
+    )
 
 
 def apply_fulltext_constraint(

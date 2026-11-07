@@ -156,7 +156,7 @@ def test_topic_changed_while_paused_does_not_bill_history(harness: Harness):
     harness.write_papers([paper("History", 5)])
     harness.run()
     pause_topic(harness.ctx, "alpha-topic")
-    harness.edit_yaml("topics/alpha-topic.yaml", lambda d: d.update(description="new focus"))
+    harness.edit_yaml("topics/alpha-topic.yaml", lambda d: d.update(content="new focus"))
     harness.rebuild()
     harness.clock.advance(minutes=1)
     activate_topic(harness.ctx, "alpha-topic")

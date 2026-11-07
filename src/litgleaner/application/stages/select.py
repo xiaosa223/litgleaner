@@ -12,7 +12,7 @@ from litgleaner.application.topics import active_topics
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.routing import Route, expand_topics, schedule_slot
 from litgleaner.domain.topic import Topic
-from litgleaner.ports.store import DigestRecord, JobSpec, RankQuery, ScoredAssessment
+from litgleaner.ports.store import DigestItem, DigestRecord, JobSpec, RankQuery, ScoredAssessment
 
 
 def _candidates(ctx: AppContext, route: Route, topic: Topic) -> tuple[ScoredAssessment, ...]:
@@ -67,11 +67,20 @@ class SelectStage(Stage):
         if ctx.store.outputs.digest_exists(route.id, topic.id, period):
             return
         rubric = ctx.rubrics[topic.rubric]
-        items = [
-            (scored.assessment.paper_id, build_card(ctx, scored, rubric))
-            for scored in _candidates(ctx, route, topic)
-        ]
-        if not items:  # 候选已被同渠道的其他路由取走
+        found = _candidates(ctx, route, topic)
+        if not found:  # 候选已被同渠道的其他路由或主题取走
             return
+        # 能再次成为候选的已推论文，只有临时分推过、现已正式评估升级的
+        upgraded = ctx.store.outputs.pushed_in_channel(
+            route.channel, (scored.assessment.paper_id for scored in found)
+        )
+        items = [
+            DigestItem(
+                scored.assessment.paper_id,
+                scored.provisional,
+                build_card(ctx, scored, rubric, upgraded=scored.assessment.paper_id in upgraded),
+            )
+            for scored in found
+        ]
         record = DigestRecord(str(ULID()), route.id, topic.id, route.channel, period)
         ctx.store.outputs.create_digest(record, items, ctx.now_iso())

@@ -3,7 +3,7 @@
 import json
 from typing import Any
 
-from sqlalchemy import Row, func, select
+from sqlalchemy import Row, func, or_, select
 from sqlalchemy.dialects.sqlite import insert
 
 from litgleaner.domain.rubric import ScoreResult
@@ -21,6 +21,7 @@ from litgleaner.infra.db.schema import (
 )
 from litgleaner.ports.store import (
     Assessment,
+    AssessmentKey,
     NewAssessment,
     RankQuery,
     ScoredAssessment,
@@ -50,6 +51,7 @@ def _to_scored(row: Row[Any]) -> ScoredAssessment:
         score=row.score,
         tier=row.tier,
         provisional=bool(row.provisional),
+        undetermined=tuple(json.loads(row.undetermined)),
     )
 
 
@@ -59,6 +61,7 @@ _SCORED_COLUMNS = (
     score.c.score,
     score.c.tier,
     score.c.provisional,
+    score.c.undetermined,
 )
 
 
@@ -167,13 +170,21 @@ class SqlJudgmentRepo:
         )
         return tuple(row.paper_id for row in rows)
 
-    def assessment_keys(self, paper_id: str, topic_id: str) -> tuple[tuple[str, str, str], ...]:
+    def assessment_keys(self, paper_id: str, topic_id: str) -> tuple[AssessmentKey, ...]:
         rows = self._db.fetch(
             select(
-                assessment.c.semantic_hash, assessment.c.topic_hash, assessment.c.input_hash
+                assessment.c.semantic_hash,
+                assessment.c.topic_hash,
+                assessment.c.input_hash,
+                assessment.c.fulltext_used,
             ).where(assessment.c.paper_id == paper_id, assessment.c.topic_id == topic_id)
         )
-        return tuple((row.semantic_hash, row.topic_hash, row.input_hash) for row in rows)
+        return tuple(
+            AssessmentKey(
+                row.semantic_hash, row.topic_hash, row.input_hash, bool(row.fulltext_used)
+            )
+            for row in rows
+        )
 
     def insert_assessment(self, item: NewAssessment, now: str) -> None:
         self._db.write(
@@ -224,6 +235,7 @@ class SqlJudgmentRepo:
                 score=result.score,
                 tier=result.tier,
                 provisional=result.provisional,
+                undetermined=json.dumps(list(result.undetermined)),
                 created_at=now,
             )
             .on_conflict_do_nothing()
@@ -237,7 +249,10 @@ class SqlJudgmentRepo:
         )
 
     def rank_candidates(self, query: RankQuery) -> tuple[ScoredAssessment, ...]:
-        """只有当前主题定义和当前指标下的最新评估才参与排序，已推送到该渠道的不再出现。"""
+        """只有当前主题定义和当前指标下的最新评估才参与排序。
+
+        同一篇论文在同一渠道只推一次，不分主题；以临时分推过的，正式评估后可以再推一次。
+        """
         latest = (
             select(func.max(assessment.c.id))
             .where(
@@ -250,8 +265,9 @@ class SqlJudgmentRepo:
         delivered = (
             select(digest_item.c.paper_id)
             .join(digest, digest.c.id == digest_item.c.digest_id)
-            .where(digest.c.channel == query.channel, digest.c.topic_id == query.topic_id)
+            .where(digest.c.channel == query.channel)
         )
+        delivered_formal = delivered.where(digest_item.c.provisional.is_(False))
         rows = self._db.fetch(
             select(*_SCORED_COLUMNS)
             .join(score, score.c.assessment_id == assessment.c.id)
@@ -259,7 +275,8 @@ class SqlJudgmentRepo:
                 assessment.c.id.in_(latest),
                 score.c.policy_hash == query.policy_hash,
                 score.c.tier.in_(query.tiers),
-                assessment.c.paper_id.not_in(delivered),
+                assessment.c.paper_id.not_in(delivered_formal),
+                or_(assessment.c.paper_id.not_in(delivered), score.c.provisional.is_(False)),
             )
             .order_by(score.c.score.desc(), assessment.c.paper_id)
             .limit(query.limit)

@@ -24,8 +24,12 @@ def _notes(card: PaperCard | PublicCard) -> list[str]:
     if not isinstance(card, PaperCard):
         return []
     notes = []
+    if card.upgraded:
+        notes.append("读完全文后升级")
     if not card.fulltext_used:
         notes.append("注意：只读了摘要，分数是临时的")
+    if card.undetermined:
+        notes.append("注意：无法判断：" + "、".join(card.undetermined))
     if card.parse_quality == "degraded":
         notes.append("注意：解析质量较低")
     return notes

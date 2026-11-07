@@ -96,6 +96,14 @@ class NewAssessment:
 
 
 @dataclass(frozen=True)
+class AssessmentKey:
+    semantic_hash: str
+    topic_hash: str
+    input_hash: str
+    fulltext_used: bool
+
+
+@dataclass(frozen=True)
 class Assessment:
     id: int
     paper_id: str
@@ -115,6 +123,7 @@ class ScoredAssessment:
     score: int
     tier: str
     provisional: bool
+    undetermined: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -135,6 +144,13 @@ class DigestRecord:
     topic_id: str
     channel: str
     period: str
+
+
+@dataclass(frozen=True)
+class DigestItem:
+    paper_id: str
+    provisional: bool  # 以临时分推送的论文，正式评估升级后可以补推一次
+    card: Mapping[str, Any]
 
 
 @dataclass(frozen=True)
@@ -216,7 +232,7 @@ class JudgmentRepo(Protocol):
         self, topic_id: str, topic_hash: str, since: str | None = None
     ) -> tuple[str, ...]: ...
     def relevant_without_fulltext(self, topic_id: str, topic_hash: str) -> tuple[str, ...]: ...
-    def assessment_keys(self, paper_id: str, topic_id: str) -> tuple[tuple[str, str, str], ...]: ...
+    def assessment_keys(self, paper_id: str, topic_id: str) -> tuple[AssessmentKey, ...]: ...
     def insert_assessment(self, assessment: NewAssessment, now: str) -> None: ...
     def get_assessment(self, assessment_id: int) -> Assessment | None: ...
     def unscored_assessments(
@@ -234,8 +250,9 @@ class JudgmentRepo(Protocol):
 class OutputRepo(Protocol):
     def digest_exists(self, route_id: str, topic_id: str, period: str) -> bool: ...
     def create_digest(
-        self, digest: DigestRecord, items: Iterable[tuple[str, Mapping[str, Any]]], now: str
+        self, digest: DigestRecord, items: Iterable[DigestItem], now: str
     ) -> None: ...
+    def pushed_in_channel(self, channel: str, paper_ids: Iterable[str]) -> frozenset[str]: ...
     def get_digest(self, digest_id: str) -> DigestRecord | None: ...
     def digest_cards(self, digest_id: str) -> tuple[Mapping[str, Any], ...]: ...
     def undelivered(self) -> tuple[tuple[str, str], ...]: ...

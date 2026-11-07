@@ -233,3 +233,68 @@ def test_quote_verification_marks_fabricated_evidence(harness: Harness):
     verified = {item["text"]: item["verified"] for item in record["extraction"]["limitations"]}
     assert verified == {"真": True, "假": False}
     assert "假（未核实）" in harness.publisher().sent[0].body
+
+
+def _assess_override(harness: Harness, **levels: int | None) -> None:
+    keys = ("relevance", "novelty", "evidence", "reusability")
+    harness.llm.overrides["assess"] = {
+        "dimensions": {
+            key: {"level": levels.get(key, 5), "reason": "演示理由", "quote": None} for key in keys
+        }
+    }
+
+
+def test_undetermined_dimension_is_marked_but_not_capped(harness: Harness):
+    harness.clock.before_push()
+    harness.write_papers([paper("Unclear Evidence", 5)])
+    _assess_override(harness, evidence=None)
+    harness.clock.advance(hours=1)
+    harness.run()
+
+    record = json.loads(harness.archive_files()[0].read_text(encoding="utf-8"))
+    assessment = record["assessments"]["alpha-topic"]
+    assert assessment["fulltext_used"] is True
+    assert assessment["provisional"] is False
+    assert assessment["undetermined"] == ["evidence"]
+    assert assessment["tier"] == "must_read"
+    body = harness.publisher().sent[0].body
+    assert "无法判断：证据可信度" in body
+    assert "只读了摘要" not in body
+
+
+def test_empty_gate_dimension_is_not_pushed(harness: Harness):
+    harness.clock.before_push()
+    harness.write_papers([paper("Unknown Relevance", 5)])
+    _assess_override(harness, relevance=None)
+    harness.clock.advance(hours=1)
+    harness.run()
+
+    assert harness.pushed_titles() == []
+
+
+def test_provisional_push_is_repeated_once_after_fulltext_upgrade(harness: Harness):
+    harness.clock.before_push()
+    harness.clock.advance(hours=1)
+    harness.write_papers([paper("Late Fulltext", 5)])
+    harness.llm.fail_tasks["extract"] = [TransientError("x") for _ in range(3)]
+    for _ in range(3):
+        harness.run()
+        harness.clock.advance(hours=1)
+    assert harness.pushed_titles() == ["Late Fulltext"]
+    assert "只读了摘要" in harness.publisher().sent[0].body
+
+    harness.ctx.store.jobs.retry_dead(harness.ctx.now_iso())
+    harness.run()  # 全文提取成功，按全文重新评估，升级为必读
+    harness.clock.before_push()
+    harness.clock.advance(hours=1)
+    harness.run()
+
+    assert harness.pushed_titles() == ["Late Fulltext", "Late Fulltext"]
+    upgraded = harness.publisher().sent[1].body
+    assert "必读" in upgraded
+    assert "读完全文后升级" in upgraded
+
+    harness.clock.before_push()
+    harness.clock.advance(hours=1)
+    harness.run()
+    assert len(harness.pushed_titles()) == 2  # 只补推一次
