@@ -14,6 +14,11 @@ chunker:
   overlap_sentences: 1
 assess:
   token_budget: 6000
+# 数据库快照：litgleaner backup 手动生成，db upgrade 迁移前自动生成，只保留最新的 keep 份。
+# 恢复演练：litgleaner restore --check <快照>。
+backup:
+  dir: data/demo/backups
+  keep: 14
 # 全文来源按顺序尝试，第一个拿到 PDF 的生效。真实来源默认关闭，启用时改成 enabled: true。
 # 顺序建议：自己的库 → 预印本 → 开放获取聚合 → 机构订阅（只有在校园网或 VPN 里运行才有效）。
 fulltext:

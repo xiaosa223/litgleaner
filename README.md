@@ -37,6 +37,8 @@ ls -R data/demo/archive        # 查看 JSON 归档
 | 查看和重试失败任务 | `jobs list`、`jobs retry` |
 | 处理发送结果未知的推送 | `delivery list`，确认后执行 `delivery resolve <digest> <渠道> --sent` 或 `--resend` |
 | 重新生成归档 | `archive rebuild` |
+| 备份数据库 | `backup`（保留份数见 `app.yaml` 的 `backup`）；`db upgrade` 迁移前会自动备份 |
+| 恢复演练 | `restore --check <快照>`：在临时目录还原并校验，不改动正在用的数据库 |
 
 ## 解析器
 

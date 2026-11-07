@@ -7,6 +7,7 @@
 | 部分 | 状态 |
 |---|---|
 | 领域模型、数据库与迁移、任务调度、配置校验、rubric 算分、切分器、CLI | 已实现 |
+| 备份：`backup`、`restore --check`、`db upgrade` 迁移前自动备份 | 已实现，见 10.3 节；下表列出未完成的部分 |
 | 解析：`mineru_cloud`、`pdf_text` | 已实现，4 种版式实测 |
 | 信号源 9 个、全文来源 8 个 | 已实现，见 [SOURCES.md](SOURCES.md) |
 | LLM：Anthropic Messages、OpenAI Chat / Responses、Gemini | 已实现，默认关闭 |
@@ -24,12 +25,15 @@
 | 9.2 | `chunker_version` 没有计入提取和评估的输入指纹 |
 | 16 | `tests/architecture/` 的厂商名正则缺少 anthropic、openai、gemini、feishu、lark、babeldoc |
 | 7.1 | 主题文件仍是 `description` 字段，没有 `background`、`content`、`goals` |
+| 10.3 | 快照只写本地目录，还不能上传对象存储（要等对象存储的 `BlobStore` 适配器） |
+| 10.3 | 每天自动备份要由常驻服务执行，服务还没实现；目前用 cron 定时执行 `litgleaner backup` |
+| 10.3 | `restore` 只支持 `--check` 演练，真正还原需要停服务后手动把快照复制为数据库文件 |
 
 ## 实施顺序
 
 每一步都要能运行和验证，不做只有框架的空壳。
 
-1. **备份**：`backup`、`restore --check`、升级前自动备份。在启用真实飞书反馈之前完成。
+1. ~~**备份**：`backup`、`restore --check`、升级前自动备份。在启用真实飞书反馈之前完成。~~ 已完成。
 2. **修正已知差异**：上表各项。
 3. **领读器设计研究**：
    - 拆解 Semantic Reader 的几个原型（ScholarPhi、Paper Plain、Scim、CiteSee）和常用产品（Zotero 阅读器、小绿鲸、沉浸式翻译、alphaXiv）。

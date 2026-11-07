@@ -46,6 +46,11 @@ class AssessSettings(FrozenModel):
     token_budget: int = Field(default=6000, gt=0)
 
 
+class BackupSettings(FrozenModel):
+    dir: str | None = None  # 不写时放在数据库所在目录的 backups/ 下
+    keep: int = Field(default=14, ge=1)
+
+
 class AppSettings(FrozenModel):
     database: str
     blob_root: str
@@ -55,6 +60,7 @@ class AppSettings(FrozenModel):
     jobs: JobSettings = JobSettings()
     chunker: ChunkerSettings = ChunkerSettings()
     assess: AssessSettings = AssessSettings()
+    backup: BackupSettings = BackupSettings()
     fulltext: tuple[AdapterConfig, ...] = ()
     parser: AdapterConfig
     library: AdapterConfig | None = None  # 加入文献库，不写或 enabled: false 时关闭
@@ -108,6 +114,16 @@ class LoadedConfig:
 
     def path(self, relative: str) -> Path:
         return self.root / relative
+
+    @property
+    def database_path(self) -> Path:
+        return self.path(self.app.database)
+
+    @property
+    def backup_dir(self) -> Path:
+        if self.app.backup.dir:
+            return self.path(self.app.backup.dir)
+        return self.database_path.parent / "backups"
 
 
 def _read(path: Path) -> Any:

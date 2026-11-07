@@ -2,7 +2,8 @@
 
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -29,7 +30,8 @@ from litgleaner.cli_shared import load_or_exit as _config
 from litgleaner.cli_shared import run_lock as _run_lock
 from litgleaner.domain.errors import ConfigError, LitGleanerError
 from litgleaner.infra.config import LoadedConfig
-from litgleaner.infra.db.migrate import is_up_to_date, upgrade_database
+from litgleaner.infra.db.backup import check_snapshot, create_snapshot, upgrade_with_backup
+from litgleaner.infra.db.migrate import is_up_to_date
 
 app = typer.Typer(help="拾穗：发现、评估并推送值得读的文献", no_args_is_help=True)
 db_app = typer.Typer(help="数据库", no_args_is_help=True)
@@ -65,11 +67,67 @@ def _print_plan(plan: WorkPlan, dry_run: bool, action: str) -> None:
         _echo("已加入队列，下次 litgleaner run 时处理")
 
 
+def _fail(error: LitGleanerError) -> typer.Exit:
+    typer.secho(str(error), fg="red", err=True)
+    return typer.Exit(1)
+
+
 @db_app.command("upgrade")
 def db_upgrade(config: ConfigOption = _DEFAULT_CONFIG) -> None:
-    """创建或升级数据库。"""
-    upgrade_database(_config(config).database_url)
+    """创建或升级数据库。已有数据时先自动备份，备份失败就不迁移。"""
+    loaded = _config(config)
+    keep = loaded.app.backup.keep
+    with _run_lock(loaded):
+        try:
+            snapshot = upgrade_with_backup(
+                loaded.database_path, loaded.backup_dir, keep=keep, now=datetime.now(UTC)
+            )
+        except LitGleanerError as error:
+            raise _fail(error) from error
+    if snapshot is not None:
+        _echo(f"升级前已备份到 {snapshot}")
     _echo("数据库已是最新版本")
+
+
+@app.command()
+def backup(config: ConfigOption = _DEFAULT_CONFIG) -> None:
+    """生成数据库快照，只保留最新的若干份。流程运行中也可以执行。"""
+    loaded = _config(config)
+    try:
+        result = create_snapshot(
+            loaded.database_path,
+            loaded.backup_dir,
+            keep=loaded.app.backup.keep,
+            now=datetime.now(UTC),
+        )
+    except LitGleanerError as error:
+        raise _fail(error) from error
+    _echo(f"已备份到 {result.path}")
+    if result.removed:
+        _echo(f"已清理 {len(result.removed)} 份旧快照")
+
+
+@app.command()
+def restore(
+    snapshot: Annotated[Path, typer.Argument(exists=True, dir_okay=False, help="快照文件")],
+    check: Annotated[bool, typer.Option("--check", help="在临时目录里演练还原并校验")] = False,
+) -> None:
+    """恢复演练：在临时目录还原快照，校验完整性、迁移版本和行数，不改动正在用的数据库。"""
+    if not check:
+        typer.secho("目前只支持 --check 演练；不会覆盖正在使用的数据库", fg="red", err=True)
+        raise typer.Exit(2)
+    report = check_snapshot(snapshot)
+    _echo(f"迁移版本\t{report.revision or '未知'}")
+    for table, count in report.row_counts.items():
+        _echo(f"{table}\t{count}")
+    if report.needs_upgrade and report.ok:
+        _echo("快照来自旧版本，已在临时副本上升级到最新版本")
+    for problem in report.problems:
+        typer.secho(f"错误：{problem}", fg="red")
+    if not report.ok:
+        _echo("演练失败")
+        raise typer.Exit(1)
+    _echo("演练通过")
 
 
 @app.command()

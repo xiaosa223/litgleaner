@@ -8,9 +8,12 @@ from pathlib import Path
 
 import pytest
 import yaml
+from alembic import command
 from typer.testing import CliRunner
 
 from litgleaner.cli import app, configure_logging
+from litgleaner.infra.config import load_config
+from litgleaner.infra.db.migrate import alembic_config
 
 ROOT = Path(__file__).parents[2]
 runner = CliRunner()
@@ -148,3 +151,41 @@ def test_logging_never_records_signed_urls_from_http_client():
     configure_logging()
     assert logging.getLogger("httpx").getEffectiveLevel() >= logging.WARNING
     assert logging.getLogger("httpcore").getEffectiveLevel() >= logging.WARNING
+
+
+def test_backup_and_restore_drill(config: Path):
+    invoke(config, "db", "upgrade")
+    output = invoke(config, "backup")
+    assert "已备份到" in output
+    snapshots = sorted((config.parent / "data" / "demo" / "backups").glob("litgleaner-*.db"))
+    assert len(snapshots) == 1
+
+    drill = restore("--check", str(snapshots[0]))
+    assert "演练通过" in drill
+    assert "source_cursor\t0" in drill
+
+
+def restore(*args: str, code: int = 0) -> str:
+    result = runner.invoke(app, ["restore", *args])
+    assert result.exit_code == code, result.output
+    return result.output
+
+
+def test_restore_drill_reports_broken_snapshot(tmp_path: Path):
+    broken = tmp_path / "broken.db"
+    broken.write_bytes(b"garbage" * 200)
+    assert "演练失败" in restore("--check", str(broken), code=1)
+
+
+def test_restore_without_check_is_refused(tmp_path: Path):
+    snapshot = tmp_path / "s.db"
+    snapshot.write_bytes(b"")
+    assert "--check" in restore(str(snapshot), code=2)
+
+
+def test_upgrade_backs_up_existing_database_first(config: Path):
+    (config.parent / "data" / "demo").mkdir(parents=True)
+    command.upgrade(alembic_config(load_config(config).database_url), "0002")
+    assert "升级前已备份到" in invoke(config, "db", "upgrade")
+    assert len(list((config.parent / "data" / "demo" / "backups").glob("*pre-upgrade-0002*"))) == 1
+    assert "升级前已备份到" not in invoke(config, "db", "upgrade")

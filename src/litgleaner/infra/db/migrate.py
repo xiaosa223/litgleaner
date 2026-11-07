@@ -25,12 +25,33 @@ def upgrade_database(url: str) -> None:
     command.upgrade(alembic_config(url), "head")
 
 
-def is_up_to_date(url: str) -> bool:
+def _scripts() -> ScriptDirectory:
+    config = Config()
+    config.set_main_option("script_location", str(_MIGRATIONS))
+    return ScriptDirectory.from_config(config)
+
+
+def head_revision() -> str:
+    head = _scripts().get_current_head()
+    if head is None:
+        raise RuntimeError("迁移目录里没有任何版本")
+    return head
+
+
+def known_revisions() -> frozenset[str]:
+    return frozenset(script.revision for script in _scripts().walk_revisions())
+
+
+def current_revision(url: str) -> str | None:
+    """数据库当前的迁移版本；还没建表时为 None。"""
     ensure_parent_dir(url)
-    head = ScriptDirectory.from_config(alembic_config(url)).get_current_head()
     engine = create_engine(url)
     try:
         with engine.connect() as connection:
-            return MigrationContext.configure(connection).get_current_revision() == head
+            return MigrationContext.configure(connection).get_current_revision()
     finally:
         engine.dispose()
+
+
+def is_up_to_date(url: str) -> bool:
+    return current_revision(url) == head_revision()
