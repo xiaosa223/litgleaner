@@ -10,6 +10,8 @@ from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_document, pdf_key
 from litgleaner.application.stages.archive import assessment_entries
 from litgleaner.application.topics import active_topics
+from litgleaner.application.translation import translatable_indices
+from litgleaner.domain.document import body_start
 from litgleaner.domain.errors import NotFound
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import (
@@ -53,6 +55,7 @@ class TopicProfile:
 class Inbox:
     recommended: tuple[InboxItem, ...]  # 最近推荐，新的在前，每篇只出现一次
     queued: tuple[InboxItem, ...]  # 待读队列
+    reading: tuple[InboxItem, ...]  # 在读，最近读过的在前
     topics: tuple[TopicProfile, ...]  # 启用中的研究画像，首页顶部显示
 
 
@@ -84,11 +87,13 @@ class BlockView:
     page: int
     bbox: BBox | None
     caption: str | None
+    translatable: bool  # 正文段落且不是中文时可以按段翻译
 
 
 @dataclass(frozen=True)
 class DocumentView:
     quality: str
+    body_start: int  # 正文从这一块开始（第一个摘要标记），段落视图从这里显示
     blocks: tuple[BlockView, ...]
 
 
@@ -123,8 +128,8 @@ def _inbox_item(
     )
 
 
-def _unpushed_item(ctx: AppContext, paper_id: str) -> InboxItem:
-    """没推送过、但在待读里的论文：只有元数据和提取结果。"""
+def _unpushed_item(ctx: AppContext, paper_id: str, status: ReadingStatus) -> InboxItem:
+    """没推送过、但在待读或在读里的论文：只有元数据和提取结果。"""
     paper = _paper(ctx, paper_id)
     aliases = {alias.scheme: alias.value for alias in ctx.store.papers.aliases_of(paper_id)}
     extraction = ctx.store.papers.get_extraction(paper_id)
@@ -143,7 +148,7 @@ def _unpushed_item(ctx: AppContext, paper_id: str) -> InboxItem:
         topic_id=None,
         topic_name=None,
         pushed_at=None,
-        reading_status="queued",
+        reading_status=status,
     )
 
 
@@ -153,12 +158,17 @@ def inbox(ctx: AppContext) -> Inbox:
     for push in ctx.store.outputs.recent_pushes(_RECENT_LIMIT):
         if push.paper_id not in latest:
             latest[push.paper_id] = _inbox_item(ctx, push.topic_id, push.created_at, push.card)
-    queued_ids = ctx.store.reader.papers_with_status("queued")
-    queued = tuple(latest.get(paper_id) or _unpushed_item(ctx, paper_id) for paper_id in queued_ids)
+
+    def listed(status: ReadingStatus) -> tuple[InboxItem, ...]:
+        return tuple(
+            latest.get(paper_id) or _unpushed_item(ctx, paper_id, status)
+            for paper_id in ctx.store.reader.papers_with_status(status)
+        )
+
     topics = tuple(
         TopicProfile(topic.id, topic.name, topic.goals) for topic in active_topics(ctx).values()
     )
-    return Inbox(tuple(latest.values()), queued, topics)
+    return Inbox(tuple(latest.values()), listed("queued"), listed("reading"), topics)
 
 
 def month_cost_usd(ctx: AppContext) -> float:
@@ -217,11 +227,12 @@ def document_view(ctx: AppContext, paper_id: str) -> DocumentView | None:
     if fulltext is None or fulltext.doc_key is None:
         return None
     document = load_document(ctx, fulltext.doc_key)
+    allowed = translatable_indices(document.blocks)
     blocks = tuple(
-        BlockView(index, block.kind, block.text, block.page, block.bbox, block.caption)
-        for index, block in enumerate(document.blocks)
+        BlockView(index, b.kind, b.text, b.page, b.bbox, b.caption, index in allowed)
+        for index, b in enumerate(document.blocks)
     )
-    return DocumentView(document.quality, blocks)
+    return DocumentView(document.quality, body_start(document.blocks), blocks)
 
 
 def pdf_content(ctx: AppContext, paper_id: str) -> bytes:

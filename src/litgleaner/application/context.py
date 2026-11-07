@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from litgleaner.application.llm_gateway import LLMGateway
 from litgleaner.domain.chunker import ChunkerConfig
+from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.topic import Topic
@@ -50,6 +51,7 @@ class AppContext:
     clock: Callable[[], datetime]
     settings: RuntimeSettings
     topics: Mapping[str, Topic]
+    glossaries: Mapping[str, Glossary]
     journal_sets: Mapping[str, tuple[str, ...]]
     rubrics: Mapping[str, Rubric]
     routes: tuple[Route, ...]

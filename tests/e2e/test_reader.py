@@ -78,6 +78,7 @@ def test_document_view_keeps_page_and_block_order(pushed: Harness):
     assert document.quality == "ok"
     assert [block.index for block in document.blocks] == list(range(len(document.blocks)))
     assert document.blocks[1].kind == "heading"
+    assert [b.translatable for b in document.blocks] == [True, False, True, False, True]
     assert reader.pdf_content(pushed.ctx, paper_id).startswith(b"%PDF")
 
 
@@ -125,3 +126,16 @@ def test_queued_paper_that_was_never_pushed_still_shows(harness: Harness):
     (item,) = reader.inbox(harness.ctx).queued
     assert (item.title, item.score, item.topic_id) == ("Weak Paper", None, None)
     assert item.reading_status == "queued"
+
+
+def test_paper_being_read_stays_on_home_page(harness: Harness):
+    harness.write_papers([paper("Weak Paper", 1)])
+    harness.run()
+    (paper_id,) = harness.ctx.store.judgments.papers_with_scores()
+
+    reader.set_reading_state(harness.ctx, paper_id, "reading", {"page": 2})
+
+    inbox = reader.inbox(harness.ctx)
+    assert inbox.queued == ()
+    (item,) = inbox.reading
+    assert (item.title, item.reading_status) == ("Weak Paper", "reading")

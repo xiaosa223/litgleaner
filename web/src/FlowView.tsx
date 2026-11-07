@@ -1,13 +1,21 @@
 // 段落视图：由统一文档重排。配图按 bbox 从 PDF 裁出，表格只保留表格结构，公式用 KaTeX。
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PdfState } from "./pdf";
 import type { BlockAction, Focus } from "./PdfView";
 import { headingLevel, isReferencesHeading, rich, safeTable, tex } from "./text";
+import type { Translations } from "./translations";
+import { EnText, ZhText, type Pairing } from "./TranslationView";
 import type { Annotation, Block, DocumentView, PaperView } from "./types";
-import { SOON } from "./ui";
+
+export interface FlowTranslation {
+  translations: Translations;
+  bilingual: boolean;
+  open: Set<number>; // 单段展开译文的段落
+  onToggle: (index: number) => void;
+  pairing: Pairing;
+}
 
 const FIGURE_WIDTH = 560;
-const ABSTRACT_MARK = /^(abstract\b|摘\s*要)/i;
 const FIGURE_HEIGHT = 520; // 竖长的图按高度限制，不占满一屏
 
 function FigureCrop({ pdf, block }: { pdf: PdfState; block: Block }) {
@@ -50,9 +58,9 @@ function FigureCrop({ pdf, block }: { pdf: PdfState; block: Block }) {
 
 function BlockView(props: {
   block: Block; pdf: PdfState | null; marks: { quote: string; cls: string }[]; focused: boolean;
-  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void;
+  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void; tr: FlowTranslation;
 }) {
-  const { block: b, pdf, marks, focused, onAction, onToPdf } = props;
+  const { block: b, pdf, marks, focused, onAction, onToPdf, tr } = props;
   const id = `b-${b.index}`;
   if (b.kind === "heading") {
     const level = headingLevel(b.text);
@@ -84,14 +92,35 @@ function BlockView(props: {
       </div>
     );
   }
+  const done = tr.translations.done.get(b.index);
+  const en = <EnText index={b.index} text={b.text} tr={done} marks={marks} pairing={tr.pairing} />;
+  const zh = (idle: ReactNode) => (
+    <ZhText index={b.index} translations={tr.translations} pairing={tr.pairing} idle={idle} quiet={tr.bilingual} />
+  );
+  const side = (
+    <div className="side">
+      {!tr.bilingual && <button disabled={!b.translatable} title={b.translatable ? "翻译这段" : "这段不需要翻译"} onClick={() => tr.onToggle(b.index)}>译</button>}
+      <button onClick={() => onAction("ask", b)}>问</button>
+      <button onClick={() => onAction("note", b)}>记</button>
+    </div>
+  );
+  if (tr.bilingual) {
+    const idle = b.translatable
+      ? <button className="ghost" onClick={() => tr.translations.translate(b.index)}>翻译这段</button>
+      : <span className="tag">原文即可，不需要翻译</span>;
+    const hasZh = done || tr.translations.live.has(b.index) || tr.translations.errors.has(b.index);
+    return (
+      <div className={`blk${focused ? " focus" : ""}`} id={id} data-b={b.index} data-page={b.page}>
+        {side}
+        <div className="bi-row"><div className="en">{en}</div><div className={`zhcol${hasZh ? "" : " missing"}`}>{zh(idle)}</div></div>
+      </div>
+    );
+  }
   return (
     <div className={`blk${focused ? " focus" : ""}`} id={id} data-b={b.index} data-page={b.page}>
-      <div className="side">
-        <button disabled title={SOON.translate}>译</button>
-        <button onClick={() => onAction("ask", b)}>问</button>
-        <button onClick={() => onAction("note", b)}>记</button>
-      </div>
-      <div className="en">{rich(b.text, marks)}</div>
+      {side}
+      <div className="en">{en}</div>
+      {tr.open.has(b.index) && <div className="zh-inline">{zh("正在翻译…")}</div>}
     </div>
   );
 }
@@ -99,9 +128,9 @@ function BlockView(props: {
 export function FlowView(props: {
   paper: PaperView; document: DocumentView; pdf: PdfState | null; annotations: Annotation[];
   focus: (Focus & { quote: string | null }) | null; scroller: HTMLElement | null;
-  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void;
+  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void; translation: FlowTranslation;
 }) {
-  const { paper, document: doc, pdf, annotations, focus, scroller, onAction, onToPdf } = props;
+  const { paper, document: doc, pdf, annotations, focus, scroller, onAction, onToPdf, translation } = props;
   const [flash, setFlash] = useState<{ block: number; quote: string | null } | null>(null);
 
   useEffect(() => {
@@ -116,16 +145,15 @@ export function FlowView(props: {
   }, [focus, scroller]);
 
   const highlights = annotations.filter((a) => a.kind === "highlight" && a.quote);
-  // 从第一个摘要标记开始（之前是标题、作者、单位，已在顶部显示）；中文期刊的中文摘要在英文标题之前，
-  // 所以不能按“第一个标题”截。找不到摘要标记时从头显示，宁可多显示也不丢内容。到参考文献为止。
-  const first = Math.max(0, doc.blocks.findIndex((b) => ABSTRACT_MARK.test(b.text.trim())));
+  // 从正文开始处（服务端按第一个摘要标记算出）显示到参考文献为止；之前的标题、作者已在顶部显示
+  const first = doc.body_start;
   const end = doc.blocks.findIndex((b) => b.kind === "heading" && isReferencesHeading(b.text));
   const blocks = doc.blocks.slice(first, end >= 0 ? end + 1 : undefined).filter((b) => b.kind !== "reference");
   const gaps = blocks.filter((b) => b.kind === "text" && !b.text.trim()).length;
   const meta = [paper.authors.slice(0, 6).join(", "), paper.venue, paper.published_at].filter(Boolean).join(" · ");
 
   return (
-    <article className="flow">
+    <article className={`flow${translation.bilingual ? " bi" : ""}`}>
       <h1>{paper.title}</h1>
       <div className="meta">{meta}</div>
       {(doc.quality === "degraded" || gaps > 0) && (
@@ -137,7 +165,7 @@ export function FlowView(props: {
         const marks = highlights.filter((a) => a.page === b.page).map((a) => ({ quote: a.quote!, cls: "hl hl-user" }));
         if (flash?.block === b.index && flash.quote) marks.unshift({ quote: flash.quote, cls: "flash" });
         return <BlockView key={b.index} block={b} pdf={pdf} marks={marks} focused={flash?.block === b.index}
-          onAction={onAction} onToPdf={onToPdf} />;
+          onAction={onAction} onToPdf={onToPdf} tr={translation} />;
       })}
     </article>
   );

@@ -354,6 +354,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
             timezone=config.timezone,
         ),
         topics=config.topics,
+        glossaries=config.glossaries,
         journal_sets=config.journal_sets,
         rubrics=config.rubrics,
         routes=config.routes,

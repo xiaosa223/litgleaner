@@ -33,6 +33,7 @@ export interface TopicProfile {
 export interface Inbox {
   recommended: InboxItem[];
   queued: InboxItem[];
+  reading: InboxItem[];
   topics: TopicProfile[];
 }
 
@@ -97,10 +98,23 @@ export interface Block {
   page: number;
   bbox: BBox | null;
   caption: string | null;
+  translatable: boolean;
+}
+
+/** 一段的译文：sources 与 sentences 按句一一对应。 */
+export interface BlockTranslation {
+  index: number;
+  sources: string[];
+  sentences: string[];
+  verified: boolean; // 通过句数和术语表校验；未通过的不缓存
+  cached: boolean;
+  stale: boolean; // 术语表或模型更新前的旧译文
+  problems: string[];
 }
 
 export interface DocumentView {
   quality: string;
+  body_start: number; // 正文从这一块开始（第一个摘要标记）
   blocks: Block[];
 }
 

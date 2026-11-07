@@ -40,10 +40,10 @@ export function Inbox() {
   const [chosen, setTab] = useState<"recommended" | "queued" | null>(null);
   if (inbox.state === "loading") return <div className="view-msg">正在加载…</div>;
   if (inbox.state === "error") return <div className="view-msg">{inbox.message}</div>;
-  const { recommended, queued, topics } = inbox.data;
-  // 没有推荐、但有待读时，默认打开待读
-  const tab = chosen ?? (recommended.length === 0 && queued.length > 0 ? "queued" : "recommended");
-  const list = tab === "recommended" ? recommended : queued;
+  const { recommended, queued, reading, topics } = inbox.data;
+  const mine = queued.length + reading.length;
+  // 没有推荐、但有待读或在读时，默认打开第二个标签
+  const tab = chosen ?? (recommended.length === 0 && mine > 0 ? "queued" : "recommended");
   return (
     <div style={{ overflow: "auto", flex: 1 }}>
       <div className="inbox">
@@ -60,12 +60,18 @@ export function Inbox() {
         {topics.length === 0 && <div className="profile">还没有启用中的研究画像。运行 <code>litgleaner topic activate &lt;id&gt;</code> 启用。</div>}
         <div className="inbox-tabs" role="tablist">
           <button className="ghost" role="tab" aria-selected={tab === "recommended"} onClick={() => setTab("recommended")}>最近推荐 {recommended.length}</button>
-          <button className="ghost" role="tab" aria-selected={tab === "queued"} onClick={() => setTab("queued")}>待读 {queued.length}</button>
+          <button className="ghost" role="tab" aria-selected={tab === "queued"} onClick={() => setTab("queued")}>待读 / 在读 {mine}</button>
         </div>
-        {list.length === 0 && (
-          <div className="empty-note">{tab === "recommended" ? "还没有推荐。流程运行并到了推送时间后，推荐会出现在这里。" : "还没有待读的论文。推荐里点“稍后读”会出现在这里。"}</div>
+        {tab === "recommended" && (recommended.length === 0
+          ? <div className="empty-note">还没有推荐。流程运行并到了推送时间后，推荐会出现在这里。</div>
+          : recommended.map((item) => <Card key={item.paper_id} item={item} onChange={reload} />))}
+        {tab === "queued" && mine === 0 && <div className="empty-note">还没有待读或在读的论文。推荐里点“稍后读”会出现在这里。</div>}
+        {tab === "queued" && reading.length > 0 && (
+          <section><h2 className="section-title">在读</h2>{reading.map((item) => <Card key={item.paper_id} item={item} onChange={reload} />)}</section>
         )}
-        {list.map((item) => <Card key={item.paper_id} item={item} onChange={reload} />)}
+        {tab === "queued" && queued.length > 0 && (
+          <section><h2 className="section-title">待读</h2>{queued.map((item) => <Card key={item.paper_id} item={item} onChange={reload} />)}</section>
+        )}
       </div>
     </div>
   );

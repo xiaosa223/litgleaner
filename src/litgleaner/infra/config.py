@@ -2,7 +2,7 @@
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -12,6 +12,7 @@ from pydantic import Field, ValidationError
 
 from litgleaner.domain.base import FrozenModel
 from litgleaner.domain.errors import ConfigError
+from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.routing import ALL_TOPICS, PUBLIC_TOPICS, Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.topic import Topic
@@ -87,7 +88,7 @@ class LLMBudget(FrozenModel):
 
 class LLMFile(FrozenModel):
     providers: Mapping[str, AdapterConfig]
-    tasks: Mapping[Literal["triage", "extract", "assess"], LLMTask]
+    tasks: Mapping[Literal["triage", "extract", "assess", "translate"], LLMTask]
     budget: LLMBudget
 
 
@@ -107,6 +108,7 @@ class LoadedConfig:
     rubrics: Mapping[str, Rubric]
     journal_sets: Mapping[str, tuple[str, ...]]
     timezone: ZoneInfo
+    glossaries: Mapping[str, Glossary] = field(default_factory=dict)
 
     @property
     def database_url(self) -> str:
@@ -144,14 +146,31 @@ def _load[ModelT: FrozenModel](path: Path, model: type[ModelT]) -> ModelT:
         raise ConfigError(f"配置文件 {path} 校验失败：\n{error}") from error
 
 
+# 同目录下的术语表和检索式草稿不是主题文件
+_NOT_TOPICS = (".glossary.yaml", ".draft.yaml")
+
+
 def _load_topics(directory: Path) -> dict[str, Topic]:
     topics: dict[str, Topic] = {}
     for path in sorted(directory.glob("*.yaml")):
+        if path.name.endswith(_NOT_TOPICS):
+            continue
         topic = _load(path, Topic)
         if topic.id != path.stem:
             raise ConfigError(f"主题文件 {path} 的 id 必须和文件名一致，当前为 {topic.id}")
         topics[topic.id] = topic
     return topics
+
+
+def _load_glossaries(directory: Path, topics: Mapping[str, Topic]) -> dict[str, Glossary]:
+    """config/topics/<topic-id>.glossary.yaml，可以没有（视为空表）。"""
+    glossaries: dict[str, Glossary] = {}
+    for path in sorted(directory.glob("*.glossary.yaml")):
+        topic_id = path.name.removesuffix(".glossary.yaml")
+        if topic_id not in topics:
+            raise ConfigError(f"术语表 {path} 对应的主题 {topic_id} 不存在")
+        glossaries[topic_id] = _load(path, Glossary)
+    return glossaries
 
 
 def _load_rubrics(directory: Path) -> dict[str, Rubric]:
@@ -224,4 +243,5 @@ def load_config(config_dir: Path) -> LoadedConfig:
         rubrics=rubrics,
         journal_sets=journals,
         timezone=_zone(app.timezone),
+        glossaries=_load_glossaries(directory / "topics", topics),
     )

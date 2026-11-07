@@ -2,7 +2,8 @@
 
 from typing import Any
 
-from litgleaner.adapters.llm.base import HttpLLM, Reply, refused, truncated
+from litgleaner.adapters.llm.base import HttpLLM, Reply, StreamState, refused, truncated
+from litgleaner.domain.errors import TransientError
 from litgleaner.ports.llm import LLMRequest
 
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
@@ -41,6 +42,30 @@ class OpenAIChatLLM(HttpLLM):
                 "json_schema": {"name": request.task, "schema": schema, "strict": True},
             }
         return body
+
+    def _stream_body(self, request: LLMRequest) -> dict[str, Any]:
+        body = super()._stream_body(request)
+        body["stream_options"] = {"include_usage": True}  # 否则流里没有用量，预算无法统计
+        return body
+
+    def _stream_event(self, event: str | None, data: Any, state: StreamState) -> str | None:
+        state.model = data.get("model") or state.model
+        if usage := data.get("usage"):
+            state.input_tokens = usage["prompt_tokens"]
+            state.output_tokens = usage["completion_tokens"]
+        if not data.get("choices"):
+            return None
+        choice = data["choices"][0]
+        delta = choice.get("delta") or {}
+        if delta.get("refusal"):
+            state.stop, state.detail = "refused", state.detail + delta["refusal"]
+        finish = choice.get("finish_reason")
+        if finish == "length":
+            state.stop = "truncated"
+        elif finish == "content_filter":
+            state.stop, state.detail = "refused", "finish_reason=content_filter"
+        content = delta.get("content")
+        return str(content) if content else None
 
     def _reply(self, data: Any) -> Reply:
         choice = data["choices"][0]
@@ -92,6 +117,32 @@ class OpenAIResponsesLLM(HttpLLM):
                 }
             }
         return body
+
+    def _stream_event(self, event: str | None, data: Any, state: StreamState) -> str | None:
+        kind = data.get("type", event)
+        if kind == "response.output_text.delta":
+            return str(data["delta"])
+        if kind == "response.refusal.delta":
+            state.stop, state.detail = "refused", state.detail + data["delta"]
+        elif kind in {"response.completed", "response.incomplete", "response.failed"}:
+            self._finish(data["response"], state)
+        elif kind == "error":
+            raise TransientError(f"{self.service} 流式输出出错：{str(data.get('message'))[:200]}")
+        return None
+
+    def _finish(self, response: dict[str, Any], state: StreamState) -> None:
+        state.model = response.get("model") or state.model
+        if usage := response.get("usage"):
+            state.input_tokens, state.output_tokens = usage["input_tokens"], usage["output_tokens"]
+        if response.get("status") == "failed":
+            message = (response.get("error") or {}).get("message", "")
+            raise TransientError(f"{self.service} 生成失败：{message[:200]}")
+        if response.get("status") == "incomplete":
+            reason = (response.get("incomplete_details") or {}).get("reason")
+            if reason == "content_filter":
+                state.stop, state.detail = "refused", "incomplete: content_filter"
+            elif state.stop is None:
+                state.stop = "truncated"
 
     def _reply(self, data: Any) -> Reply:
         parts = [

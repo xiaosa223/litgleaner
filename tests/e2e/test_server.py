@@ -1,5 +1,6 @@
 """本地 HTTP 接口：第 15.5 节的本地安全要求和各接口的协议适配。"""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -207,3 +208,40 @@ def test_highlight_rects_are_bounded(client: TestClient):
 def test_costs_endpoint(client: TestClient):
     _login(client)
     assert client.get("/api/costs").json()["month_usd"] >= 0
+
+
+def _events(response) -> list[tuple[str, dict]]:
+    events, name = [], None
+    for line in response.iter_lines():
+        if line.startswith("event: "):
+            name = line[7:]
+        elif line.startswith("data: "):
+            events.append((name, json.loads(line[6:])))
+    return events
+
+
+def test_translate_streams_deltas_then_result_and_is_listed(client: TestClient):
+    csrf = {"X-CSRF-Token": _login(client)}
+    paper_id = _paper_id(client)
+    url = f"/api/papers/{paper_id}/blocks/2/translate"
+    assert client.post(url).status_code == 403  # 状态变更：要 CSRF 令牌
+    with client.stream("POST", url, headers=csrf) as response:
+        assert response.headers["content-type"].startswith("text/event-stream")
+        events = _events(response)
+    names = [name for name, _ in events]
+    assert names.count("delta") >= 2 and names[-1] == "done"
+    done = events[-1][1]
+    assert done["verified"] and done["sentences"] == ["【译】We study the problem."]
+
+    listed = client.get(f"/api/papers/{paper_id}/translations").json()
+    assert [item["index"] for item in listed] == [2]
+    costs = client.get("/api/costs", params={"paper_id": paper_id}).json()
+    assert costs["paper_usd"] == pytest.approx(0.001)
+
+
+def test_translate_errors_arrive_as_error_event(client: TestClient):
+    csrf = {"X-CSRF-Token": _login(client)}
+    url = f"/api/papers/{_paper_id(client)}/blocks/1/translate"
+    with client.stream("POST", url, headers=csrf) as response:
+        events = _events(response)
+    assert events == [("error", {"message": "这一块不需要翻译（标题、公式、表格或中文段落）"})]

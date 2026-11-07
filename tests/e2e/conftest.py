@@ -164,6 +164,7 @@ def _write_config(root: Path) -> None:
                 "triage": {"provider": "main", "model": "cheap", "prompt": "triage"},
                 "extract": {"provider": "main", "model": "strong", "prompt": "extract"},
                 "assess": {"provider": "main", "model": "strong", "prompt": "assess"},
+                "translate": {"provider": "main", "model": "cheap", "prompt": "translate"},
             },
             "budget": {"daily_usd": 10.0},
         },

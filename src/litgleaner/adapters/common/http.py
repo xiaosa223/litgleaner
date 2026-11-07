@@ -5,7 +5,7 @@
 
 import json
 import time
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from email.utils import parsedate_to_datetime
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any
@@ -22,6 +22,7 @@ from litgleaner.domain.errors import (
 
 DEFAULT_RETRY_SECONDS = 900
 _MESSAGE_LIMIT = 200
+_ERROR_STATUS = 400
 _MISSING = frozenset({404, 410})
 
 
@@ -165,6 +166,27 @@ class HttpClient:
             return response.json()
         except ValueError as error:
             raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
+
+    def post_lines(
+        self,
+        path: str,
+        body: Mapping[str, Any],
+        *,
+        params: Mapping[str, str] | None = None,
+    ) -> Iterator[str]:
+        """POST JSON，逐行读取流式响应（SSE）。
+
+        错误分类与 post_json 相同；读到一半断开算临时错误。
+        """
+        self._wait_turn()
+        try:
+            with self._client.stream("POST", path, json=body, params=params) as response:
+                if response.status_code >= _ERROR_STATUS:
+                    response.read()
+                    self._raise_for_status(response)
+                yield from response.iter_lines()
+        except httpx.HTTPError as error:
+            raise TransientError(f"{self.service} 连接中断：{type(error).__name__}") from error
 
     def get_text(
         self, path: str, params: Mapping[str, Any] | None = None, *, allow_missing: bool = False

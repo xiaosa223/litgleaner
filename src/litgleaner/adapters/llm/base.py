@@ -6,8 +6,8 @@
 
 import json
 import re
-from collections.abc import Mapping
-from dataclasses import dataclass
+from collections.abc import Iterator, Mapping
+from dataclasses import dataclass, field
 from typing import Annotated, Any, ClassVar, Literal
 
 import httpx
@@ -15,9 +15,24 @@ from pydantic import Field
 
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import parse_options
+from litgleaner.adapters.llm.sse import iter_sse
 from litgleaner.domain.base import FrozenModel
-from litgleaner.domain.errors import ConfigError, PermanentError, SchemaChanged, TransientError
-from litgleaner.ports.llm import LLMRequest, LLMResponse
+from litgleaner.domain.chunker import estimate_tokens
+from litgleaner.domain.errors import (
+    ConfigError,
+    LitGleanerError,
+    PermanentError,
+    SchemaChanged,
+    TransientError,
+)
+from litgleaner.ports.llm import (
+    LLMRequest,
+    LLMResponse,
+    StreamDone,
+    StreamEvent,
+    TextDelta,
+    TextRequest,
+)
 
 _UNSUPPORTED = frozenset(
     {
@@ -61,6 +76,18 @@ class Reply:
     model: str | None
     input_tokens: int
     output_tokens: int
+
+
+@dataclass
+class StreamState:
+    """一次流式调用内累积的信息。只在这次调用里修改。"""
+
+    model: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    stop: Literal["truncated", "refused"] | None = None
+    detail: str = ""
+    text: list[str] = field(default_factory=list)
 
 
 def relax_schema(node: Any) -> Any:
@@ -179,8 +206,86 @@ class HttpLLM:
             cost_usd=cost,
         )
 
+    def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
+        """纯文本流式输出。
+
+        最后一个事件是 StreamDone；出错时先给出 StreamDone（带已知用量）再抛出。
+        """
+        self.check_model(request.model)
+        as_request = LLMRequest(request.task, request.model, request.system, request.user, {})
+        body = self._stream_body(as_request)
+        field_name = self._options.max_tokens_field or self.default_max_tokens_field
+        self._set_output_limit(body, field_name, self._options.max_output_tokens)
+        state = StreamState()
+        lines = self._http.post_lines(
+            self._stream_path(request.model),
+            deep_merge(body, self._options.extra_body),
+            params=self._stream_params(),
+        )
+        try:
+            for event, raw in iter_sse(lines):
+                delta = self._parse_event(event, raw, state)
+                if delta:
+                    state.text.append(delta)
+                    yield TextDelta(delta)
+            self._check_stop(state)
+        except LitGleanerError as error:
+            yield self._done(request, state, error)
+            raise
+        yield self._done(request, state, None)
+
+    def _parse_event(self, event: str | None, raw: str, state: StreamState) -> str | None:
+        if raw.strip() == "[DONE]":
+            return None
+        try:
+            return self._stream_event(event, json.loads(raw), state)
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
+            raise SchemaChanged(
+                f"{self.service} 流式事件结构与预期不符：{type(error).__name__} {error}"
+            ) from error
+
+    def _check_stop(self, state: StreamState) -> None:
+        if state.stop == "refused":
+            raise refused(self.service, state.detail or "流式输出被拒绝")
+        if state.stop == "truncated":
+            raise truncated(self.service)
+
+    def _done(
+        self, request: TextRequest, state: StreamState, error: LitGleanerError | None
+    ) -> StreamDone:
+        """成功但接口没给用量时按文本长度估算，不能当作免费；失败时只记已知用量。"""
+        tokens_in, tokens_out = state.input_tokens, state.output_tokens
+        estimated = error is None and (tokens_in is None or tokens_out is None)
+        if estimated:
+            tokens_in = tokens_in or estimate_tokens(request.system + request.user)
+            tokens_out = tokens_out or estimate_tokens("".join(state.text))
+        price_in, price_out = self._options.prices[request.model]
+        tokens_in, tokens_out = tokens_in or 0, tokens_out or 0
+        return StreamDone(
+            model=state.model or request.model,
+            input_tokens=tokens_in,
+            output_tokens=tokens_out,
+            cost_usd=(tokens_in * price_in + tokens_out * price_out) / _PER_MILLION,
+            estimated=estimated,
+            error=error,
+        )
+
     def close(self) -> None:
         self._http.close()
+
+    def _stream_body(self, request: LLMRequest) -> dict[str, Any]:
+        body = self._body(request, request.system, None)
+        body["stream"] = True
+        return body
+
+    def _stream_path(self, model: str) -> str:
+        return self._path(model)
+
+    def _stream_params(self) -> dict[str, str] | None:
+        return None
+
+    def _stream_event(self, event: str | None, data: Any, state: StreamState) -> str | None:
+        raise NotImplementedError
 
     def _set_output_limit(self, body: dict[str, Any], field: str, value: int) -> None:
         body[field] = value

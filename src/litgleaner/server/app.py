@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, RedirectResponse
 
-from litgleaner.application import reader
+from litgleaner.application import reader, translation
 from litgleaner.application.context import AppContext
 from litgleaner.domain.errors import NotFound
 from litgleaner.domain.reading import Annotation, NewAnnotation
@@ -16,6 +16,7 @@ from litgleaner.server.security import (
     LocalSecurity,
     install_guard,
 )
+from litgleaner.server.streaming import sse_response
 
 NOT_BUILT = "前端还没有构建：在 web/ 目录执行 pnpm install && pnpm build。接口照常可用。"
 
@@ -42,8 +43,19 @@ def _paper_routes(app: FastAPI, ctx: AppContext) -> None:
         return reader.inbox(ctx)
 
     @app.get("/api/costs")
-    def costs() -> dict[str, float]:
-        return {"month_usd": reader.month_cost_usd(ctx)}
+    def costs(paper_id: str | None = None) -> dict[str, float | None]:
+        paper_usd = ctx.store.runs.llm_cost_for_paper(paper_id) if paper_id else None
+        return {"month_usd": reader.month_cost_usd(ctx), "paper_usd": paper_usd}
+
+    @app.get("/api/papers/{paper_id}/translations")
+    def translations(paper_id: str) -> list[translation.BlockTranslation]:
+        return sorted(
+            translation.cached_translations(ctx, paper_id).values(), key=lambda t: t.index
+        )
+
+    @app.post("/api/papers/{paper_id}/blocks/{index}/translate")
+    def translate(paper_id: str, index: int) -> Response:
+        return sse_response(translation.translate_block(ctx, paper_id, index))
 
     @app.get("/api/papers/{paper_id}")
     def paper(paper_id: str) -> reader.PaperView:

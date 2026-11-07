@@ -1,5 +1,7 @@
 """统一文档格式。解析器的差异到此为止，下游只认这里。"""
 
+import re
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
@@ -15,6 +17,17 @@ class Block:
     page: int
     bbox: tuple[int, int, int, int] | None = None
     caption: str | None = None
+
+
+_ABSTRACT_MARK = re.compile(r"^(abstract\b|摘\s*要)", re.IGNORECASE)
+
+
+def body_start(blocks: Sequence[Block]) -> int:
+    """正文从第一个摘要标记开始，之前是标题、作者、单位。
+
+    中文期刊的中文摘要可能排在英文标题之后，所以不能按“第一个标题”判断。找不到摘要标记时从头开始。
+    """
+    return next((i for i, b in enumerate(blocks) if _ABSTRACT_MARK.match(b.text.strip())), 0)
 
 
 @dataclass(frozen=True)

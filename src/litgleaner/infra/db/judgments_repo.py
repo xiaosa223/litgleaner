@@ -157,6 +157,15 @@ class SqlJudgmentRepo:
         rows = self._db.fetch(statement.order_by(triage.c.paper_id))
         return tuple(row.paper_id for row in rows)
 
+    def relevant_topics(self, paper_id: str) -> tuple[tuple[str, str], ...]:
+        """初筛判为相关的 (主题, 主题指纹)。"""
+        rows = self._db.fetch(
+            select(triage.c.topic_id, triage.c.topic_hash)
+            .where(triage.c.paper_id == paper_id, triage.c.relevant.is_(True))
+            .order_by(triage.c.topic_id)
+        )
+        return tuple((row.topic_id, row.topic_hash) for row in rows)
+
     def relevant_without_fulltext(self, topic_id: str, topic_hash: str) -> tuple[str, ...]:
         rows = self._db.fetch(
             select(triage.c.paper_id)

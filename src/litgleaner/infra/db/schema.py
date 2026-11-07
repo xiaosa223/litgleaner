@@ -233,6 +233,7 @@ llm_call = Table(
     Column("cost_usd", Float, nullable=False),
     Column("ok", Boolean, nullable=False),
     Column("created_at", String, nullable=False, index=True),
+    Column("paper_id", String, nullable=True, index=True),  # 领读器的按需任务按论文计费
 )
 
 # 反馈只追加。external_id 是渠道给的事件编号，同一次点击重复送达时靠它去重。
@@ -284,4 +285,20 @@ annotation = Table(
     Column("created_at", String, nullable=False),
     Column("updated_at", String, nullable=False),
     Column("deleted_at", String, nullable=True),
+)
+
+# 段落译文缓存（第 12.3 节）。同一段原文、同一术语表、同一译者版本只翻一次。
+# 按句存放，与原文分句对齐。
+translation = Table(
+    "translation",
+    metadata,
+    Column("unit", String, primary_key=True),  # block（段落译文）；双语 PDF 以后用 pdf
+    Column("source_hash", String, primary_key=True),
+    Column("target_lang", String, primary_key=True),
+    Column("glossary_hash", String, primary_key=True),
+    Column("translator_version", String, primary_key=True),
+    Column("sentences", Text, nullable=False),  # JSON 数组，第 i 项是原文第 i 句的译文
+    Column("model", String, nullable=False),
+    Column("paper_id", String, nullable=True, index=True),
+    Column("created_at", String, nullable=False),
 )

@@ -1,6 +1,7 @@
 // 所有请求同源发出；改变状态的请求带 CSRF 令牌（第 15.5 节）。
 import type {
   Annotation,
+  BlockTranslation,
   DocumentView,
   Inbox,
   NewAnnotation,
@@ -60,9 +61,40 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 
 const paperPath = (id: string) => `/api/papers/${encodeURIComponent(id)}`;
 
+/** 读取翻译的 SSE 流：delta 逐段回调，done 返回结果，error 抛出。 */
+async function streamTranslation(path: string, onDelta: (text: string) => void): Promise<BlockTranslation> {
+  const response = await fetch(path, { method: "POST", headers: { "X-CSRF-Token": await csrfToken() }, credentials: "same-origin" });
+  if (!response.ok || !response.body) await parse<never>(response);
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const events = buffer.split("\n\n");
+    buffer = events.pop() ?? "";
+    for (const raw of events) {
+      const name = /^event: (.+)$/m.exec(raw)?.[1];
+      const data = /^data: (.+)$/m.exec(raw)?.[1];
+      if (!name || !data) continue;
+      const payload = JSON.parse(data) as { text?: string; message?: string };
+      if (name === "delta") onDelta(payload.text ?? "");
+      if (name === "done") return payload as unknown as BlockTranslation;
+      if (name === "error") throw new ApiError(400, payload.message ?? "翻译失败");
+    }
+    if (done) throw new ApiError(500, "翻译中断，请重试");
+  }
+}
+
 export const api = {
   inbox: () => get<Inbox>("/api/inbox"),
-  costs: () => get<{ month_usd: number }>("/api/costs"),
+  costs: (paperId?: string) =>
+    get<{ month_usd: number; paper_usd: number | null }>(
+      paperId ? `/api/costs?paper_id=${encodeURIComponent(paperId)}` : "/api/costs",
+    ),
+  translations: (id: string) => get<BlockTranslation[]>(`${paperPath(id)}/translations`),
+  translate: (id: string, index: number, onDelta: (text: string) => void) =>
+    streamTranslation(`${paperPath(id)}/blocks/${index}/translate`, onDelta),
   paper: (id: string) => get<PaperView>(paperPath(id)),
   document: (id: string) => get<DocumentView>(`${paperPath(id)}/document`),
   pdfUrl: (id: string) => `${paperPath(id)}/pdf`,

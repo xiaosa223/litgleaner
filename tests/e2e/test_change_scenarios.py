@@ -308,3 +308,21 @@ def test_chunker_change_does_not_revive_dead_extract_jobs(harness: Harness):
     harness.run()
 
     assert harness.llm_calls("extract") == calls
+
+
+def test_glossary_file_is_loaded_and_not_mistaken_for_a_topic(harness: Harness):
+    path = harness.root / "config" / "topics" / "alpha-topic.glossary.yaml"
+    path.write_text(
+        yaml.safe_dump({"terms": [{"en": "self-attention", "zh": "自注意力"}]}, allow_unicode=True),
+        encoding="utf-8",
+    )
+    ctx = harness.rebuild()
+    assert set(ctx.topics) == {"alpha-topic"}
+    assert [t.zh for t in ctx.glossaries["alpha-topic"].terms] == ["自注意力"]
+
+
+def test_glossary_for_unknown_topic_is_rejected(harness: Harness):
+    path = harness.root / "config" / "topics" / "ghost.glossary.yaml"
+    path.write_text(yaml.safe_dump({"terms": []}), encoding="utf-8")
+    with pytest.raises(ConfigError, match="ghost"):
+        load_config(harness.root / "config")

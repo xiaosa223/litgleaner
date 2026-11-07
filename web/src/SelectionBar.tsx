@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { TextSelection } from "./selection";
 import type { Block, Rect } from "./types";
-import { AuthorQuote, Modal, SOON } from "./ui";
+import { AuthorQuote, Modal } from "./ui";
 
 export interface NoteTarget {
   quote: string | null;
@@ -14,13 +14,13 @@ export interface NoteTarget {
 const BAR_WIDTH = 320;
 
 export function SelectionBar({ selection, autoHl, onAction }: {
-  selection: TextSelection; autoHl: boolean; onAction: (action: "highlight" | "note" | "ask" | "auto") => void;
+  selection: TextSelection; autoHl: boolean; onAction: (action: "translate" | "highlight" | "note" | "ask" | "auto") => void;
 }) {
   const left = Math.max(8, Math.min(selection.anchor.x - BAR_WIDTH / 2, window.innerWidth - BAR_WIDTH - 8));
   const top = Math.max(8, selection.anchor.top - 44);
   return (
     <div className="selbar" style={{ left, top }} role="toolbar" aria-label="选中文字" onMouseDown={(e) => e.preventDefault()}>
-      <button disabled title={SOON.translate}>翻译</button>
+      <button onClick={() => onAction("translate")}>翻译</button>
       <button onClick={() => onAction("highlight")}>高亮</button>
       <button onClick={() => onAction("note")}>记笔记</button>
       <button onClick={() => onAction("ask")}>问</button>

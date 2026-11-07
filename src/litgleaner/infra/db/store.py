@@ -27,6 +27,7 @@ from litgleaner.infra.db.schema import (
     sighting,
     triage,
 )
+from litgleaner.infra.db.translation_repo import SqlTranslationRepo
 
 _COUNTED = (
     paper,
@@ -55,6 +56,7 @@ class SqlStore:
         self._jobs = SqlJobRepo(self._db)
         self._runs = SqlRunRepo(self._db)
         self._reader = SqlReaderRepo(self._db)
+        self._translations = SqlTranslationRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -83,6 +85,10 @@ class SqlStore:
     @property
     def reader(self) -> SqlReaderRepo:
         return self._reader
+
+    @property
+    def translations(self) -> SqlTranslationRepo:
+        return self._translations
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

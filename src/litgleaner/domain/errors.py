@@ -46,6 +46,10 @@ class BudgetExceeded(LitGleanerError):
     """超出 LLM 每日预算。任务保持待处理，第二天继续，不计失败次数。"""
 
 
+class InvalidRequest(LitGleanerError):
+    """请求本身合法，但对象不支持这个操作，例如翻译一个标题块。"""
+
+
 class NotFound(LitGleanerError):
     """要找的论文、批注或文件不存在。"""
 

@@ -1,14 +1,23 @@
 """假大模型：输出完全确定。论文内容里的标记决定结果，方便测试和演示。"""
 
 import re
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from typing import Any
 
-from litgleaner.ports.llm import LLMRequest, LLMResponse
+from litgleaner.ports.llm import (
+    LLMRequest,
+    LLMResponse,
+    StreamDone,
+    StreamEvent,
+    TextDelta,
+    TextRequest,
+)
 
 _LEVEL = re.compile(r"\[\[level:(\d)\]\]")
 _DEFAULT_LEVEL = 3
 _COST_PER_CALL = 0.001
+_UNTRUSTED = re.compile(r"</?untrusted_paper>")
+_NUMBER = re.compile(r"^\s*\[\d+\]\s*")
 
 
 class FakeLLM:
@@ -17,6 +26,24 @@ class FakeLLM:
         self.fail_next: list[Exception] = []
         self.fail_tasks: dict[str, list[Exception]] = {}
         self.overrides: dict[str, Mapping[str, Any]] = {}
+        self.text_calls: list[TextRequest] = []
+        self.text_overrides: dict[str, str] = {}
+
+    def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
+        """纯文本流：默认把每个非空输入行译成“【译】原文”，分两段吐出，便于测试增量显示。"""
+        self.text_calls.append(request)
+        if self.fail_next:
+            raise self.fail_next.pop(0)
+        text = self.text_overrides.get(request.task)
+        if text is None:
+            inner = _UNTRUSTED.sub("", request.user)
+            lines = (_NUMBER.sub("", line).strip() for line in inner.splitlines())
+            text = "\n".join(f"【译】{line}" for line in lines if line)
+        middle = len(text) // 2
+        for piece in (text[:middle], text[middle:]):
+            if piece:
+                yield TextDelta(piece)
+        yield StreamDone(request.model, 100, 20, _COST_PER_CALL)
 
     def complete(self, request: LLMRequest) -> LLMResponse:
         self.calls.append(request)

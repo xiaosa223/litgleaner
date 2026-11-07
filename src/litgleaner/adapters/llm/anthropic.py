@@ -2,7 +2,8 @@
 
 from typing import Any
 
-from litgleaner.adapters.llm.base import HttpLLM, Reply, refused, truncated
+from litgleaner.adapters.llm.base import HttpLLM, Reply, StreamState, refused, truncated
+from litgleaner.domain.errors import TransientError
 from litgleaner.ports.llm import LLMRequest
 
 API_VERSION = "2023-06-01"
@@ -31,6 +32,28 @@ class AnthropicMessagesLLM(HttpLLM):
             body["output_config"] = {"format": {"type": "json_schema", "schema": schema}}
         return body
 
+    def _stream_event(self, event: str | None, data: Any, state: StreamState) -> str | None:
+        kind = data.get("type", event)
+        if kind == "message_start":
+            message = data["message"]
+            state.model = message.get("model")
+            state.input_tokens = _input_tokens(message.get("usage") or {})
+        elif kind == "content_block_delta" and data["delta"].get("type") == "text_delta":
+            return str(data["delta"]["text"])
+        elif kind == "message_delta":
+            state.output_tokens = (data.get("usage") or {}).get(
+                "output_tokens", state.output_tokens
+            )
+            stop = data["delta"].get("stop_reason")
+            if stop == "max_tokens":
+                state.stop = "truncated"
+            elif stop == "refusal":
+                state.stop, state.detail = "refused", "stop_reason=refusal"
+        elif kind == "error":
+            message = (data.get("error") or {}).get("message", "")
+            raise TransientError(f"{self.service} 流式输出出错：{message[:200]}")
+        return None
+
     def _reply(self, data: Any) -> Reply:
         stop = data.get("stop_reason")
         text = "".join(b["text"] for b in data["content"] if b.get("type") == "text")
@@ -39,9 +62,12 @@ class AnthropicMessagesLLM(HttpLLM):
         if stop == "max_tokens":
             raise truncated(self.service)
         usage = data["usage"]
-        tokens_in = (
-            usage["input_tokens"]
-            + (usage.get("cache_creation_input_tokens") or 0)
-            + (usage.get("cache_read_input_tokens") or 0)
-        )
-        return Reply(text, data.get("model"), tokens_in, usage["output_tokens"])
+        return Reply(text, data.get("model"), _input_tokens(usage), usage["output_tokens"])
+
+
+def _input_tokens(usage: dict[str, Any]) -> int:
+    return int(
+        usage["input_tokens"]
+        + (usage.get("cache_creation_input_tokens") or 0)
+        + (usage.get("cache_read_input_tokens") or 0)
+    )

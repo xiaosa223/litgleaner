@@ -147,6 +147,7 @@ class SqlRunRepo:
                 output_tokens=call.output_tokens,
                 cost_usd=call.cost_usd,
                 ok=call.ok,
+                paper_id=call.paper_id,
                 created_at=now,
             )
         )
@@ -155,6 +156,14 @@ class SqlRunRepo:
         rows = self._db.fetch(
             select(func.coalesce(func.sum(llm_call.c.cost_usd), 0.0).label("total")).where(
                 llm_call.c.created_at >= since
+            )
+        )
+        return float(rows[0].total)
+
+    def llm_cost_for_paper(self, paper_id: str) -> float:
+        rows = self._db.fetch(
+            select(func.coalesce(func.sum(llm_call.c.cost_usd), 0.0).label("total")).where(
+                llm_call.c.paper_id == paper_id
             )
         )
         return float(rows[0].total)

@@ -1,15 +1,18 @@
 // 原版视图：pdf.js 渲染页面，叠加文字层（可选中原文）、段落区域（悬停出现“译 / 问 / 记”）和用户高亮。
 import { TextLayer } from "pdfjs-dist";
 import "pdfjs-dist/web/pdf_viewer.css";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import type { FlowTranslation } from "./FlowView";
 import type { PdfState } from "./pdf";
+import { ZhText } from "./TranslationView";
 import type { Annotation, Block } from "./types";
-import { SOON } from "./ui";
 
 export type BlockAction = "ask" | "note";
 export type Focus = { block: number | null; page: number; nonce: number };
 
 const MAX_PAGE_WIDTH = 900;
+const MAX_ROW_WIDTH = 1240; // 双语对照时页面加右侧译文栏
+const COLUMN_GAP = 20;
 const pct = (v: number) => `${(v / 10).toFixed(2)}%`;
 export const isBody = (b: Block) => b.kind === "text" && b.bbox !== null;
 
@@ -22,11 +25,46 @@ export function hitBlock(blocks: Block[], page: number, x: number, y: number): B
   });
 }
 
+/** 双语对照：译文按段落在页面上的高度排在右侧，重叠时依次下移。 */
+function TransColumn({ blocks, height, width, tr, onHover }: {
+  blocks: Block[]; height: number; width: number; tr: FlowTranslation; onHover: (index: number | null) => void;
+}) {
+  const column = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    // 顶部的“翻译本页”按钮占住的高度不能被译文盖住
+    let bottom = column.current?.querySelector<HTMLElement>(".trans-page")?.offsetHeight ?? -10;
+    column.current?.querySelectorAll<HTMLElement>(".tb").forEach((element) => {
+      const top = Math.max((Number(element.dataset.y) / 1000) * height, bottom + 10);
+      element.style.top = `${top}px`;
+      bottom = top + element.offsetHeight;
+    });
+    if (column.current) column.current.style.height = `${Math.max(height, bottom)}px`;
+  });
+  const t = tr.translations;
+  const shown = blocks.filter((b) => t.done.has(b.index) || t.live.has(b.index) || t.errors.has(b.index));
+  const pending = blocks.filter((b) => !t.done.has(b.index) && !t.live.has(b.index)).map((b) => b.index);
+  return (
+    <div className="trans-col" ref={column} style={{ flex: `0 0 ${width}px` }}>
+      {pending.length > 0 && (
+        <button className="ghost trans-page" onClick={() => t.translateAll(pending)} title="逐段翻译，会产生模型费用">
+          翻译本页 {pending.length} 段
+        </button>
+      )}
+      {shown.map((b) => (
+        <div key={b.index} className="tb" data-y={b.bbox![1]} onMouseEnter={() => onHover(b.index)} onMouseLeave={() => onHover(null)}>
+          <ZhText index={b.index} translations={t} pairing={tr.pairing} idle={null} quiet />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Page(props: {
   pdf: PdfState; index: number; width: number; blocks: Block[]; annotations: Annotation[];
   hovered: number | null; focused: number | null; onAction: (action: BlockAction, block: Block) => void;
+  tr: FlowTranslation; columnWidth: number; onHover: (index: number | null) => void;
 }) {
-  const { pdf, index, width, blocks, annotations, hovered, focused, onAction } = props;
+  const { pdf, index, width, blocks, annotations, hovered, focused, onAction, tr, columnWidth, onHover } = props;
   const size = pdf.sizes[index];
   const height = (width / size.width) * size.height;
   const host = useRef<HTMLDivElement>(null);
@@ -78,14 +116,23 @@ function Page(props: {
         ))}
         {blocks.filter((b) => b.page === index && b.bbox && b.kind !== "reference").map((b) => {
           const [x0, y0, x1, y1] = b.bbox!;
-          const cls = ["ov", hovered === b.index ? "hov" : "", focused === b.index ? "focus" : ""].join(" ");
+          const pop = tr.open.has(b.index) && !tr.bilingual;
+          const cls = ["ov", hovered === b.index ? "hov" : "", focused === b.index ? "focus" : "", pop ? "has-pop" : ""].join(" ");
           return (
             <div key={b.index} id={`o-${b.index}`} className={cls} style={{ left: pct(x0), top: pct(y0), width: pct(x1 - x0), height: pct(y1 - y0) }}>
               {isBody(b) && (
                 <div className="acts">
-                  <button disabled title={SOON.translate}>译</button>
+                  {!tr.bilingual && <button disabled={!b.translatable} title={b.translatable ? "翻译这段" : "这段不需要翻译"} onClick={() => tr.onToggle(b.index)}>译</button>}
                   <button onClick={() => onAction("ask", b)}>问</button>
                   <button onClick={() => onAction("note", b)}>记</button>
+                </div>
+              )}
+              {pop && (
+                <div className="pop" style={{ top: "calc(100% + 8px)" }}>
+                  <button className="x" aria-label="关闭" onClick={() => tr.onToggle(b.index)}>×</button>
+                  <div style={{ fontSize: 14.5, lineHeight: 1.75 }}>
+                    <ZhText index={b.index} translations={tr.translations} pairing={tr.pairing} idle="正在翻译…" />
+                  </div>
                 </div>
               )}
             </div>
@@ -93,22 +140,26 @@ function Page(props: {
         })}
         <span className="no">第 {index + 1} 页</span>
       </div>
+      {tr.bilingual && (
+        <TransColumn blocks={blocks.filter((b) => b.page === index && b.translatable && b.bbox)} height={height}
+          width={columnWidth} tr={tr} onHover={onHover} />
+      )}
     </div>
   );
 }
 
 export function PdfView(props: {
   pdf: PdfState; blocks: Block[]; annotations: Annotation[]; focus: Focus | null;
-  scroller: HTMLElement | null; onAction: (action: BlockAction, block: Block) => void;
+  scroller: HTMLElement | null; onAction: (action: BlockAction, block: Block) => void; translation: FlowTranslation;
 }) {
-  const { pdf, blocks, annotations, focus, scroller, onAction } = props;
-  const [width, setWidth] = useState(0);
+  const { pdf, blocks, annotations, focus, scroller, onAction, translation } = props;
+  const [available, setAvailable] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
   const [focused, setFocused] = useState<number | null>(null);
 
   useEffect(() => {
     if (!scroller) return;
-    const measure = () => setWidth(Math.min(scroller.clientWidth - 32, MAX_PAGE_WIDTH));
+    const measure = () => setAvailable(scroller.clientWidth - 32);
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(scroller);
@@ -134,12 +185,15 @@ export function PdfView(props: {
     setHovered(hit?.index ?? null);
   };
 
+  const row = Math.min(available, translation.bilingual ? MAX_ROW_WIDTH : MAX_PAGE_WIDTH);
+  const width = translation.bilingual ? Math.floor((row - COLUMN_GAP) * 0.6) : row;
+  const columnWidth = row - width - COLUMN_GAP;
   if (width <= 0) return null;
   return (
     <div className="pages" onMouseMove={onMove} onMouseLeave={() => setHovered(null)}>
       {pdf.sizes.map((_, index) => (
         <Page key={index} pdf={pdf} index={index} width={width} blocks={blocks} annotations={annotations}
-          hovered={hovered} focused={focused} onAction={onAction} />
+          hovered={hovered} focused={focused} onAction={onAction} tr={translation} columnWidth={columnWidth} onHover={setHovered} />
       ))}
     </div>
   );
