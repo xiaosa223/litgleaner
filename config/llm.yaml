@@ -12,10 +12,11 @@
 # 通用 options：
 #   prices              必填。美元 / 百万 token，[输入, 输出]。tasks 用到的模型缺价格时启动报错，否则每日预算无效
 #   base_url            省略时用官方地址；中转站或本地服务改这里
-#   max_output_tokens   默认 4000，含思考 token
+#   max_output_tokens   默认 4000，含思考 token。推理模型（响应里带 reasoning_content 的）思考很长，评估任务建议 16000
 #   max_tokens_field    请求体里输出上限的字段名，默认按协议；部分兼容接口只认 max_tokens
 #   structured          native（默认，用接口自带的 JSON Schema 约束）或 prompt（把结构写进提示词，
-#                       给不支持结构化输出的接口用）。两种模式下网关都会在本地按完整结构校验
+#                       给不支持结构化输出的接口用）。两种模式下网关都会在本地按完整结构校验。
+#                       中转站和本地网关常常收下 json_schema 却不强制执行（返回裸数组、缺字段），这时也用 prompt
 #   extra_body          深度合并进请求体，放各家专有参数，例如思考强度
 #   headers             不含密钥的附加请求头
 #   timeout_seconds     默认 180
@@ -52,7 +53,7 @@ providers:
     options:
       base_url: https://api.example.com/v1
       prices: {}
-      # structured: prompt          # 接口不支持 json_schema 时打开
+      # structured: prompt          # 接口不支持或不强制执行 json_schema 时打开
       # max_tokens_field: max_tokens
 tasks:
   triage: { provider: main, model: demo-cheap, prompt: triage }
