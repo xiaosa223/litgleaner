@@ -57,6 +57,8 @@ class OpenAIChatLLM(HttpLLM):
             return None
         choice = data["choices"][0]
         delta = choice.get("delta") or {}
+        if delta.get("reasoning_content") or delta.get("reasoning"):  # 兼容接口的思考内容
+            state.thinking = True
         if delta.get("refusal"):
             state.stop, state.detail = "refused", state.detail + delta["refusal"]
         finish = choice.get("finish_reason")
@@ -122,6 +124,8 @@ class OpenAIResponsesLLM(HttpLLM):
         kind = data.get("type", event)
         if kind == "response.output_text.delta":
             return str(data["delta"])
+        if kind.startswith("response.reasoning"):
+            state.thinking = True
         if kind == "response.refusal.delta":
             state.stop, state.detail = "refused", state.detail + data["delta"]
         elif kind in {"response.completed", "response.incomplete", "response.failed"}:

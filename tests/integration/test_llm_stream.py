@@ -50,7 +50,7 @@ def calls(store: SqlStore) -> list:
 def test_stream_yields_text_then_records_cost_with_paper(store: SqlStore):
     llm = FakeLLM()
     stream = gateway(store, llm).stream(
-        "translate", {}, "First sentence.\nSecond one.", paper_id="P1"
+        "translate", {}, "[[1]] First sentence.\n[[2]] Second one.", paper_id="P1"
     )
 
     pieces = list(stream)

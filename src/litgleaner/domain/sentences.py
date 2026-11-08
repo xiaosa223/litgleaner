@@ -15,7 +15,7 @@ _ABBREVIATIONS = frozenset(
     }
 )  # fmt: skip
 _CJK = re.compile(r"[㐀-鿿豈-﫿]")
-_MATH = re.compile(r"\$\$.+?\$\$|\$[^$]+\$", re.DOTALL)
+_MATH = re.compile(r"\$\$.+?\$\$|\$(?=\S)[^$\n]+(?<=\S)\$(?!\d)", re.DOTALL)  # 金额不算公式
 _END = re.compile(r"[.!?。！？]")
 _CLOSERS = "\"'”’)]）】"
 

@@ -9,7 +9,7 @@ from litgleaner.application import reader, translation
 from litgleaner.application.context import AppContext
 from litgleaner.domain.errors import NotFound
 from litgleaner.domain.reading import Annotation, NewAnnotation
-from litgleaner.server.schemas import AnnotationBody, AnnotationEdit, ReadingBody
+from litgleaner.server.schemas import AnnotationBody, AnnotationEdit, ReadingBody, TranslateBody
 from litgleaner.server.security import (
     LAUNCH_PATH,
     SESSION_COOKIE,
@@ -56,6 +56,10 @@ def _paper_routes(app: FastAPI, ctx: AppContext) -> None:
     @app.post("/api/papers/{paper_id}/blocks/{index}/translate")
     def translate(paper_id: str, index: int) -> Response:
         return sse_response(translation.translate_block(ctx, paper_id, index))
+
+    @app.post("/api/papers/{paper_id}/translate")
+    def translate_many(paper_id: str, body: TranslateBody) -> Response:
+        return sse_response(translation.translate_blocks(ctx, paper_id, body.indices))
 
     @app.get("/api/papers/{paper_id}")
     def paper(paper_id: str) -> reader.PaperView:

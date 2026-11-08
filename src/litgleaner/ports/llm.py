@@ -2,6 +2,7 @@
 
 - complete：结构化输出，结构由调用方提供，并在网关统一校验。
 - stream：纯文本流式输出（ADR 0004），逐段给出文本增量，最后给出用量；结束后由调用方校验内容。
+  推理模型先思考时，在第一段正文之前给出一次 Thinking（不带思考内容），供界面显示状态。
 """
 
 from collections.abc import Iterator, Mapping
@@ -41,6 +42,11 @@ class TextDelta:
 
 
 @dataclass(frozen=True)
+class Thinking:
+    """模型正在思考，还没有正文。每次调用最多出现一次，思考内容不外传。"""
+
+
+@dataclass(frozen=True)
 class StreamDone:
     """流的最后一个事件。出错时同样给出，带着已知的用量，随后抛出 error。"""
 
@@ -52,7 +58,7 @@ class StreamDone:
     error: Exception | None = None
 
 
-StreamEvent = TextDelta | StreamDone
+StreamEvent = TextDelta | Thinking | StreamDone
 
 
 class LLM(Protocol):

@@ -67,6 +67,7 @@ class GeminiLLM(HttpLLM):
         elif finish == "MAX_TOKENS":
             state.stop = "truncated"
         parts = (candidates[0].get("content") or {}).get("parts") or []
+        state.thinking = state.thinking or any(p.get("thought") for p in parts)
         text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
         return text or None
 

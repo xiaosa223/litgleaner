@@ -32,6 +32,7 @@ from litgleaner.ports.llm import (
     StreamEvent,
     TextDelta,
     TextRequest,
+    Thinking,
 )
 
 _UNSUPPORTED = frozenset(
@@ -87,6 +88,7 @@ class StreamState:
     output_tokens: int | None = None
     stop: Literal["truncated", "refused"] | None = None
     detail: str = ""
+    thinking: bool = False  # 适配器看到思考内容时置为 True
     text: list[str] = field(default_factory=list)
 
 
@@ -222,9 +224,13 @@ class HttpLLM:
             deep_merge(body, self._options.extra_body),
             params=self._stream_params(),
         )
+        announced = False
         try:
             for event, raw in iter_sse(lines):
                 delta = self._parse_event(event, raw, state)
+                if state.thinking and not announced and not state.text:
+                    announced = True
+                    yield Thinking()
                 if delta:
                     state.text.append(delta)
                     yield TextDelta(delta)

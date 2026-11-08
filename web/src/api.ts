@@ -61,9 +61,22 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 
 const paperPath = (id: string) => `/api/papers/${encodeURIComponent(id)}`;
 
-/** 读取翻译的 SSE 流：delta 逐段回调，done 返回结果，error 抛出。 */
-async function streamTranslation(path: string, onDelta: (text: string) => void): Promise<BlockTranslation> {
-  const response = await fetch(path, { method: "POST", headers: { "X-CSRF-Token": await csrfToken() }, credentials: "same-origin" });
+export interface TranslationHandlers {
+  onDelta: (index: number, text: string) => void; // 一句完整的译文
+  onThinking: () => void; // 模型在思考，还没有正文
+  onBlock: (result: BlockTranslation) => void; // 一块的最终结果（校验后）
+}
+
+/** 读取翻译的 SSE 流：delta、status、block 逐个回调，end 结束，error 抛出。 */
+async function streamTranslation(path: string, body: unknown, handlers: TranslationHandlers): Promise<void> {
+  const headers: Record<string, string> = { "X-CSRF-Token": await csrfToken() };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const response = await fetch(path, {
+    method: "POST",
+    headers,
+    credentials: "same-origin",
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
   if (!response.ok || !response.body) await parse<never>(response);
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
@@ -77,9 +90,11 @@ async function streamTranslation(path: string, onDelta: (text: string) => void):
       const name = /^event: (.+)$/m.exec(raw)?.[1];
       const data = /^data: (.+)$/m.exec(raw)?.[1];
       if (!name || !data) continue;
-      const payload = JSON.parse(data) as { text?: string; message?: string };
-      if (name === "delta") onDelta(payload.text ?? "");
-      if (name === "done") return payload as unknown as BlockTranslation;
+      const payload = JSON.parse(data) as { index?: number; text?: string; message?: string };
+      if (name === "delta" && payload.index !== undefined) handlers.onDelta(payload.index, payload.text ?? "");
+      if (name === "status") handlers.onThinking();
+      if (name === "block") handlers.onBlock(payload as unknown as BlockTranslation);
+      if (name === "end") return;
       if (name === "error") throw new ApiError(400, payload.message ?? "翻译失败");
     }
     if (done) throw new ApiError(500, "翻译中断，请重试");
@@ -93,8 +108,12 @@ export const api = {
       paperId ? `/api/costs?paper_id=${encodeURIComponent(paperId)}` : "/api/costs",
     ),
   translations: (id: string) => get<BlockTranslation[]>(`${paperPath(id)}/translations`),
-  translate: (id: string, index: number, onDelta: (text: string) => void) =>
-    streamTranslation(`${paperPath(id)}/blocks/${index}/translate`, onDelta),
+  /** 翻译这一块所在的整段；同段的其他块也会收到结果。 */
+  translate: (id: string, index: number, handlers: TranslationHandlers) =>
+    streamTranslation(`${paperPath(id)}/blocks/${index}/translate`, undefined, handlers),
+  /** 按页或整篇：按段落分批翻译，一段完成就回调。 */
+  translateMany: (id: string, indices: number[], handlers: TranslationHandlers) =>
+    streamTranslation(`${paperPath(id)}/translate`, { indices }, handlers),
   paper: (id: string) => get<PaperView>(paperPath(id)),
   document: (id: string) => get<DocumentView>(`${paperPath(id)}/document`),
   pdfUrl: (id: string) => `${paperPath(id)}/pdf`,

@@ -46,7 +46,7 @@ function TransColumn({ blocks, height, width, tr, onHover }: {
   return (
     <div className="trans-col" ref={column} style={{ flex: `0 0 ${width}px` }}>
       {pending.length > 0 && (
-        <button className="ghost trans-page" onClick={() => t.translateAll(pending)} title="逐段翻译，会产生模型费用">
+        <button className="ghost trans-page" onClick={() => t.translateAll(pending)} title="按段落分批翻译，会产生模型费用">
           翻译本页 {pending.length} 段
         </button>
       )}

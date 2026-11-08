@@ -10,7 +10,15 @@ from jsonschema import Draft202012Validator
 from litgleaner.domain.errors import BudgetExceeded, TransientError
 from litgleaner.domain.evidence import wrap_untrusted
 from litgleaner.domain.hashing import stable_hash
-from litgleaner.ports.llm import LLM, LLMRequest, LLMResponse, StreamDone, TextDelta, TextRequest
+from litgleaner.ports.llm import (
+    LLM,
+    LLMRequest,
+    LLMResponse,
+    StreamDone,
+    TextDelta,
+    TextRequest,
+    Thinking,
+)
 from litgleaner.ports.store import LLMCall, RunRepo
 
 
@@ -52,7 +60,10 @@ class TextResult:
 
 
 class TextStream:
-    """流式文本：迭代得到增量；迭代完成后 result 才有值。费用在流结束时（包括出错时）记录。"""
+    """流式文本：迭代得到文本增量，推理模型思考时先得到一次 Thinking；迭代完成后 result 才有值。
+
+    费用在流结束时（包括出错时）记录。
+    """
 
     def __init__(
         self, gateway: "LLMGateway", task: str, request: TextRequest, paper_id: str | None
@@ -63,11 +74,13 @@ class TextStream:
         self._paper_id = paper_id
         self.result: TextResult | None = None
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[str | Thinking]:
         route = self._gateway.routes[self._task]
         parts: list[str] = []
         for event in route.llm.stream(self._request):
-            if isinstance(event, TextDelta):
+            if isinstance(event, Thinking):
+                yield event
+            elif isinstance(event, TextDelta):
                 parts.append(event.text)
                 yield event.text
             elif isinstance(event, StreamDone):

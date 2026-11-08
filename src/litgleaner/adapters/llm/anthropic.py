@@ -40,6 +40,8 @@ class AnthropicMessagesLLM(HttpLLM):
             state.input_tokens = _input_tokens(message.get("usage") or {})
         elif kind == "content_block_delta" and data["delta"].get("type") == "text_delta":
             return str(data["delta"]["text"])
+        elif kind == "content_block_delta" and data["delta"].get("type") == "thinking_delta":
+            state.thinking = True
         elif kind == "message_delta":
             state.output_tokens = (data.get("usage") or {}).get(
                 "output_tokens", state.output_tokens

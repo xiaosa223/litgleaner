@@ -17,7 +17,7 @@ _LEVEL = re.compile(r"\[\[level:(\d)\]\]")
 _DEFAULT_LEVEL = 3
 _COST_PER_CALL = 0.001
 _UNTRUSTED = re.compile(r"</?untrusted_paper>")
-_NUMBER = re.compile(r"^\s*\[\d+\]\s*")
+_MARKER = re.compile(r"^\s*(\[\[\d+\]\])\s*(.*)$")
 
 
 class FakeLLM:
@@ -30,15 +30,15 @@ class FakeLLM:
         self.text_overrides: dict[str, str] = {}
 
     def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
-        """纯文本流：默认把每个非空输入行译成“【译】原文”，分两段吐出，便于测试增量显示。"""
+        """纯文本流：默认把每个编号行译成“[[n]] 【译】原文”，分两段吐出，便于测试增量显示。"""
         self.text_calls.append(request)
         if self.fail_next:
             raise self.fail_next.pop(0)
         text = self.text_overrides.get(request.task)
         if text is None:
             inner = _UNTRUSTED.sub("", request.user)
-            lines = (_NUMBER.sub("", line).strip() for line in inner.splitlines())
-            text = "\n".join(f"【译】{line}" for line in lines if line)
+            matches = (_MARKER.match(line) for line in inner.splitlines())
+            text = "\n".join(f"{m.group(1)} 【译】{m.group(2)}" for m in matches if m)
         middle = len(text) // 2
         for piece in (text[:middle], text[middle:]):
             if piece:

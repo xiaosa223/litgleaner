@@ -229,14 +229,26 @@ def test_translate_streams_deltas_then_result_and_is_listed(client: TestClient):
         assert response.headers["content-type"].startswith("text/event-stream")
         events = _events(response)
     names = [name for name, _ in events]
-    assert names.count("delta") >= 2 and names[-1] == "done"
-    done = events[-1][1]
+    assert names == ["delta", "block", "end"]
+    assert events[0][1] == {"index": 2, "text": "【译】We study the problem."}
+    done = events[1][1]
     assert done["verified"] and done["sentences"] == ["【译】We study the problem."]
 
     listed = client.get(f"/api/papers/{paper_id}/translations").json()
     assert [item["index"] for item in listed] == [2]
     costs = client.get("/api/costs", params={"paper_id": paper_id}).json()
     assert costs["paper_usd"] == pytest.approx(0.001)
+
+
+def test_translate_many_streams_each_block(client: TestClient):
+    csrf = {"X-CSRF-Token": _login(client)}
+    url = f"/api/papers/{_paper_id(client)}/translate"
+    assert client.post(url, json={"indices": [2]}).status_code == 403
+    assert client.post(url, json={"indices": []}, headers=csrf).status_code == 422
+    with client.stream("POST", url, json={"indices": [2, 4]}, headers=csrf) as response:
+        events = _events(response)
+    finished = [data["index"] for name, data in events if name == "block"]
+    assert finished == [2, 4] and events[-1] == ("end", {})
 
 
 def test_translate_errors_arrive_as_error_event(client: TestClient):

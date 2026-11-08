@@ -1,0 +1,319 @@
+: heartbeat
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"refusal":"","role":"assistant"},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"嗯","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"用户给了我","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"一个","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"指令，让我","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"逐行翻译，并且","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"每行要","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"保留开头的编号。然后","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"给了两行英文内容","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。\n\n","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"我先","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"看看具体要求：“","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"逐行翻译”","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"意思","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"就是一行","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"一行对应","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"着","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"翻","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，不能合并","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"或者","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"打乱顺序","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。“","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"每行保留开头的编号”","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"这个很关键，像","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":" [[1]]、[[","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"2]] 这样的标记","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"必须","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"原样放在","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"译文","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"前面","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，不能","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"丢掉","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"或者改格式","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。\n\n再来","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"读一下原文","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"第一行","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"是 \"","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"Attention helps.\"","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，第二","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"行是","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":" \"It is fast.\"","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。都是","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"很简单的","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"短句。\n\n","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“Attention helps.” ","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"我","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"得想想","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"怎么翻","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"比较自然","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。“Attention” 在这儿","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"是“注意力”","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"吧","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"？“helps","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"” 是“有帮助","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”。","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"直","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"译是","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“注意力有帮助”，但","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"感觉","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"有点生硬。结合","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"语境，可能是","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"说在","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"模型","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"或者任务","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"里，注意力机制","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"能起到","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"作用，所以","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"可以","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"译成“注意力机制","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"有帮助”或者更","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"口语一点，“","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"注意力能","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"起作用","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”。不过既然","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"是","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"简短陈述","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，用“注意力有帮助","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”也","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"行","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，但","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"为了更","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"准确点","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"或许","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“注意力机制有帮助","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”更好","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"？","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"再","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"想想，如果","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"泛指","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"注意","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”这个行为","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，说","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“集中","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"注意力有帮助","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”也通","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，但原文","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"没","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"说","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“集中”。","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"我先","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"倾向于","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"“注意力有帮助","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”，简洁","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"对应","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。\n\n","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"第二","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"行 \"It is fast","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":".\" 这个","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"简单","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，“","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"它很快","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”或者“这","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"很快","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"都行。指代","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"前面","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"提到的","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"东西，用“它","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"”比较","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"顺。\n\n翻译","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"的时候，编号","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"必须","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"一字","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"不","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"差地保留","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，比如 [[1]]","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":" 后面空","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"一格再","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"跟","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"译文。","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"格式","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"要","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"整齐","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。\n\n好了","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"，思路","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"差不多清晰","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"了：就","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"按两","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"行分别","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"处理，编号","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"照抄，译文求","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"准确","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"、通顺，不额外","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"加","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"解释","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"。准备","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":null,"reasoning_content":"输出。","refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"[[","extra_fields":null,"function_call":null,"refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"1]] ","extra_fields":null,"function_call":null,"refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"注意力有帮助","extra_fields":null,"function_call":null,"refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"。","extra_fields":null,"function_call":null,"refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"\n[[2]] ","extra_fields":null,"function_call":null,"refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"它很快。","extra_fields":null,"function_call":null,"refusal":""},"finish_reason":null,"index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":null}
+
+data: {"choices":[{"delta":{"content":"","extra_fields":null,"function_call":{"name":"","arguments":""},"refusal":"","role":"assistant"},"finish_reason":"stop","index":0,"logprobs":null}],"created":1794113054,"id":"2ca718861f2dcf3a4c8458a530d50ddc","model":"hy4-free","object":"chat.completion.chunk","usage":{"prompt_tokens":69,"completion_tokens":365,"total_tokens":434,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":348,"rejected_prediction_tokens":0,"cached_tokens":0},"prompt_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":0,"rejected_prediction_tokens":0,"cached_tokens":0},"prompt_cache_hit_tokens":0,"prompt_cache_miss_tokens":69,"cache_read_input_tokens":0,"cache_creation_input_tokens":0,"prompt_cache_write_tokens":0,"completion_thinking_tokens":348,"credit":0,"cached_tokens":0,"quota":{"model":"hy4","percent":12,"reset_at":"1794124972","shared_models":[]}}}
+
+data: [DONE]
+

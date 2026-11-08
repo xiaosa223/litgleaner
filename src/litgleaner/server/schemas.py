@@ -51,3 +51,11 @@ class AnnotationBody(_Body):
 
 class AnnotationEdit(_Body):
     body: str | None = Field(default=None, max_length=20_000)
+
+
+class TranslateBody(_Body):
+    """按页或整篇翻译：要翻译的块序号。"""
+
+    indices: list[Annotated[int, Field(ge=0, le=1_000_000)]] = Field(
+        min_length=1, max_length=20_000
+    )

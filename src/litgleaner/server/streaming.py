@@ -7,7 +7,12 @@ from dataclasses import asdict
 
 from fastapi.responses import StreamingResponse
 
-from litgleaner.application.translation import TranslateEvent, TranslationDelta
+from litgleaner.application.translation import (
+    BlockTranslation,
+    TranslateEvent,
+    TranslationDelta,
+    TranslationStatus,
+)
 from litgleaner.domain.errors import LitGleanerError
 
 logger = logging.getLogger(__name__)
@@ -21,9 +26,12 @@ def _sse(events: Iterator[TranslateEvent]) -> Iterator[str]:
     try:
         for event in events:
             if isinstance(event, TranslationDelta):
-                yield _event("delta", {"text": event.text})
-            else:
-                yield _event("done", asdict(event))
+                yield _event("delta", {"index": event.index, "text": event.text})
+            elif isinstance(event, TranslationStatus):
+                yield _event("status", {"state": event.state})
+            elif isinstance(event, BlockTranslation):
+                yield _event("block", asdict(event))
+        yield _event("end", {})
     except LitGleanerError as error:  # 预算用完、参数不对、模型出错：都告诉界面，不中断服务
         yield _event("error", {"message": str(error)})
     except Exception:

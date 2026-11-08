@@ -35,6 +35,13 @@ export function EnText({ index, text, tr, marks, pairing }: {
 }
 
 function Status({ tr, onRetry, quiet }: { tr: BlockTranslation; onRetry: () => void; quiet: boolean }) {
+  if (!tr.verified && tr.sentences.length === 0) {
+    return (
+      <span className="tag" style={{ color: "var(--warn)" }}>
+        译文没有通过核验，保留原文：{tr.problems.join("；")}。<button className="linkbtn" onClick={onRetry}>重试</button>
+      </span>
+    );
+  }
   if (!tr.verified) {
     return (
       <span className="tag" style={{ color: "var(--warn)" }}>
@@ -57,7 +64,8 @@ export function ZhText({ index, translations, pairing, idle, quiet = false }: {
   const error = translations.errors.get(index);
   const retry = () => translations.translate(index);
   if (live !== undefined) {
-    return <>{live || "正在翻译…"}<span className="tag">正在翻译 · 按课题术语表统一译名</span></>;
+    const waiting = translations.thinking ? "模型思考中…" : "正在翻译…";
+    return <>{live || waiting}<span className="tag">正在翻译 · 按课题术语表统一译名</span></>;
   }
   if (error) {
     return <span className="tag" style={{ color: "var(--warn)" }}>{error} <button className="linkbtn" onClick={retry}>重试</button></span>;
