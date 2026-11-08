@@ -1,0 +1,10 @@
+# 只有一个包；这里只用来登记依赖补丁。
+# EmbedPDF 的补丁拷自 Agentero（MIT），来源见仓库根目录 THIRD_PARTY.md。升级 EmbedPDF 前对照上游重做。
+patchedDependencies:
+  # 文档引用计数、逐字形矩阵和原始字符读取（字符级重排要用）、文字读取越界修正
+  '@embedpdf/engines@2.14.4': patches/@embedpdf__engines@2.14.4.patch
+  # 注册表销毁后才打开完成的文档要释放，不能泄漏到 worker 里
+  '@embedpdf/plugin-document-manager@2.14.4': patches/@embedpdf__plugin-document-manager@2.14.4.patch
+  '@embedpdf/plugin-scroll@2.14.4': patches/@embedpdf__plugin-scroll@2.14.4.patch
+  '@embedpdf/plugin-tiling@2.14.4': patches/@embedpdf__plugin-tiling@2.14.4.patch
+  '@embedpdf/plugin-zoom@2.14.4': patches/@embedpdf__plugin-zoom@2.14.4.patch

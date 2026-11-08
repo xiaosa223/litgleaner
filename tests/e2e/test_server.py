@@ -78,6 +78,9 @@ def test_security_headers_are_set(client: TestClient):
     headers = client.get("/api/inbox").headers
     assert "default-src 'self'" in headers["content-security-policy"]
     assert "frame-ancestors 'none'" in headers["content-security-policy"]
+    # PDF 引擎是 wasm：只放行编译 wasm，不放行 eval 和内联脚本
+    assert "script-src 'self' 'wasm-unsafe-eval'" in headers["content-security-policy"]
+    assert "'unsafe-eval'" not in headers["content-security-policy"].replace("wasm-unsafe", "")
     assert headers["x-content-type-options"] == "nosniff"
     assert headers["referrer-policy"] == "no-referrer"
     assert headers["cache-control"] == "no-store"
@@ -143,6 +146,20 @@ def test_serves_built_frontend_with_spa_fallback(
     assert "拾穗" in client.get("/papers/abc").text
     assert client.get("/assets/app.js").text == "console.log(1)"
     assert client.get("/api/unknown").status_code == 404
+
+
+def test_wasm_is_served_as_wasm_even_without_system_mime_entry(
+    harness: Harness, security: LocalSecurity, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # Windows 上 Python 的 mimetypes 读注册表，可能没有 .wasm；类型不对浏览器就不能流式编译 PDF 引擎
+    monkeypatch.setattr("starlette.responses.guess_type", lambda *_a, **_k: (None, None))
+    static = tmp_path / "static"
+    (static / "assets").mkdir(parents=True)
+    (static / "index.html").write_text("<!doctype html>", encoding="utf-8")
+    (static / "assets" / "pdfium.wasm").write_bytes(b"\0asm\1\0\0\0")
+    client = TestClient(create_app(harness.ctx, security, static_dir=static), base_url=BASE)
+    _login(client)
+    assert client.get("/assets/pdfium.wasm").headers["content-type"] == "application/wasm"
 
 
 @pytest.mark.parametrize(

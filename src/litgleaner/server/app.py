@@ -112,7 +112,9 @@ def _static_routes(app: FastAPI, static_dir: Path | None) -> None:
             return PlainTextResponse(NOT_BUILT)
         target = (root / path).resolve()
         if path and target.is_relative_to(root) and target.is_file():
-            return FileResponse(target)
+            # Windows 上 mimetypes 读注册表，可能认不出 .wasm；类型不对浏览器就不能编译 PDF 引擎
+            media_type = "application/wasm" if target.suffix == ".wasm" else None
+            return FileResponse(target, media_type=media_type)
         return FileResponse(root / "index.html")  # 前端路由由页面处理
 
 

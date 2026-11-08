@@ -1,0 +1,55 @@
+--- a/dist/react/index.js
++++ b/dist/react/index.js
+@@ -30,12 +30,52 @@
+     }
+   };
+ };
++function samePage(a, b) {
++    return (a.pageIndex === b.pageIndex &&
++        a.rotatedWidth === b.rotatedWidth &&
++        a.rotatedHeight === b.rotatedHeight &&
++        a.width === b.width &&
++        a.height === b.height &&
++        Boolean(a.elevated) === Boolean(b.elevated));
++}
++function sameScrollerLayout(a, b) {
++    if (a === b)
++        return true;
++    if (!a || !b)
++        return false;
++    if (a.startSpacing !== b.startSpacing ||
++        a.endSpacing !== b.endSpacing ||
++        a.totalWidth !== b.totalWidth ||
++        a.totalHeight !== b.totalHeight ||
++        a.pageGap !== b.pageGap ||
++        a.strategy !== b.strategy ||
++        a.items.length !== b.items.length) {
++        return false;
++    }
++    for (let i = 0; i < a.items.length; i++) {
++        const left = a.items[i]?.pageLayouts;
++        const right = b.items[i]?.pageLayouts;
++        if (!left || !right || left.length !== right.length)
++            return false;
++        for (let j = 0; j < left.length; j++) {
++            const pageA = left[j];
++            const pageB = right[j];
++            if (!pageA || !pageB || !samePage(pageA, pageB))
++                return false;
++        }
++    }
++    return true;
++}
++
+ function Scroller({ documentId, renderPage, ...props }) {
+   const { plugin: scrollPlugin } = useScrollPlugin();
+   const [layoutData, setLayoutData] = useState({ layout: null, docId: null });
+   useEffect(() => {
+     if (!scrollPlugin || !documentId) return;
++    let previousLayout = null;
+     const unsubscribe = scrollPlugin.onScrollerData(documentId, (newLayout) => {
++      if (sameScrollerLayout(previousLayout, newLayout)) return;
++      previousLayout = newLayout;
+       setLayoutData({ layout: newLayout, docId: documentId });
+     });
+     return () => {

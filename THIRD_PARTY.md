@@ -10,6 +10,10 @@
 | 本项目文件 | 上游文件 | 方式 |
 |---|---|---|
 | `src/litgleaner/domain/masking.py` | `src/lib/translate/mask.ts`、`src/lib/translate/preserved-links.ts` | 把占位符保护的匹配规则和还原校验从 TypeScript 移植为 Python |
+| `web/patches/@embedpdf__engines@2.14.4.patch` 等 5 个补丁（engines、plugin-document-manager、plugin-scroll、plugin-tiling、plugin-zoom） | `patches/` 下同名文件 | 原样拷贝，经 `web/pnpm-workspace.yaml` 的 `patchedDependencies` 生效；没有带 ai、annotation 两个插件的补丁（未使用） |
+| `web/src/pdf/engine.ts` | `src/lib/pdf/engine.ts` | 改写：去掉经 Tauri 读取系统中文字体的后备和日志模块 |
+| `web/src/pdf/EngineProvider.tsx` | `src/components/viewer/pdf/engine-provider.tsx` | 改写 |
+| `web/src/PdfView.tsx` 的插件配置、`useScroll` 用 ref 持有的做法 | `src/components/viewer/pdf/pdf-viewer.tsx` | 参照 |
 
 ### 许可声明
 

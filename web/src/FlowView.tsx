@@ -1,5 +1,5 @@
 // 段落视图：由统一文档重排。配图按 bbox 从 PDF 裁出，表格只保留表格结构，公式用 KaTeX。
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { PdfState } from "./pdf";
 import type { BlockAction, Focus } from "./PdfView";
 import { headingLevel, isReferencesHeading, rich, safeTable, tex } from "./text";
@@ -19,7 +19,7 @@ const FIGURE_WIDTH = 560;
 const FIGURE_HEIGHT = 520; // 竖长的图按高度限制，不占满一屏
 
 function FigureCrop({ pdf, block }: { pdf: PdfState; block: Block }) {
-  const host = useRef<HTMLDivElement>(null);
+  const [src, setSrc] = useState<string | null>(null);
   const [x0, y0, x1, y1] = block.bbox!;
   const size = pdf.sizes[block.page];
   const cropWidth = ((x1 - x0) / 1000) * size.width;
@@ -27,32 +27,29 @@ function FigureCrop({ pdf, block }: { pdf: PdfState; block: Block }) {
   const scale = Math.min(FIGURE_WIDTH / Math.max(cropWidth, 1), FIGURE_HEIGHT / Math.max(cropHeight, 1), 3);
 
   useEffect(() => {
+    const page = pdf.doc.pages[block.page];
+    if (!page) return;
+    let url: string | null = null;
     let cancelled = false;
-    const target = host.current;
-    (async () => {
-      const page = await pdf.doc.getPage(block.page + 1);
-      const viewport = page.getViewport({ scale });
-      const ratio = window.devicePixelRatio || 1;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.floor(viewport.width * ratio);
-      canvas.height = Math.floor(viewport.height * ratio);
-      Object.assign(canvas.style, {
-        position: "absolute",
-        width: `${viewport.width}px`,
-        left: `${(-x0 / 1000) * viewport.width}px`,
-        top: `${(-y0 / 1000) * viewport.height}px`,
-      });
-      await page.render({ canvas, viewport, transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0] }).promise;
-      if (!cancelled && target) target.replaceChildren(canvas);
-    })().catch(() => undefined); // 裁图失败时只显示图注
+    const rect = { origin: { x: (x0 / 1000) * size.width, y: (y0 / 1000) * size.height }, size: { width: cropWidth, height: cropHeight } };
+    pdf.engine
+      .renderPageRect(pdf.doc, page, rect, { scaleFactor: scale, dpr: window.devicePixelRatio || 1, imageType: "image/png" })
+      .toPromise()
+      .then((blob) => {
+        if (cancelled) return;
+        url = URL.createObjectURL(blob);
+        setSrc(url);
+      }, () => undefined); // 裁图失败时只显示图注
     return () => {
       cancelled = true;
+      if (url) URL.revokeObjectURL(url);
     };
-  }, [pdf, block.page, scale, x0, y0]);
+  }, [pdf, block.page, scale, x0, y0, cropWidth, cropHeight, size.width, size.height]);
 
   return (
-    <div className="crop" ref={host}
-      style={{ position: "relative", overflow: "hidden", width: cropWidth * scale, maxWidth: "100%", height: cropHeight * scale }} />
+    <div className="crop" style={{ position: "relative", overflow: "hidden", width: cropWidth * scale, maxWidth: "100%", height: cropHeight * scale }}>
+      {src && <img src={src} alt="" style={{ width: "100%", height: "100%", display: "block" }} />}
+    </div>
   );
 }
 

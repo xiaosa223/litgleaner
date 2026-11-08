@@ -106,7 +106,7 @@ export function Reader({ paperId }: { paperId: string }) {
     if (action === "ask") { setTab("qa"); toast(SOON.ask); return; }
     if (action === "note") { setNoteTarget(target); return; }
     if (action === "auto") { setAutoHl(true); toast("连续高亮已开启：选中即高亮，按 Esc 关闭"); }
-    window.getSelection()?.removeAllRanges();
+    sel.clear();
     void create("highlight", target, null);
   };
 
@@ -115,27 +115,27 @@ export function Reader({ paperId }: { paperId: string }) {
     setNoteTarget({ quote: null, page: block.page, block, rects: [] });
   };
 
+  const onSelected = (sel: TextSelection | null) => {
+    setPopup(null);
+    if (!sel) return setSelection(null);
+    if (autoHl) { sel.clear(); return void create("highlight", { quote: sel.text, page: sel.page, block: sel.block, rects: sel.rects }, null); }
+    setSelection(sel);
+  };
+
+  // 段落视图读浏览器选区；原版视图的选区由 PDF 引擎回调 onSelected
   const onMouseUp = (event: React.MouseEvent) => {
-    if (!scroller || (event.target as HTMLElement).closest(".acts, .side, button")) return;
-    window.setTimeout(() => {
-      const sel = readSelection(scroller, blocks);
-      setPopup(null);
-      if (!sel) return setSelection(null);
-      if (autoHl) { window.getSelection()?.removeAllRanges(); return void create("highlight", { quote: sel.text, page: sel.page, block: sel.block, rects: sel.rects }, null); }
-      setSelection(sel);
-    }, 0);
+    if (view !== "flow" || !scroller || (event.target as HTMLElement).closest(".acts, .side, button")) return;
+    window.setTimeout(() => onSelected(readSelection(scroller, blocks)), 0);
   };
 
   const onScroll = () => {
     setSelection(null);
-    if (!scroller) return;
-    const page = view === "pdf" ? currentPage(scroller, ".page", "p") : currentPage(scroller, "[data-page]", "page");
+    if (!scroller || view !== "flow") return; // 原版视图自己滚动，页码由 PdfView 回调
+    const page = currentPage(scroller, "[data-page]", "page");
     if (page !== null) savePosition(page);
-    if (view === "flow") {
-      const headings = [...scroller.querySelectorAll<HTMLElement>(".flow .hd")].filter((h) => h.getBoundingClientRect().top < 160);
-      const last = headings.pop();
-      setActiveHeading(last ? Number(last.id.slice(2)) : null);
-    }
+    const headings = [...scroller.querySelectorAll<HTMLElement>(".flow .hd")].filter((h) => h.getBoundingClientRect().top < 160);
+    const last = headings.pop();
+    setActiveHeading(last ? Number(last.id.slice(2)) : null);
   };
 
   useEffect(() => {
@@ -175,13 +175,14 @@ export function Reader({ paperId }: { paperId: string }) {
         onView={setPreferred} onPure={pure} onHelp={() => setHelp(true)} />
       <div className={`layout${blocks.length && !showBilingual ? "" : " wide"}`}>
         <Toc blocks={blocks} active={activeHeading} onJump={(b) => jumpTo(b, b.page)} />
-        <main className="doc" ref={setScroller} onScroll={onScroll} onMouseUp={onMouseUp}>
+        <main className={`doc${view === "pdf" && pdf ? " pdf-mode" : ""}`} ref={setScroller} onScroll={onScroll} onMouseUp={onMouseUp}>
           {!data.has_pdf && !data.has_document && (
             <article className="flow"><h1>{data.title}</h1><div className="degraded">还没有全文，下面是摘要。</div><p>{data.abstract ?? "（无摘要）"}</p></article>
           )}
           {view === "pdf" && pdfError && <div className="view-msg">{pdfError}</div>}
           {view === "pdf" && canPdf && !pdf && <div className="view-msg">正在打开 PDF…</div>}
-          {view === "pdf" && pdf && <PdfView pdf={pdf} blocks={blocks} annotations={data.annotations} focus={focus} scroller={scroller} onAction={onBlockAction} translation={translation} />}
+          {view === "pdf" && pdf && <PdfView pdf={pdf} blocks={blocks} annotations={data.annotations} focus={focus} onAction={onBlockAction}
+            translation={translation} onPage={savePosition} onSelect={onSelected} />}
           {view === "flow" && doc && <FlowView paper={data} document={doc} pdf={pdf} annotations={data.annotations} focus={focus} scroller={scroller}
             onAction={onBlockAction} onToPdf={(b) => { setPreferred("pdf"); window.setTimeout(() => jumpTo(b, b.page), 60); }}
             translation={translation} />}

@@ -9,17 +9,35 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@embedpdf/core": "2.14.4",
+    "@embedpdf/engines": "2.14.4",
+    "@embedpdf/models": "2.14.4",
+    "@embedpdf/pdfium": "2.14.4",
+    "@embedpdf/plugin-document-manager": "2.14.4",
+    "@embedpdf/plugin-interaction-manager": "2.14.4",
+    "@embedpdf/plugin-render": "2.14.4",
+    "@embedpdf/plugin-scroll": "2.14.4",
+    "@embedpdf/plugin-search": "2.14.4",
+    "@embedpdf/plugin-selection": "2.14.4",
+    "@embedpdf/plugin-tiling": "2.14.4",
+    "@embedpdf/plugin-viewport": "2.14.4",
+    "@embedpdf/plugin-zoom": "2.14.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "katex": "^0.19.1",
-    "pdfjs-dist": "^6.5.438",
+    "lucide-react": "^1.70.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
     "@types/katex": "^0.16.8",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.2.1",
+    "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.6"
   }

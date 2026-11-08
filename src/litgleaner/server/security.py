@@ -21,11 +21,12 @@ _LOOPBACK_NAMES = ("127.0.0.1", "localhost")
 MAX_BODY_BYTES = 64 * 1024  # 批注上限 2 万字，UTF-8 下也远小于这个值
 _MAX_SESSIONS = 64
 _IDLE_SECONDS = 30 * 24 * 3600
-# 模型输出一律按纯文本渲染，页面不需要内联脚本；pdf.js 的 worker 和字体来自本站
+# 模型输出一律按纯文本渲染，页面不需要内联脚本；PDF 引擎的 worker、wasm 和字体来自本站。
+# PDF 引擎是 PDFium 的 wasm，浏览器编译 wasm 需要 'wasm-unsafe-eval'；它不放行 eval 和内联脚本。
 CONTENT_SECURITY_POLICY = "; ".join(
     (
         "default-src 'self'",
-        "script-src 'self'",
+        "script-src 'self' 'wasm-unsafe-eval'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob:",
         "font-src 'self' data:",
