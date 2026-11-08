@@ -1,6 +1,6 @@
 # ADR 0003：领读器技术栈与常驻服务的分层
 
-- 状态：已接受
+- 状态：已接受；第 2 条中的 PDF 引擎（`pdfjs-dist`）和样式方案由 [ADR 0006](0006-platform-and-reader-reuse.md) 修订为 EmbedPDF + Tailwind + shadcn/ui
 - 依据：ARCHITECTURE.md 第 4、12、15.5 节
 
 ## 背景
