@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.knowledge import Concept, ConceptAlias, ConceptOccurrence
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.qa import Answer, Question
 from litgleaner.domain.reading import Annotation, ReadingState
+
+if TYPE_CHECKING:
+    from litgleaner.ports.store import Extraction, FullTextState, ScoredAssessment
 
 
 @dataclass(frozen=True)
@@ -37,3 +40,21 @@ class ExportConcept:
 class ExportSnapshot:
     papers: tuple[ExportPaper, ...]
     concepts: tuple[ExportConcept, ...]
+
+
+@dataclass(frozen=True)
+class TopicExportQuery:
+    topic_id: str
+    topic_hash: str
+    semantic_hash: str
+    policy_hash: str
+
+
+@dataclass(frozen=True)
+class TopicExportSnapshot:
+    papers: tuple[Paper, ...]
+    aliases: Mapping[str, tuple[Alias, ...]]
+    extractions: Mapping[str, Extraction]
+    scores: Mapping[str, ScoredAssessment]
+    fulltexts: Mapping[str, FullTextState]
+    reading: Mapping[str, ReadingState]

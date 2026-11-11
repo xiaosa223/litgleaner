@@ -38,11 +38,12 @@ from litgleaner.infra.db.schema import (
 )
 from litgleaner.infra.db.search_repo import SqlSearchRepo
 from litgleaner.infra.db.survey_repo import SqlSurveyRepo
+from litgleaner.infra.db.topic_export_repo import SqlTopicExportRepo
 from litgleaner.infra.db.topic_map_repo import SqlTopicMapRepo
 from litgleaner.infra.db.translation_repo import SqlTranslationRepo
 
 if TYPE_CHECKING:
-    from litgleaner.ports.export import ExportSnapshot
+    from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
 
 _COUNTED = (
     paper,
@@ -156,6 +157,9 @@ class SqlStore:
 
     def export_snapshot(self) -> "ExportSnapshot":
         return SqlExportRepo(self._db).snapshot()
+
+    def topic_export_snapshot(self, query: "TopicExportQuery") -> "TopicExportSnapshot":
+        return SqlTopicExportRepo(self._db).snapshot(query)
 
     def stats(self) -> dict[str, int]:
         counts = {

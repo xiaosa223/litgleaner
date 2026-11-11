@@ -1,12 +1,13 @@
 """文献库、个人数据导出及飞书相关的命令。"""
 
+import json
 import logging
 import queue
 import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
 
@@ -15,6 +16,14 @@ from litgleaner.application.export import mine
 from litgleaner.application.library import find_paper, record_action, require_library
 from litgleaner.application.pipeline import run_pipeline
 from litgleaner.application.stages.publish import rerender
+from litgleaner.application.topic_export import (
+    ReferenceFormat,
+    TableFormat,
+    comparison,
+    reference_text,
+    references,
+    table_text,
+)
 from litgleaner.bootstrap import authorize_zotero, build_feishu_listener, zotero_status
 from litgleaner.cli_shared import (
     DEFAULT_CONFIG,
@@ -26,7 +35,7 @@ from litgleaner.cli_shared import (
     run_lock,
     try_run_lock,
 )
-from litgleaner.domain.errors import ConfigError, InvalidRequest, LitGleanerError
+from litgleaner.domain.errors import ConfigError, InvalidRequest, LitGleanerError, NotFound
 from litgleaner.domain.library import CardAction
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.infra.export_files import write_directory
@@ -38,7 +47,7 @@ LOCK_RETRIES = 30
 
 zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
-export_app = typer.Typer(help="导出个人数据", no_args_is_help=True)
+export_app = typer.Typer(help="导出课题对比表、引用与个人数据", no_args_is_help=True)
 
 
 @export_app.command("mine")
@@ -56,6 +65,52 @@ def export_mine(
         typer.secho(str(error), fg="red", err=True)
         raise typer.Exit(1) from error
     echo(f"已导出 {count} 个文件到 {out}")
+
+
+@export_app.command("table")
+@friendly
+def export_table(
+    topic: Annotated[str, typer.Option(help="当前研究课题编号")],
+    format: Annotated[str, typer.Option(help="格式：md 或 csv")] = "md",
+    tier: Annotated[str | None, typer.Option(help="按当前有效等级筛选，逗号分隔")] = None,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """从已有提取和当前评分导出对比表；可重定向保存文件，不调用模型。"""
+    if format not in ("md", "csv"):
+        raise typer.BadParameter("格式必须是 md 或 csv", param_hint="--format")
+    try:
+        result = comparison(context_or_exit(config), topic, tier=tier)
+        typer.echo(table_text(result, cast(TableFormat, format)), nl=False)
+    except (InvalidRequest, NotFound) as error:
+        typer.secho(str(error), fg="red", err=True)
+        raise typer.Exit(2) from error
+
+
+@export_app.command("refs")
+@friendly
+def export_refs(
+    topic: Annotated[str, typer.Option(help="当前研究课题编号")],
+    format: Annotated[str, typer.Option(help="格式：bibtex 或 csl-json")] = "bibtex",
+    only_read: Annotated[bool, typer.Option(help="仅包含手动或阅读流程标为已读的论文")] = False,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """从来源元数据导出引用；需要人工核对的论文另列在标准错误输出。"""
+    if format not in ("bibtex", "csl-json"):
+        raise typer.BadParameter("格式必须是 bibtex 或 csl-json", param_hint="--format")
+    try:
+        result = references(context_or_exit(config), topic, only_read=only_read)
+        typer.echo(reference_text(result, cast(ReferenceFormat, format)), nl=False)
+    except (InvalidRequest, NotFound) as error:
+        typer.secho(str(error), fg="red", err=True)
+        raise typer.Exit(2) from error
+    for paper in result.needs_verification:
+        typer.echo(
+            "需要人工核对："
+            + json.dumps({"paper_id": paper.id, "title": paper.title}, ensure_ascii=False),
+            err=True,
+        )
+    for warning in result.references.warnings:
+        typer.echo("警告：" + json.dumps(warning, ensure_ascii=False), err=True)
 
 
 @zotero_app.command("authorize")
