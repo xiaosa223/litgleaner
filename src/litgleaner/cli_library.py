@@ -1,4 +1,4 @@
-"""文献库和飞书相关的命令：授权 Zotero、手动加入论文、运行飞书按钮监听。"""
+"""文献库、个人数据导出及飞书相关的命令。"""
 
 import logging
 import queue
@@ -11,6 +11,7 @@ from typing import Annotated
 import typer
 
 from litgleaner.application.context import AppContext
+from litgleaner.application.export import mine
 from litgleaner.application.library import find_paper, record_action, require_library
 from litgleaner.application.pipeline import run_pipeline
 from litgleaner.application.stages.publish import rerender
@@ -25,9 +26,10 @@ from litgleaner.cli_shared import (
     run_lock,
     try_run_lock,
 )
-from litgleaner.domain.errors import ConfigError, LitGleanerError
+from litgleaner.domain.errors import ConfigError, InvalidRequest, LitGleanerError
 from litgleaner.domain.library import CardAction
 from litgleaner.infra.config import LoadedConfig
+from litgleaner.infra.export_files import write_directory
 from litgleaner.ports.inbound import CardClick
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,24 @@ LOCK_RETRIES = 30
 
 zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
+export_app = typer.Typer(help="导出个人数据", no_args_is_help=True)
+
+
+@export_app.command("mine")
+@friendly
+def export_mine(
+    out: Annotated[Path, typer.Option(help="导出到新目录；已有目录不会覆盖")],
+    include_pdfs: Annotated[bool, typer.Option(help="一并导出本地已有的原 PDF")] = False,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """导出全部论文、笔记、问答、概念与引用，不调用模型。"""
+    ctx = context_or_exit(config)
+    try:
+        count = write_directory(mine(ctx, include_pdfs=include_pdfs), out)
+    except InvalidRequest as error:
+        typer.secho(str(error), fg="red", err=True)
+        raise typer.Exit(1) from error
+    echo(f"已导出 {count} 个文件到 {out}")
 
 
 @zotero_app.command("authorize")

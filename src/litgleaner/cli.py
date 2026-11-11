@@ -23,7 +23,7 @@ from litgleaner.application.topics import (
     pause_topic,
 )
 from litgleaner.bootstrap import build_context, zotero_status
-from litgleaner.cli_library import feishu_app, zotero_app
+from litgleaner.cli_library import export_app, feishu_app, zotero_app
 from litgleaner.cli_shared import DEFAULT_CONFIG as _DEFAULT_CONFIG
 from litgleaner.cli_shared import ConfigOption, fake_adapters, missing_credentials, missing_optional
 from litgleaner.cli_shared import context_or_exit as _context
@@ -53,6 +53,7 @@ for name, group in (
     ("delivery", delivery_app),
     ("zotero", zotero_app),
     ("feishu", feishu_app),
+    ("export", export_app),
 ):
     app.add_typer(group, name=name)
 

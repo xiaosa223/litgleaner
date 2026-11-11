@@ -1,12 +1,14 @@
 """把各仓储组合成 Store。"""
 
 from contextlib import AbstractContextManager
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
 from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
 from litgleaner.infra.db.citation_repo import SqlCitationRepo
 from litgleaner.infra.db.database import Database
+from litgleaner.infra.db.export_repo import SqlExportRepo
 from litgleaner.infra.db.feedback_repo import SqlFeedbackRepo
 from litgleaner.infra.db.inbox_repo import SqlInboxRepo
 from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
@@ -38,6 +40,9 @@ from litgleaner.infra.db.search_repo import SqlSearchRepo
 from litgleaner.infra.db.survey_repo import SqlSurveyRepo
 from litgleaner.infra.db.topic_map_repo import SqlTopicMapRepo
 from litgleaner.infra.db.translation_repo import SqlTranslationRepo
+
+if TYPE_CHECKING:
+    from litgleaner.ports.export import ExportSnapshot
 
 _COUNTED = (
     paper,
@@ -148,6 +153,9 @@ class SqlStore:
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()
+
+    def export_snapshot(self) -> "ExportSnapshot":
+        return SqlExportRepo(self._db).snapshot()
 
     def stats(self) -> dict[str, int]:
         counts = {

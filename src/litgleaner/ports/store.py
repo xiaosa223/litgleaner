@@ -20,6 +20,7 @@ from litgleaner.ports.survey import SurveyRepo
 from litgleaner.ports.translations import TranslationRepo
 
 if TYPE_CHECKING:
+    from litgleaner.ports.export import ExportSnapshot
     from litgleaner.ports.reading_route import ReadingRouteRepo
     from litgleaner.ports.topic_map import TopicMapRepo
 
@@ -395,3 +396,4 @@ class Store(Protocol):
 
     def atomic(self) -> AbstractContextManager[None]: ...
     def stats(self) -> dict[str, int]: ...
+    def export_snapshot(self) -> "ExportSnapshot": ...
