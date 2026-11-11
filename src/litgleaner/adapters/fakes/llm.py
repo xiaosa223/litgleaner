@@ -69,16 +69,33 @@ class FakeLLM:
             relevant = "[[irrelevant]]" not in request.user
             return {"relevant": relevant, "reason": "演示判断"}
         if request.task == "extract":
-            return {
-                "summary": "演示总结",
-                "conclusion": "演示结论",
-                "innovation": "演示创新点",
-                "key_concepts": [],
-                "limitations": [
-                    {"text": "演示不足", "source": "author", "quote": "We found it works."}
-                ],
-            }
+            return self._extraction()
         return self._assessment(request)
+
+    def _extraction(self) -> Mapping[str, Any]:
+        return {
+            "summary": "演示总结",
+            "conclusion": "演示结论",
+            "innovation": "演示创新点",
+            "key_concepts": [],
+            "limitations": [
+                {"text": "演示不足", "source": "author", "quote": "We found it works.", "page": 1}
+            ],
+            "problem": None,
+            "prior_gap": None,
+            "approach": None,
+            "method": None,
+            "claims": [],
+            "datasets": [],
+            "metrics": [],
+            "results": [],
+            "code_data": [],
+            "questions": [
+                {"question": question, "answer": None}
+                for question in ("本文研究什么问题？", "本文采用什么方法？", "结论有哪些适用条件？")
+            ],
+            "highlights": [],
+        }
 
     def _topic_map(self, request: LLMRequest) -> Mapping[str, Any]:
         records = json.loads(_UNTRUSTED.sub("", request.user))["papers"]

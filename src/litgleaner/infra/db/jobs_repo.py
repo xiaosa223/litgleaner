@@ -30,7 +30,9 @@ WITH eligible AS MATERIALIZED (
         ) ELSE 0 END
     )
 )
-UPDATE job SET status='pending',attempts=0,next_run_at=:now,updated_at=:now,first_deferred_at=NULL
+UPDATE job SET status='pending',attempts=0,next_run_at=:now,updated_at=:now,first_deferred_at=NULL,
+    payload=CASE WHEN stage='extract' AND json_valid(payload)
+        THEN json_set(payload,'$.retry_current',json('true')) ELSE payload END
 WHERE key IN (SELECT key FROM eligible)
 RETURNING key
 """

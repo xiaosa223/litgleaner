@@ -20,6 +20,32 @@ from litgleaner.infra.db.migrate import upgrade_database
 ROOT = Path(__file__).parents[2]
 
 
+def extraction_answer(**changes) -> dict:
+    """明确构造当前提取协议的离线回答；不修补网关收到的旧协议响应。"""
+    return {
+        "summary": None,
+        "conclusion": None,
+        "innovation": None,
+        "key_concepts": [],
+        "limitations": [],
+        "problem": None,
+        "prior_gap": None,
+        "approach": None,
+        "claims": [],
+        "method": None,
+        "datasets": [],
+        "metrics": [],
+        "results": [],
+        "code_data": [],
+        "questions": [
+            {"question": question, "answer": None}
+            for question in ("研究问题是什么？", "方法有什么依据？", "结果适用何种条件？")
+        ],
+        "highlights": [],
+        **changes,
+    }
+
+
 def paper(title: str, level: int | None = None, marker: str = "", **kw) -> dict:
     tag = f" [[level:{level}]]" if level is not None else ""
     return {

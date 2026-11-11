@@ -11,13 +11,14 @@ from litgleaner.application.pipeline import run_stages
 from litgleaner.application.stages.extract import ExtractStage, extraction_is_stale
 from litgleaner.application.topics import activate_topic
 from litgleaner.domain.document import Block
-from tests.e2e.conftest import Harness, paper
+from tests.e2e.conftest import Harness, extraction_answer, paper
 
 DEFINITION = "Transformer is a neural architecture based on attention."
 
 
 def _answer(harness: Harness, name: str = "Transformer", definition: str | None = DEFINITION):
     harness.llm.overrides["extract"] = {
+        **extraction_answer(),
         "summary": "Study summary",
         "innovation": None,
         "conclusion": None,
@@ -188,8 +189,8 @@ def test_limitation_quotes_also_require_original_and_clean_sent_evidence(harness
     _answer(harness)
     data = dict(harness.llm.overrides["extract"])
     data["limitations"] = [
-        {"text": str(index), "source": "author", "quote": quote}
-        for index, quote in enumerate((unsafe, unsent, "We found it works."))
+        {"text": str(index), "source": "author", "quote": quote, "page": page}
+        for index, (quote, page) in enumerate(((unsafe, 1), (unsent, 2), ("We found it works.", 1)))
     ]
     harness.llm.overrides["extract"] = data
     assert harness.run("extract").ok

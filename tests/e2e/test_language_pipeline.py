@@ -14,7 +14,7 @@ from litgleaner.application.stages.extract import (
     extraction_is_stale,
 )
 from litgleaner.ports.store import JobSpec
-from tests.e2e.conftest import Harness, paper
+from tests.e2e.conftest import Harness, extraction_answer, paper
 
 
 def _language(harness: Harness, reading: str, ui: str = "zh-CN") -> None:
@@ -112,11 +112,14 @@ def test_english_generation_keeps_author_quotes_unchanged_and_verified(harness: 
     _language(harness, "en")
     quote = "We found it works."
     harness.llm.overrides["extract"] = {
+        **extraction_answer(),
         "summary": "A concise study summary.",
         "key_concepts": [],
         "conclusion": "The method works in the reported setting.",
         "innovation": None,
-        "limitations": [{"text": "The evidence is limited.", "source": "author", "quote": quote}],
+        "limitations": [
+            {"text": "The evidence is limited.", "source": "author", "quote": quote, "page": 1}
+        ],
     }
     harness.llm.overrides["assess"] = {
         "dimensions": {

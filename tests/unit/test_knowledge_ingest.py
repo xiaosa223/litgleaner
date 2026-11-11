@@ -149,7 +149,7 @@ def test_legacy_extraction_without_concepts_remains_unchanged():
     ctx.store.knowledge.register.assert_not_called()
 
 
-def test_definition_bbox_uses_the_definition_block_and_cross_block_quotes_have_no_single_bbox():
+def test_definition_bbox_uses_real_block_and_separate_markers_do_not_form_a_definition():
     quote = "GAN is a generative adversarial network used for synthesis."
     doc = _document(
         Block("heading", "Abstract", 0),
@@ -163,9 +163,69 @@ def test_definition_bbox_uses_the_definition_block_and_cross_block_quotes_have_n
         Block("text", "GAN is a generative adversarial", 0, (1, 1, 20, 20)),
         Block("text", "network used for synthesis.", 0, (30, 40, 300, 400)),
     )
-    ctx, _, _ = _ingest(doc, [_concept(definition=quote)])
+    ctx, data, source = _ingest(doc, [_concept(definition=quote)])
     occurrence = ctx.store.knowledge.add_occurrence.call_args.args[0]
-    assert occurrence.verified and occurrence.bbox is None
+    assert source.text.count("[page=0 ") >= 2 and quote not in source.text
+    assert not occurrence.verified and occurrence.definition is None
+    assert not data["key_concepts"][0]["verified"]
+    assert occurrence.bbox == (1, 1, 20, 20)  # 只保留真实术语位置
+
+
+def test_continuous_actual_source_across_blocks_never_invents_a_single_definition_bbox():
+    quote = "GAN is a generative adversarial network used for synthesis."
+    doc = _document(
+        Block("heading", "Abstract", 0),
+        Block("text", "GAN is a generative adversarial", 0, (1, 1, 20, 20)),
+        Block("text", "network used for synthesis.", 0, (30, 40, 300, 400)),
+    )
+    ctx, _, source = _ingest(doc, [_concept(definition=quote)])
+    first_end = len(doc.blocks[1].text)
+    data = ingest_concepts(
+        ctx,
+        "paper",
+        {"key_concepts": [_concept(definition=quote)]},
+        doc,
+        ExtractionSource(quote, source.sources, ((0, first_end), (first_end + 1, len(quote)))),
+        input_hash="input",
+        producer_version="version",
+        now="now",
+    )
+    occurrence = ctx.store.knowledge.add_occurrence.call_args.args[0]
+    assert data["key_concepts"][0]["verified"]
+    assert occurrence.definition == quote and occurrence.bbox is None
+
+
+@pytest.mark.parametrize("duplicate_at", ["metadata", "other_page"])
+def test_definition_cannot_borrow_a_complete_quote_from_metadata_or_another_page(duplicate_at):
+    quote = "GAN is a generative adversarial network used for synthesis."
+    doc = _document(
+        Block("heading", "Abstract", 0),
+        Block("text", "GAN is a generative adversarial", 0),
+        Block("text", "network used for synthesis.", 0),
+        *([Block("text", quote, 1)] if duplicate_at == "other_page" else []),
+    )
+    ctx, _, source = _ingest(doc, [_concept(definition=quote)])
+    if duplicate_at == "metadata":
+        text = quote + "\n\n" + source.text
+        offset = len(quote) + 2
+        source = ExtractionSource(
+            text,
+            source.sources,
+            tuple((start + offset, end + offset) for start, end in source.spans),
+        )
+    data = ingest_concepts(
+        ctx,
+        "paper",
+        {"key_concepts": [_concept(definition=quote)]},
+        doc,
+        source,
+        input_hash="input",
+        producer_version="version",
+        now="now",
+    )
+    assert quote in source.text
+    assert not data["key_concepts"][0]["verified"]
+    assert ctx.store.knowledge.add_occurrence.call_args.args[0].definition is None
 
 
 def test_existing_aliases_resolving_to_one_concept_still_keep_the_strongest_occurrence():

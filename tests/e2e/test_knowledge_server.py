@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from litgleaner.ports.store import LLMCall
 from litgleaner.server.app import create_app
 from litgleaner.server.security import LocalSecurity
-from tests.e2e.conftest import Harness, paper
+from tests.e2e.conftest import Harness, extraction_answer, paper
 
 
 def _client(harness: Harness) -> TestClient:
@@ -22,6 +22,7 @@ def _client(harness: Harness) -> TestClient:
 def knowledge_ui(harness: Harness):
     harness.write_papers([paper("Knowledge One", 5), paper("Knowledge Two", 5)])
     harness.llm.overrides["extract"] = {
+        **extraction_answer(),
         "summary": "概念事实样例",
         "conclusion": "方法有效",
         "innovation": None,

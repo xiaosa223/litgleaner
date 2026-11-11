@@ -5,81 +5,57 @@ from dataclasses import replace
 from typing import Any
 
 from litgleaner.application.context import AppContext
-from litgleaner.application.documents import full_text_of, load_chunks, load_document
+from litgleaner.application.documents import load_chunks, load_document
+from litgleaner.application.extraction_facts import verify_extraction
+from litgleaner.application.extraction_schema import EXTRACT_SCHEMA, EXTRACTION_CONTRACT_VERSION
 from litgleaner.application.knowledge_ingest import extraction_source, ingest_concepts
 from litgleaner.application.stages.base import Stage
 from litgleaner.domain.chunker import ChunkerConfig
-from litgleaner.domain.evidence import clean_untrusted, verify_quote
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import language_name
 from litgleaner.ports.store import FullTextState, JobSpec
 
-EXTRACT_SCHEMA: Mapping[str, Any] = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["summary", "conclusion", "limitations", "innovation", "key_concepts"],
-    "properties": {
-        "summary": {"type": ["string", "null"], "maxLength": 300},
-        "conclusion": {"type": ["string", "null"], "maxLength": 800},
-        "innovation": {"type": ["string", "null"], "maxLength": 300},
-        "key_concepts": {
-            "type": "array",
-            "maxItems": 12,
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["name", "role", "definition", "page"],
-                "properties": {
-                    "name": {"type": "string", "minLength": 1, "maxLength": 200},
-                    "role": {"enum": ["core", "prerequisite", "mentioned"]},
-                    "definition": {"type": ["string", "null"], "maxLength": 2000},
-                    "page": {"type": "integer", "minimum": 0},
-                },
-            },
-        },
-        "limitations": {
-            "type": "array",
-            "maxItems": 10,
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["text", "source", "quote"],
-                "properties": {
-                    "text": {"type": "string", "maxLength": 400},
-                    "source": {"enum": ["author", "inferred"]},
-                    "quote": {"type": ["string", "null"], "maxLength": 800},
-                },
-            },
-        },
-    },
-}
-
-
-def _with_verification(
-    data: Mapping[str, Any], source_text: str, sent_text: str | None = None
-) -> dict[str, Any]:
-    limitations = [
-        {
-            **item,
-            "verified": verify_quote(item.get("quote"), source_text)
-            and verify_quote(
-                item.get("quote"), clean_untrusted(source_text if sent_text is None else sent_text)
-            ),
-        }
-        for item in data["limitations"]
-    ]
-    return {**data, "limitations": limitations}
-
 
 def extraction_input_hash(
-    doc_key: str, chunker: ChunkerConfig, reading_language: str = "zh-CN"
+    doc_key: str,
+    chunker: ChunkerConfig,
+    reading_language: str = "zh-CN",
+    token_budget: int = 6000,
 ) -> str:
-    """提取输入包含文档、切分版本和阅读语言；变化只标记失效，不自动重做。"""
+    """文档、切分、语言与实际发送预算变化只标记失效，不自动重做。"""
     return stable_hash(
         {
             "doc": doc_key,
             "chunker": chunker.version,
             "reading_language": reading_language,
+            "token_budget": token_budget,
+            "contract": EXTRACTION_CONTRACT_VERSION,
+            "schema": EXTRACT_SCHEMA,
+        }
+    )
+
+
+def _input_hash(ctx: AppContext, doc_key: str) -> str:
+    return extraction_input_hash(
+        doc_key,
+        ctx.settings.chunker,
+        ctx.settings.reading_language,
+        ctx.settings.assess_token_budget,
+    )
+
+
+def extraction_producer_version(ctx: AppContext) -> str | None:
+    """提示词、输出结构与模型配置共同确定生产者；读取不调用模型。"""
+    route = ctx.llm.routes.get("extract")
+    if route is None:
+        return None
+    return stable_hash(
+        {
+            "contract": EXTRACTION_CONTRACT_VERSION,
+            "schema": EXTRACT_SCHEMA,
+            "prompt": route.prompt.version,
+            "model": route.model,
+            "provider": route.provider_version,
         }
     )
 
@@ -92,12 +68,10 @@ def extraction_is_stale(ctx: AppContext, paper_id: str) -> bool:
     state = ctx.store.papers.get_fulltext(paper_id)
     if state is None or state.doc_key is None:
         return True
-    expected = extraction_input_hash(
-        state.doc_key, ctx.settings.chunker, ctx.settings.reading_language
-    )
-    route = ctx.llm.routes.get("extract")
+    expected = _input_hash(ctx, state.doc_key)
+    producer = extraction_producer_version(ctx)
     return extraction.input_hash != expected or (
-        route is not None and extraction.extractor_version != route.prompt.version
+        producer is not None and extraction.extractor_version != producer
     )
 
 
@@ -108,11 +82,14 @@ class ExtractStage(Stage):
         for paper_id in ctx.store.papers.parsed_without_extraction():
             state = ctx.store.papers.get_fulltext(paper_id)
             if state and state.doc_key:
-                input_hash = extraction_input_hash(
-                    state.doc_key, ctx.settings.chunker, ctx.settings.reading_language
+                input_hash = _input_hash(ctx, state.doc_key)
+                producer = extraction_producer_version(ctx)
+                key = f"extract:{paper_id}:{input_hash}:{producer}"
+                yield JobSpec(
+                    key,
+                    self.name,
+                    {"paper_id": paper_id, "input_hash": input_hash, "producer": producer},
                 )
-                key = f"extract:{paper_id}:{input_hash}"
-                yield JobSpec(key, self.name, {"paper_id": paper_id, "input_hash": input_hash})
 
     def process(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
         paper_id = payload["paper_id"]
@@ -120,13 +97,15 @@ class ExtractStage(Stage):
         state = ctx.store.papers.get_fulltext(paper_id)
         if paper is None or state is None or state.doc_key is None:
             raise ValueError(f"没有可提取的文档：{paper_id}")
-        input_hash = extraction_input_hash(
-            state.doc_key, ctx.settings.chunker, ctx.settings.reading_language
-        )
-        if payload.get("input_hash", input_hash) != input_hash:
-            return  # 配置变化后，不让旧任务借用新配置再调用一次模型
         if ctx.store.papers.get_extraction(paper_id) is not None:
             return  # 与 plan 一致：历史结果只标记过期，重排/重复任务不自动重提取
+        input_hash = _input_hash(ctx, state.doc_key)
+        producer = extraction_producer_version(ctx)
+        changed = payload.get("input_hash", input_hash) != input_hash or (
+            payload.get("producer", producer) != producer
+        )
+        if changed and not (state.status == "failed" and payload.get("retry_current") is True):
+            return  # 配置变化后，不让旧任务借用新配置再调用一次模型
         chunked = load_chunks(ctx, state.doc_key)
         document = load_document(ctx, state.doc_key)
         source = extraction_source(paper, document, chunked, ctx.settings.assess_token_budget)
@@ -137,7 +116,8 @@ class ExtractStage(Stage):
             EXTRACT_SCHEMA,
             paper_id=paper.id,
         )
-        data = _with_verification(result.data, full_text_of(chunked), source.text)
+        data = verify_extraction(result.data, document, source)
+        assert producer is not None  # call 已确认提取路由可用
         now = ctx.now_iso()
         with ctx.store.atomic():
             data = ingest_concepts(
@@ -147,13 +127,13 @@ class ExtractStage(Stage):
                 document,
                 source,
                 input_hash=input_hash,
-                producer_version=result.prompt_version,
+                producer_version=producer,
                 now=now,
             )
             ctx.store.papers.insert_extraction(
                 paper_id,
                 input_hash,
-                result.prompt_version,
+                producer,
                 data,
                 now,
             )

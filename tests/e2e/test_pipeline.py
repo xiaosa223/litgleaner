@@ -3,7 +3,7 @@
 import json
 
 from litgleaner.domain.errors import AuthFailed, TransientError
-from tests.e2e.conftest import Harness, paper
+from tests.e2e.conftest import Harness, extraction_answer, paper
 
 
 def standard_papers() -> list[dict]:
@@ -220,13 +220,14 @@ def test_archive_is_deterministic_on_rebuild(harness: Harness):
 def test_quote_verification_marks_fabricated_evidence(harness: Harness):
     harness.write_papers([paper("Quoted", 5)])
     harness.llm.overrides["extract"] = {
+        **extraction_answer(),
         "summary": "s",
         "key_concepts": [],
         "conclusion": "c",
         "innovation": None,
         "limitations": [
-            {"text": "真", "source": "author", "quote": "We found it works."},
-            {"text": "假", "source": "author", "quote": "This sentence was invented."},
+            {"text": "真", "source": "author", "quote": "We found it works.", "page": 1},
+            {"text": "假", "source": "author", "quote": "This sentence was invented.", "page": 1},
         ],
     }
     harness.run()

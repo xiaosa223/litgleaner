@@ -4,7 +4,10 @@ from dataclasses import dataclass, replace
 from typing import Literal
 
 from litgleaner.application.context import AppContext
-from litgleaner.application.stages.extract import extraction_input_hash
+from litgleaner.application.stages.extract import (
+    extraction_input_hash,
+    extraction_producer_version,
+)
 from litgleaner.domain.errors import InvalidRequest, NotFound
 from litgleaner.domain.knowledge import Concept, ConceptAlias, ConceptOccurrence
 from litgleaner.domain.reading import BBox
@@ -62,11 +65,14 @@ def _stale(ctx: AppContext, item: ConceptOccurrence) -> bool:
     if state is None or state.doc_key is None:
         return True
     expected = extraction_input_hash(
-        state.doc_key, ctx.settings.chunker, ctx.settings.reading_language
+        state.doc_key,
+        ctx.settings.chunker,
+        ctx.settings.reading_language,
+        ctx.settings.assess_token_budget,
     )
-    route = ctx.llm.routes.get("extract")
+    producer = extraction_producer_version(ctx)
     return item.input_hash != expected or (
-        route is not None and item.producer_version != route.prompt.version
+        producer is not None and item.producer_version != producer
     )
 
 

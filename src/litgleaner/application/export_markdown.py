@@ -24,9 +24,8 @@ def _generated(item: ExportPaper) -> list[str]:
     for record in item.extractions:
         sections += [f"### 提取记录 {record['id']}", "模型生成；完整记录保留输入和版本指纹。"]
         data = record["data"]
-        for key in ("summary", "innovation", "conclusion", "limitations"):
-            if key in data:
-                sections += [f"模型内容：{key}", literal(data[key])]
+        for key, value in data.items():
+            sections += [f"模型内容：{label(key)}", literal(value)]
         sections += list(stored_quotes(data))
         sections += ["原始记录（引文字段的来源按上方核验标记区分）", literal(record)]
     sections += ["## 模型判断与规则评分历史"]

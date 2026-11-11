@@ -2,6 +2,7 @@
 
 import re
 import unicodedata
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any, cast
@@ -32,6 +33,53 @@ class SentBlock:
 class ExtractionSource:
     text: str
     sources: tuple[SentBlock, ...]
+    spans: tuple[tuple[int, int], ...] | None = None
+
+
+def _legacy_spans(source: ExtractionSource) -> tuple[tuple[int, int], ...] | None:
+    """旧来源只接受精确 marker 后缀结构，或明确只有一个正文块的消息。"""
+    if len(source.sources) == 1 and source.text == source.sources[0].text:
+        return ((0, len(source.text)),)
+    spans: list[tuple[int, int]] = []
+    end = len(source.text)
+    for sent in reversed(source.sources):
+        start = end - len(sent.text)
+        if start < 0 or source.text[start:end] != sent.text:
+            return None
+        marker = re.search(r"\[page=(\d+) [^\]\n]+\]\n$", source.text[:start])
+        if marker is None or int(marker[1]) != sent.page:
+            return None
+        spans.append((start, end))
+        end = marker.start() - 2
+        if (
+            spans
+            and len(spans) < len(source.sources)
+            and source.text[end : marker.start()] != "\n\n"
+        ):
+            return None
+    return tuple(reversed(spans))
+
+
+def sent_page_texts(source: ExtractionSource) -> Mapping[int, tuple[str, ...]]:
+    """按构建时偏移保留同页连续正文；元数据、页标记和其他页不能接成引文。"""
+    spans = source.spans if source.spans is not None else _legacy_spans(source)
+    if spans is None or len(spans) != len(source.sources):
+        return {}
+    runs: dict[int, list[str]] = defaultdict(list)
+    previous: tuple[int, int] | None = None
+    for sent, (start, end) in zip(source.sources, spans, strict=True):
+        if not (0 <= start < end <= len(source.text)) or source.text[start:end] != sent.text:
+            return {}
+        if previous is not None and start < previous[1]:
+            return {}
+        text = clean_untrusted(source.text[start:end])
+        gap = "" if previous is None else source.text[previous[1] : start]
+        if previous is not None and previous[0] == sent.page and not gap.strip():
+            runs[sent.page][-1] += gap + text
+        else:
+            runs[sent.page].append(text)
+        previous = sent.page, end
+    return {page: tuple(items) for page, items in runs.items()}
 
 
 def _normalized(text: str) -> str:
@@ -78,6 +126,7 @@ def extraction_source(
     """沿用章节筛选，把已选片段定位到真实块后发送零基页码，避免多页块的页码歧义。"""
     header = _bounded_prefix(paper_header(paper), min(400, max(0, token_budget) // 4))
     sources: list[SentBlock] = []
+    spans: list[tuple[int, int]] = []
     parts: list[str] = []
     for source, section in _source_blocks(document, chunks, token_budget):
         if any(item.page == source.page and item.text == source.text for item in sources):
@@ -87,8 +136,9 @@ def extraction_source(
         text = _bounded_prefix(source.text, token_budget, prefix=prefix)
         if text.strip():
             sources.append(SentBlock(source.block, text))
+            spans.append((len(prefix), len(prefix) + len(text)))
             parts.append(marker + text)
-    return ExtractionSource("\n\n".join((header, *parts)), tuple(sources))
+    return ExtractionSource("\n\n".join((header, *parts)), tuple(sources), tuple(spans))
 
 
 def _contains_term(name: str, text: str) -> bool:
@@ -121,8 +171,11 @@ def _verified_definition(
         return False
     page = item["page"]
     original = "\n".join(_block_text(b) for b in document.blocks if b.page == page)
-    sent = "\n".join(clean_untrusted(s.text) for s in source.sources if s.page == page)
-    return verify_quote(definition, original) and verify_quote(definition, sent)
+    return (
+        verify_quote(definition, original)
+        and any(verify_quote(definition, run) for run in sent_page_texts(source).get(page, ()))
+        and verify_quote(definition, clean_untrusted(source.text))
+    )
 
 
 def _checked_concepts(

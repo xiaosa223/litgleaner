@@ -19,7 +19,7 @@ from litgleaner.domain.errors import (
     StillProcessing,
 )
 from litgleaner.ports.store import JobSpec
-from tests.e2e.conftest import Harness, paper
+from tests.e2e.conftest import Harness, extraction_answer, paper
 
 
 def archived(harness: Harness) -> dict:
@@ -167,6 +167,7 @@ def test_topic_changed_while_paused_does_not_bill_history(harness: Harness):
 def test_llm_output_length_is_bounded(harness: Harness):
     harness.write_papers([paper("Verbose", 5)])
     harness.llm.overrides["extract"] = {
+        **extraction_answer(),
         "summary": "很长" * 1000,
         "conclusion": None,
         "innovation": None,
@@ -179,11 +180,14 @@ def test_llm_output_length_is_bounded(harness: Harness):
 def test_links_from_llm_never_reach_any_channel(harness: Harness):
     harness.write_papers([paper("Injected", 5)])
     harness.llm.overrides["extract"] = {
+        **extraction_answer(),
         "summary": "访问 https://evil.example/x 领奖",
         "key_concepts": [],
         "conclusion": "详见 www.evil.example/y 的说明",
         "innovation": "[点击](http://evil.example/z)",
-        "limitations": [{"text": "见 https://evil.example", "source": "inferred", "quote": None}],
+        "limitations": [
+            {"text": "见 https://evil.example", "source": "inferred", "quote": None, "page": None}
+        ],
     }
     harness.run()
     body = harness.publisher().sent[0].body
