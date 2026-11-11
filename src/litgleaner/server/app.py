@@ -1,18 +1,28 @@
 """组装 FastAPI 应用：接口、安全检查、前端静态文件。"""
 
 from pathlib import Path
+from urllib.parse import unquote
 
 from fastapi import FastAPI, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, RedirectResponse
 
-from litgleaner.application import reader, translation
+from litgleaner.application import inbox, reader, translation, translation_plan
 from litgleaner.application.context import AppContext
-from litgleaner.domain.errors import NotFound
+from litgleaner.domain.errors import InvalidRequest, NotFound
+from litgleaner.domain.inbox import InboxItem
 from litgleaner.domain.reading import Annotation, NewAnnotation
-from litgleaner.server.schemas import AnnotationBody, AnnotationEdit, ReadingBody, TranslateBody
+from litgleaner.server.schemas import (
+    AddPaperBody,
+    AnnotationBody,
+    AnnotationEdit,
+    ReadingBody,
+    TranslateBody,
+)
 from litgleaner.server.security import (
     LAUNCH_PATH,
     SESSION_COOKIE,
+    UPLOAD_PATH,
     LocalSecurity,
     install_guard,
 )
@@ -61,6 +71,14 @@ def _paper_routes(app: FastAPI, ctx: AppContext) -> None:
     def translate_many(paper_id: str, body: TranslateBody) -> Response:
         return sse_response(translation.translate_blocks(ctx, paper_id, body.indices))
 
+    @app.get("/api/papers/{paper_id}/translation-plan")
+    def translation_estimate(paper_id: str) -> translation_plan.TranslationPlan:
+        return translation_plan.plan(ctx, paper_id)  # 只估算，不调用模型
+
+    @app.post("/api/papers/{paper_id}/translation-plan", status_code=202)
+    def translation_confirm(paper_id: str) -> translation_plan.TranslationPlan:
+        return translation_plan.queue(ctx, paper_id)  # 用户确认后排队，由常驻服务执行
+
     @app.get("/api/papers/{paper_id}")
     def paper(paper_id: str) -> reader.PaperView:
         return reader.paper_view(ctx, paper_id)
@@ -78,6 +96,21 @@ def _paper_routes(app: FastAPI, ctx: AppContext) -> None:
         # PDF 来自第三方：页面里由 pdf.js 读取；直接在地址栏打开时放进沙箱，禁止脚本
         headers = {"Content-Disposition": "inline", "Content-Security-Policy": "sandbox"}
         return Response(content, media_type="application/pdf", headers=headers)
+
+
+def _inbox_routes(app: FastAPI, ctx: AppContext) -> None:
+    @app.post("/api/inbox/papers")
+    def add_paper(body: AddPaperBody) -> InboxItem:
+        return inbox.add_identifier(ctx, body.text)
+
+    @app.post(UPLOAD_PATH)
+    async def upload_paper(request: Request) -> InboxItem:
+        if request.headers.get("content-type", "").split(";")[0].strip() != "application/pdf":
+            raise InvalidRequest("请求体必须是 PDF 文件（Content-Type: application/pdf）")
+        name = unquote(request.headers.get("x-file-name", ""))[:255] or "未命名论文.pdf"
+        identifier = (request.headers.get("x-identifier") or "")[:300] or None
+        content = await request.body()
+        return await run_in_threadpool(inbox.add_pdf, ctx, name, content, identifier)
 
 
 def _user_routes(app: FastAPI, ctx: AppContext) -> None:
@@ -129,8 +162,13 @@ def create_app(ctx: AppContext, security: LocalSecurity, static_dir: Path | None
     def not_found(_request: Request, error: NotFound) -> JSONResponse:
         return JSONResponse({"detail": str(error)}, status_code=404)
 
+    @app.exception_handler(InvalidRequest)
+    def invalid(_request: Request, error: InvalidRequest) -> JSONResponse:
+        return JSONResponse({"detail": str(error)}, status_code=422)
+
     _session_routes(app, security)
     _paper_routes(app, ctx)
     _user_routes(app, ctx)
+    _inbox_routes(app, ctx)
     _static_routes(app, static_dir)
     return app

@@ -14,7 +14,7 @@ from litgleaner.adapters.fulltext.arxiv import ArxivFullText
 from litgleaner.adapters.sources.arxiv import ArxivSource
 from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged, TransientError
 from litgleaner.domain.identity import Alias
-from litgleaner.domain.query import AuthorWatch, JournalWatch, KeywordSearch
+from litgleaner.domain.query import AuthorWatch, IdentifierLookup, JournalWatch, KeywordSearch
 from litgleaner.ports.fulltext import FullTextRequest
 
 PDF = b"%PDF-1.5\nbody"
@@ -118,8 +118,8 @@ def source(router: Router, **options) -> ArxivSource:
     )
 
 
-def test_declares_keyword_and_author_queries_only():
-    assert {KeywordSearch, AuthorWatch} == set(source(Router()).capabilities)
+def test_declares_keyword_author_and_identifier_queries_only():
+    assert {KeywordSearch, AuthorWatch, IdentifierLookup} == set(source(Router()).capabilities)
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(JournalWatch(issns=("1234-5678",)), None)
 
@@ -220,3 +220,24 @@ def test_invalid_options_are_config_errors():
         source(Router(), min_interval_seconds=1)
     with pytest.raises(ConfigError):
         source(Router(), page_size=0)
+
+
+# ---- 按标识符查（添加论文，第 12.8 节）：id_list 与检索返回同样的 Atom 格式 ----
+
+
+def test_identifier_lookup_uses_id_list_without_date_window():
+    feed = fixture_bytes("arxiv", "keyword.xml")
+    router = Router().reply("/query", body=feed)
+    result = ArxivSource("arxiv", {}, contact_email=None, transport=router.transport).fetch(
+        IdentifierLookup(arxiv_id="1706.03762"), None
+    )
+    params = router.params(0)
+    assert params["id_list"] == "1706.03762"
+    assert "search_query" not in params
+    assert len(result.records) == 1  # 只取第一条
+    assert result.next_cursor is None
+
+
+def test_identifier_lookup_without_arxiv_id_returns_nothing():
+    source = ArxivSource("arxiv", {}, contact_email=None, transport=Router().transport)
+    assert source.fetch(IdentifierLookup(doi="10.1/x"), None).records == ()

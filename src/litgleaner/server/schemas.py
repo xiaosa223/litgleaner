@@ -19,6 +19,10 @@ class _Body(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class AddPaperBody(_Body):
+    text: str = Field(min_length=1, max_length=500)  # DOI、arXiv 编号或链接
+
+
 class ReadingBody(_Body):
     status: ReadingStatus
     position: dict[str, int | str] | None = None  # 例如 {"view": "pdf", "page": 3}

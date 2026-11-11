@@ -62,11 +62,16 @@ class SqlJobRepo:
             .values(
                 status="pending",
                 attempts=0,
+                last_error=None,
                 next_run_at=now,
                 updated_at=now,
                 first_deferred_at=None,
             )
         )
+
+    def get(self, key: str) -> Job | None:
+        rows = self._db.fetch(select(job).where(job.c.key == key))
+        return _to_job(rows[0]) if rows else None
 
     def due(self, stage: str, now: str) -> tuple[Job, ...]:
         rows = self._db.fetch(

@@ -1,12 +1,14 @@
 """常驻服务：真实端口上的领读器接口，加上和命令行共用运行锁的定时调度。"""
 
 import fcntl
+import time
 from collections.abc import Iterator
 from pathlib import Path
 
 import httpx
 import pytest
 
+from litgleaner.application import inbox
 from litgleaner.infra.config import load_config
 from litgleaner.service import Service, open_in_browser, run_due
 from tests.e2e.conftest import Harness, paper
@@ -66,3 +68,28 @@ def test_browser_is_opened_via_private_file_not_token_in_argv(tmp_path, monkeypa
     assert "secret-token" in path.read_text(encoding="utf-8")
     assert opened == [path.as_uri()]
     assert "secret-token" not in opened[0]
+
+
+def test_added_paper_is_processed_without_waiting_for_the_schedule(
+    harness: Harness, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("litgleaner.service.ON_DEMAND_TICK_SECONDS", 0.05)
+    harness.write_papers([paper("Off Topic", 3, marker=" [[irrelevant]]")])
+    running = Service(
+        load_config(harness.root / "config"), harness.ctx, static_dir=None, interval_seconds=3600
+    )
+    running.start()
+    try:
+        time.sleep(0.3)  # 启动时的第一轮定时运行跑完
+        item = inbox.add_identifier(harness.ctx, "10.1000/off-topic")
+        assert item.paper_id
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            state = harness.ctx.store.papers.get_fulltext(item.paper_id)
+            if state is not None and state.status == "parsed":
+                break
+            time.sleep(0.05)
+        else:
+            pytest.fail("添加的论文没有在 10 秒内处理")
+    finally:
+        running.stop()

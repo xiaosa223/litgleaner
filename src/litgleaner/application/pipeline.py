@@ -18,6 +18,7 @@ from litgleaner.application.stages.score import ScoreStage
 from litgleaner.application.stages.select import SelectStage
 from litgleaner.application.stages.triage import TriageStage
 from litgleaner.application.topics import sync_topics
+from litgleaner.application.translation_plan import TranslatePaperStage
 from litgleaner.domain.errors import (
     BudgetExceeded,
     ConfigError,
@@ -44,6 +45,9 @@ STAGES: tuple[Stage, ...] = (
     LibrarySaveStage(),
 )
 STAGE_NAMES: tuple[str, ...] = tuple(stage.name for stage in STAGES)
+# 按需阶段（第 15.1 节）：用户在领读器里确认后才有任务，没有 plan；排在后台阶段之前执行
+ON_DEMAND: tuple[Stage, ...] = (TranslatePaperStage(),)
+ON_DEMAND_NAMES: tuple[str, ...] = tuple(stage.name for stage in ON_DEMAND)
 
 
 @dataclass(frozen=True)
@@ -157,7 +161,7 @@ def run_stage(ctx: AppContext, stage: Stage) -> StageReport:
 
 def run_stages(ctx: AppContext, names: Sequence[str]) -> RunReport:
     warnings = sync_topics(ctx)
-    selected = [stage for stage in STAGES if stage.name in names]
+    selected = [stage for stage in (*ON_DEMAND, *STAGES) if stage.name in names]
     reports = tuple(run_stage(ctx, stage) for stage in selected)
     dead = len(ctx.store.jobs.list_by_status("dead"))
     if dead:
@@ -166,6 +170,17 @@ def run_stages(ctx: AppContext, names: Sequence[str]) -> RunReport:
 
 
 def run_pipeline(ctx: AppContext, only: str | None = None) -> RunReport:
-    if only is not None and only not in STAGE_NAMES:
-        raise ConfigError(f"未知阶段：{only}，可选：{', '.join(STAGE_NAMES)}")
-    return run_stages(ctx, (only,) if only else STAGE_NAMES)
+    names = (*ON_DEMAND_NAMES, *STAGE_NAMES)
+    if only is not None and only not in names:
+        raise ConfigError(f"未知阶段：{only}，可选：{', '.join(names)}")
+    return run_stages(ctx, (only,) if only else names)
+
+
+def has_on_demand_work(ctx: AppContext) -> bool:
+    now = ctx.now_iso()
+    return any(ctx.store.jobs.due(name, now) for name in ON_DEMAND_NAMES)
+
+
+def run_on_demand(ctx: AppContext) -> RunReport:
+    """只处理用户确认过的按需任务。常驻服务在两次定时运行之间频繁调用，不同步主题。"""
+    return RunReport(tuple(run_stage(ctx, stage) for stage in ON_DEMAND))

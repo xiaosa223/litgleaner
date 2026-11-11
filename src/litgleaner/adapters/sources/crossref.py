@@ -19,7 +19,7 @@ from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
 from litgleaner.domain.errors import SchemaChanged
-from litgleaner.domain.query import JournalWatch, KeywordSearch, Query
+from litgleaner.domain.query import IdentifierLookup, JournalWatch, KeywordSearch, Query
 from litgleaner.ports.source import FetchResult
 
 _FIELDS = "DOI,title,abstract,author,container-title,ISSN,issued,published,type"
@@ -33,7 +33,7 @@ class CrossrefOptions(SourceOptions):
 
 
 class CrossrefSource:
-    capabilities: frozenset[type] = frozenset({JournalWatch, KeywordSearch})
+    capabilities: frozenset[type] = frozenset({JournalWatch, KeywordSearch, IdentifierLookup})
 
     def __init__(
         self,
@@ -59,6 +59,8 @@ class CrossrefSource:
 
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
+        if isinstance(query, IdentifierLookup):
+            return self._lookup(query)
         options = self._options
         window = window_from_cursor(
             cursor,
@@ -79,6 +81,19 @@ class CrossrefSource:
             truncated=builder.truncated,
             raw=self._http.raw_log(),
         )
+
+    def _lookup(self, query: IdentifierLookup) -> FetchResult:
+        builder = RecordBuilder(self.name)
+        self._http.reset_raw_log()
+        if query.doi:
+            params = {"mailto": self._contact} if self._contact else None
+            body = self._http.get_json(f"/works/{query.doi}", params, allow_missing=True)
+            message = body.get("message") if isinstance(body, Mapping) else None
+            if isinstance(message, Mapping):
+                _add(builder, message)
+            elif body is not None:
+                raise SchemaChanged("Crossref 单篇查询返回缺少 message")
+        return FetchResult(builder.records, None, builder.warnings, raw=self._http.raw_log())
 
     def _params(self, filters: list[str], window: Window, rows: int) -> dict[str, str]:
         dates = [

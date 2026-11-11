@@ -175,6 +175,10 @@ class HttpLLM:
             keep_raw=False,  # 请求里是论文内容，不在内存里留档
         )
 
+    def price(self, model: str) -> tuple[float, float] | None:
+        found = self._options.prices.get(model)
+        return None if found is None else (float(found[0]), float(found[1]))
+
     def check_model(self, model: str) -> None:
         if model not in self._options.prices:
             raise ConfigError(f"{self.service} 的 options.prices 缺少模型 {model} 的价格")

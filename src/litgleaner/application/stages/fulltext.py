@@ -1,4 +1,4 @@
-"""取全文和解析。只处理初筛通过的论文，这是控制成本和存储的关键。"""
+"""取全文和解析。只处理初筛通过的论文和用户添加的论文，这是控制成本和存储的关键。"""
 
 import hashlib
 import logging
@@ -52,24 +52,32 @@ class AcquireStage(Stage):
                 topic.id, topic.topic_hash
             )
         }
+        papers.update(ctx.store.inbox.papers_without_fulltext())  # 用户添加的论文不要求通过初筛
         for paper_id in sorted(papers):
             yield JobSpec(f"acquire:{paper_id}", self.name, {"paper_id": paper_id})
 
     def process(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
         paper_id = payload["paper_id"]
+        current = ctx.store.papers.get_fulltext(paper_id)
+        if current and current.pdf_sha256:
+            return
         paper = ctx.store.papers.get(paper_id)
         if paper is None:
             raise ValueError(f"论文不存在：{paper_id}")
         request = FullTextRequest(paper_id, paper.title, ctx.store.papers.aliases_of(paper_id))
         found = first_available(ctx.fulltext, request)
         now = ctx.now_iso()
-        if found is None:
-            ctx.store.papers.save_fulltext(FullTextState(paper_id, "unavailable"), now)
-            return
-        sha256 = hashlib.sha256(found.content).hexdigest()
-        key = pdf_key(sha256)
-        ctx.blobs.put(key, found.content)
+        sha256 = hashlib.sha256(found.content).hexdigest() if found else ""
+        key = pdf_key(sha256) if found else ""
+        if found:
+            ctx.blobs.put(key, found.content)
         with ctx.store.atomic():
+            current = ctx.store.papers.get_fulltext(paper_id)
+            if current and current.pdf_sha256:  # 网络查询期间用户可能已经上传了 PDF
+                return
+            if found is None:
+                ctx.store.papers.save_fulltext(FullTextState(paper_id, "unavailable"), now)
+                return
             ctx.store.papers.add_artifact(
                 Artifact(
                     sha256, "pdf", key, len(found.content), found.provider, found.license_basis
@@ -89,8 +97,12 @@ class AcquireStage(Stage):
 
     def on_dead(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
         """取全文彻底失败时仍然按摘要评估，论文不能因此从系统里消失。"""
-        state = FullTextState(payload["paper_id"], "failed")
-        ctx.store.papers.save_fulltext(state, ctx.now_iso())
+        with ctx.store.atomic():
+            state = ctx.store.papers.get_fulltext(payload["paper_id"])
+            if state is None or not state.pdf_sha256:
+                ctx.store.papers.save_fulltext(
+                    FullTextState(payload["paper_id"], "failed"), ctx.now_iso()
+                )
 
 
 class ParseStage(Stage):

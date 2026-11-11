@@ -6,6 +6,7 @@ from sqlalchemy import func, select
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.feedback_repo import SqlFeedbackRepo
+from litgleaner.infra.db.inbox_repo import SqlInboxRepo
 from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
 from litgleaner.infra.db.judgments_repo import SqlJudgmentRepo
 from litgleaner.infra.db.outputs_repo import SqlOutputRepo
@@ -20,6 +21,7 @@ from litgleaner.infra.db.schema import (
     extraction,
     feedback,
     fulltext,
+    inbox,
     library_entry,
     paper,
     reading_state,
@@ -43,6 +45,7 @@ _COUNTED = (
     library_entry,
     reading_state,
     annotation,
+    inbox,
 )
 
 
@@ -57,6 +60,7 @@ class SqlStore:
         self._runs = SqlRunRepo(self._db)
         self._reader = SqlReaderRepo(self._db)
         self._translations = SqlTranslationRepo(self._db)
+        self._inbox = SqlInboxRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -89,6 +93,10 @@ class SqlStore:
     @property
     def translations(self) -> SqlTranslationRepo:
         return self._translations
+
+    @property
+    def inbox(self) -> SqlInboxRepo:
+        return self._inbox
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

@@ -26,7 +26,7 @@ from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
 from litgleaner.domain.errors import SchemaChanged, TransientError
 from litgleaner.domain.identity import normalize_arxiv_id
-from litgleaner.domain.query import AuthorWatch, KeywordSearch, Query
+from litgleaner.domain.query import AuthorWatch, IdentifierLookup, KeywordSearch, Query
 from litgleaner.ports.source import FetchResult
 
 _NS = {
@@ -51,7 +51,7 @@ class _Page:
 
 
 class ArxivSource:
-    capabilities: frozenset[type] = frozenset({KeywordSearch, AuthorWatch})
+    capabilities: frozenset[type] = frozenset({KeywordSearch, AuthorWatch, IdentifierLookup})
 
     def __init__(
         self,
@@ -76,6 +76,8 @@ class ArxivSource:
 
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
+        if isinstance(query, IdentifierLookup):
+            return self._lookup(query)
         options = self._options
         window = window_from_cursor(
             cursor,
@@ -93,6 +95,16 @@ class ArxivSource:
             truncated=builder.truncated,
             raw=self._http.raw_log(),
         )
+
+    def _lookup(self, query: IdentifierLookup) -> FetchResult:
+        builder = RecordBuilder(self.name)
+        self._http.reset_raw_log()
+        if query.arxiv_id:
+            params = {"id_list": query.arxiv_id, "max_results": "1"}
+            page = _parse_feed(self._http.get_text("/query", params) or "")
+            for entry in page.entries[:1]:
+                _add(builder, entry)
+        return FetchResult(builder.records, None, builder.warnings, raw=self._http.raw_log())
 
     def _search(self, expression: str, window: Window, builder: RecordBuilder) -> None:
         size, limit = self._options.page_size, self._options.max_records

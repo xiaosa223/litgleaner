@@ -9,7 +9,7 @@ from litgleaner.adapters.fulltext.crossref_tdm import CrossrefTdmFullText
 from litgleaner.adapters.sources.crossref import CrossrefSource
 from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged
 from litgleaner.domain.identity import Alias
-from litgleaner.domain.query import AuthorWatch, JournalWatch, KeywordSearch
+from litgleaner.domain.query import AuthorWatch, IdentifierLookup, JournalWatch, KeywordSearch
 from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 11, 5)
@@ -30,7 +30,7 @@ def source(router: Router, **options) -> CrossrefSource:
 
 def test_declares_journal_and_keyword_queries_only():
     capabilities = source(Router()).capabilities
-    assert {JournalWatch, KeywordSearch} == set(capabilities)
+    assert {JournalWatch, KeywordSearch, IdentifierLookup} == set(capabilities)
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(AuthorWatch(names=("A",)), None)
 
@@ -139,3 +139,26 @@ def test_tdm_skips_non_pdf_links_and_missing_doi():
 
 def test_tdm_unknown_doi_is_not_an_error():
     assert tdm(Router()).fetch(request("10.9999/missing")) is None
+
+
+# ---- 按标识符查（添加论文，第 12.8 节） ----
+
+WORK = fixture_json("crossref", "work_nature.json")
+
+
+def test_identifier_lookup_fetches_one_work_by_doi():
+    router = Router().reply("/works/10.1038/s41586-021-03819-2", json_body=WORK)
+    result = source(router).fetch(IdentifierLookup(doi="10.1038/s41586-021-03819-2"), None)
+    (record,) = result.records
+    assert record.doi == "10.1038/s41586-021-03819-2"
+    assert record.title.startswith("Highly accurate protein structure prediction")
+    assert result.next_cursor is None  # 一次性查询，不推进游标
+
+
+def test_identifier_lookup_unknown_doi_returns_nothing():
+    router = Router().reply("/works/10.9999/nope", json_body={}, status=404)
+    assert source(router).fetch(IdentifierLookup(doi="10.9999/nope"), None).records == ()
+
+
+def test_identifier_lookup_without_doi_returns_nothing():
+    assert source(Router()).fetch(IdentifierLookup(arxiv_id="1706.03762"), None).records == ()

@@ -42,7 +42,15 @@ class InboxDrain(_QueryBase):
     kind: Literal["inbox_drain"] = "inbox_drain"
 
 
-Query = JournalWatch | KeywordSearch | CitationWatch | AuthorWatch | InboxDrain
+class IdentifierLookup(_QueryBase):
+    """按标识符查一篇论文的元数据（用户添加论文，第 12.8 节）。一次性查询，不用游标。"""
+
+    kind: Literal["identifier_lookup"] = "identifier_lookup"
+    doi: str | None = None
+    arxiv_id: str | None = None
+
+
+Query = JournalWatch | KeywordSearch | CitationWatch | AuthorWatch | InboxDrain | IdentifierLookup
 
 _ADAPTER: TypeAdapter[Query] = TypeAdapter(Annotated[Query, Field(discriminator="kind")])
 

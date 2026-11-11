@@ -17,7 +17,7 @@ from pathlib import Path
 import uvicorn
 
 from litgleaner.application.context import AppContext
-from litgleaner.application.pipeline import RunReport, run_pipeline
+from litgleaner.application.pipeline import RunReport, has_on_demand_work, run_pipeline
 from litgleaner.cli_shared import try_run_lock
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.server.app import create_app
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_STATIC_DIR = Path(__file__).parent / "server" / "static"
 DEFAULT_INTERVAL_SECONDS = 300
+ON_DEMAND_TICK_SECONDS = 3  # 用户的操作（整篇翻译、添加论文）不等下一轮定时运行
 _JOIN_TIMEOUT_SECONDS = 10
 
 
@@ -82,6 +83,7 @@ class Service:
         self._threads: list[threading.Thread] = []
         self._server: uvicorn.Server | None = None
         self._security: LocalSecurity | None = None
+        self._seen_inbox = ctx.store.inbox.ready_revision()  # 完成添加后才唤醒处理
 
     @property
     def base_url(self) -> str:
@@ -139,7 +141,24 @@ class Service:
                 run_due(self._config, self._ctx)
             except Exception:  # 调度线程不能因为一次失败退出，详情写进日志
                 logger.exception("定时运行出错")
-            self._stop.wait(self._interval)
+            self._serve_on_demand(self._interval)
+
+    def _serve_on_demand(self, seconds: float) -> None:
+        """两次定时运行之间，每隔几秒检查用户的操作：有按需任务或新添加的论文时立即跑一轮流程。
+
+        流程里按需阶段排在最前；发现阶段按天幂等，提前跑不会重复抓取或重复收费。
+        """
+        ticks = max(1, int(seconds // ON_DEMAND_TICK_SECONDS))
+        for _ in range(ticks):
+            if self._stop.wait(min(seconds, ON_DEMAND_TICK_SECONDS)):
+                return
+            try:
+                latest = self._ctx.store.inbox.ready_revision()
+                wanted = has_on_demand_work(self._ctx) or latest != self._seen_inbox
+                if wanted and run_due(self._config, self._ctx) is not None:
+                    self._seen_inbox = latest
+            except Exception:
+                logger.exception("处理用户操作时出错")
 
     def stop(self) -> None:
         self._stop.set()

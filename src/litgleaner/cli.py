@@ -9,7 +9,7 @@ import typer
 
 from litgleaner.application.context import AppContext
 from litgleaner.application.delivery_ops import resolve_delivery, unresolved_deliveries
-from litgleaner.application.pipeline import STAGE_NAMES, run_pipeline
+from litgleaner.application.pipeline import ON_DEMAND_NAMES, STAGE_NAMES, run_pipeline
 from litgleaner.application.rubric_ops import reassess, rescore
 from litgleaner.application.stages.archive import write_archive
 from litgleaner.application.topics import (
@@ -133,7 +133,9 @@ def restore(
 @_friendly
 def run(
     config: ConfigOption = _DEFAULT_CONFIG,
-    stage: Annotated[str | None, typer.Option(help=f"只运行一个阶段：{STAGE_NAMES}")] = None,
+    stage: Annotated[
+        str | None, typer.Option(help=f"只运行一个阶段：{(*ON_DEMAND_NAMES, *STAGE_NAMES)}")
+    ] = None,
 ) -> None:
     """运行流程。发生失败时退出码为 1，方便定时任务发现问题。"""
     loaded = _config(config)

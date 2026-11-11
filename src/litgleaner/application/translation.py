@@ -86,7 +86,7 @@ def translator_version(ctx: AppContext) -> str:
     )[:16]
 
 
-def _paragraphs(ctx: AppContext, paper_id: str) -> tuple[Paragraph, ...]:
+def paper_paragraphs(ctx: AppContext, paper_id: str) -> tuple[Paragraph, ...]:
     if ctx.store.papers.get(paper_id) is None:
         raise NotFound(f"论文不存在：{paper_id}")
     state = ctx.store.papers.get_fulltext(paper_id)
@@ -96,7 +96,7 @@ def _paragraphs(ctx: AppContext, paper_id: str) -> tuple[Paragraph, ...]:
     return paragraphs(blocks, translatable_indices(blocks))
 
 
-def _key(ctx: AppContext, paragraph: Paragraph, glossary: Glossary) -> TranslationKey:
+def cache_key(ctx: AppContext, paragraph: Paragraph, glossary: Glossary) -> TranslationKey:
     return TranslationKey(
         UNIT,
         stable_hash(paragraph.text),
@@ -108,7 +108,7 @@ def _key(ctx: AppContext, paragraph: Paragraph, glossary: Glossary) -> Translati
 
 def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTranslation]:
     """已有的译文，按块给出。当前指纹的优先；没有时用最新的旧译文并标记 stale。不调用模型。"""
-    found_paragraphs = _paragraphs(ctx, paper_id)
+    found_paragraphs = paper_paragraphs(ctx, paper_id)
     if not found_paragraphs:
         return {}
     glossary = paper_glossary(ctx, paper_id)
@@ -117,7 +117,7 @@ def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTransl
     )
     result: dict[int, BlockTranslation] = {}
     for paragraph in found_paragraphs:
-        key = _key(ctx, paragraph, glossary)
+        key = cache_key(ctx, paragraph, glossary)
         mine = [
             c
             for c in found
@@ -133,7 +133,7 @@ def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTransl
 
 def translate_block(ctx: AppContext, paper_id: str, index: int) -> Iterator[TranslateEvent]:
     """翻译某一块所在的整段，给出这一段每一块的结果。"""
-    found = _paragraphs(ctx, paper_id)
+    found = paper_paragraphs(ctx, paper_id)
     target = next((p for p in found if index in p.indices), None)
     if target is None:
         raise InvalidRequest("这一块不需要翻译（标题、公式、表格或中文段落）")
@@ -145,7 +145,7 @@ def translate_blocks(
 ) -> Iterator[TranslateEvent]:
     """按页或整篇翻译：包含这些块的段落按阅读顺序分批翻译，已缓存的直接给出。"""
     wanted = set(indices)
-    found = _paragraphs(ctx, paper_id)
+    found = paper_paragraphs(ctx, paper_id)
     chosen = [p for p in found if wanted.intersection(p.indices)]
     if not chosen:
         raise InvalidRequest("选中的部分没有需要翻译的段落")
@@ -159,12 +159,12 @@ def _translate(
     model = ctx.llm.routes[TASK].model if TASK in ctx.llm.routes else ""
 
     def save(paragraph: Paragraph, sentences: tuple[str, ...]) -> None:
-        key = _key(ctx, paragraph, glossary)
+        key = cache_key(ctx, paragraph, glossary)
         ctx.store.translations.put(key, sentences, model, paper_id, ctx.now_iso())
 
     pending: list[Paragraph] = []
     for paragraph in chosen:
-        cached = ctx.store.translations.get(_key(ctx, paragraph, glossary))
+        cached = ctx.store.translations.get(cache_key(ctx, paragraph, glossary))
         if cached is not None and len(cached.sentences) == len(paragraph.sentences):
             yield from block_results(paragraph, cached.sentences, cached=True)
         else:

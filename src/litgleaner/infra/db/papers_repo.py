@@ -203,6 +203,16 @@ class SqlPaperRepo:
         )
         return tuple(row.paper_id for row in rows)
 
+    def paper_with_pdf(self, sha256: str) -> str | None:
+        """已经用这份 PDF 作全文的论文。"""
+        rows = self._db.fetch(
+            select(fulltext.c.paper_id)
+            .where(fulltext.c.pdf_sha256 == sha256)
+            .order_by(fulltext.c.paper_id)
+            .limit(1)
+        )
+        return str(rows[0].paper_id) if rows else None
+
     def add_artifact(self, item: Artifact, now: str) -> None:
         self._db.write(
             insert(artifact)

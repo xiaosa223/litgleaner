@@ -48,6 +48,9 @@ class Database:
             yield
             return
         with self._engine.begin() as connection:
+            # 先取写锁，再读判重键。SQLite 的延迟事务会让两个请求都读到“不存在”，
+            # 随后各建一篇论文；busy_timeout 让后来的短事务等待前一个提交。
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
             self._local.connection = connection
             try:
                 yield

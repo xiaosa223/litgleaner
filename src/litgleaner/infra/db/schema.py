@@ -302,3 +302,18 @@ translation = Table(
     Column("paper_id", String, nullable=True, index=True),
     Column("created_at", String, nullable=False),
 )
+
+# 用户添加的论文（第 12.8 节）：DOI、arXiv 编号、链接、上传的 PDF。只追加状态变化，不删除。
+inbox = Table(
+    "inbox",
+    metadata,
+    Column("id", String, primary_key=True),  # ULID
+    Column("kind", String, nullable=False),  # doi | arxiv | url | pdf
+    Column("value", String, nullable=False),  # 标识符、链接或文件名
+    Column("pdf_sha256", String, nullable=True),  # 上传的 PDF
+    Column("status", String, nullable=False, index=True),  # pending | done | failed
+    Column("paper_id", String, nullable=True, index=True),
+    Column("error", Text, nullable=True),
+    Column("created_at", String, nullable=False),
+    Column("updated_at", String, nullable=False),
+)
