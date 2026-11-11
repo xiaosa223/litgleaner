@@ -28,12 +28,15 @@ from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
+from litgleaner.adapters.sources.historical_common import HistoryCollector, citation_count
+from litgleaner.adapters.sources.openalex_history import OpenAlexHistory
 from litgleaner.adapters.sources.openalex_references import OpenAlexReferences
 from litgleaner.domain.errors import SchemaChanged
 from litgleaner.domain.identity import normalize_arxiv_id, normalize_doi
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
+    HistoricalSearch,
     JournalWatch,
     KeywordSearch,
     Query,
@@ -43,7 +46,7 @@ from litgleaner.ports.source import FetchResult
 
 _SELECT = (
     "id,doi,title,publication_date,authorships,abstract_inverted_index,"
-    "primary_location,ids,locations"
+    "primary_location,ids,locations,type,cited_by_count"
 )
 _AUTHOR_SELECT = "id,display_name,works_count"
 _MAX_OR_VALUES = 100
@@ -60,7 +63,7 @@ class OpenAlexOptions(SourceOptions):
 
 class OpenAlexSource:
     capabilities: frozenset[type] = frozenset(
-        {JournalWatch, KeywordSearch, CitationWatch, AuthorWatch, ReferenceList}
+        {JournalWatch, KeywordSearch, CitationWatch, AuthorWatch, ReferenceList, HistoricalSearch}
     )
 
     def __init__(
@@ -92,6 +95,15 @@ class OpenAlexSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
+        if isinstance(query, HistoricalSearch):
+            return OpenAlexHistory(
+                self._http,
+                HistoryCollector(query, RecordBuilder(self.name), options.max_records, "review"),
+                work_fields,
+                self._polite({"select": _SELECT}),
+                options.per_page,
+                self._keyed,
+            ).fetch(query)
         if isinstance(query, ReferenceList):
             return OpenAlexReferences(
                 self._http,
@@ -329,6 +341,10 @@ def work_fields(item: Mapping[str, Any]) -> dict[str, Any]:
         "published_at": parse_date(publication_date if isinstance(publication_date, str) else None),
         "doi": normalize_doi(raw_doi if isinstance(raw_doi, str) else None),
         "arxiv_id": _arxiv_id(item),
+        "publication_types": (item["type"],)
+        if isinstance(item.get("type"), str) and item["type"].strip()
+        else (),
+        "citation_count": citation_count(item.get("cited_by_count")),
         "external_ids": {
             "openalex": short_id(item.get("id")),
             "pmid": _id_tail(ids, "pmid"),

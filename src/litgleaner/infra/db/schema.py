@@ -33,6 +33,17 @@ paper = Table(
     Column("issn", String),
     Column("published_at", String),
     Column("first_seen_at", String, nullable=False, index=True),
+    Column("publication_types", Text),
+    Column("citation_count", Integer),
+    CheckConstraint(
+        "publication_types IS NULL OR CASE WHEN json_valid(publication_types) "
+        "THEN json_type(publication_types)='array' ELSE 0 END",
+        name="ck_paper_publication_types",
+    ),
+    CheckConstraint(
+        "citation_count IS NULL OR (typeof(citation_count)='integer' AND citation_count>=0)",
+        name="ck_paper_citation_count",
+    ),
 )
 
 paper_alias = Table(

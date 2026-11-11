@@ -56,9 +56,14 @@ def _snapshot(path):
         "memory_fts",
     )
     with sqlite3.connect(path) as conn:
-        rows = {
-            name: conn.execute(f"SELECT * FROM {name} ORDER BY rowid").fetchall() for name in tables
-        }
+        rows = {}
+        for name in tables:
+            columns = (
+                "id,title,title_key,abstract,authors,venue,issn,published_at,first_seen_at"
+                if name == "paper"
+                else "*"
+            )
+            rows[name] = conn.execute(f"SELECT {columns} FROM {name} ORDER BY rowid").fetchall()
         triggers = dict(
             conn.execute("SELECT name,sql FROM sqlite_master WHERE type='trigger'").fetchall()
         )

@@ -81,6 +81,22 @@ OpenAlex 和 Semantic Scholar 另外支持 `ReferenceList`：查论文引用的�
 - local 的游标是已处理条目的最大加入时间，web 的游标是文库版本号。
 - 这里只读。把推送的论文写进 Zotero 是另一条路径（本地 API 写入），见 [CHANNELS.md](CHANNELS.md)。
 
+## 显式历史检索
+
+`HistoricalSearch` 是课题调研使用的一次性查询协议，目前由 OpenAlex 和 Semantic Scholar 实现；尚未接入 `topic survey` 命令。调用方必须给定 `terms`、`since`、`until`、`category`，可选 `exclude` 和 `limit`（1–1000）。查询不使用日常发现游标或 `lookback_days`，返回 `next_cursor=None`，不加入日常发现计划。
+
+| 类别 | 检索依据 |
+|---|---|
+| `reviews` | 来源实际类型字段过滤综述，出版日期降序 |
+| `highly_cited` | 来源实际引用数降序 |
+| `recent` | 显式日期区间内按出版日期降序；调用方负责设置近两年范围 |
+
+每次最多读取 `min(query.limit, options.max_records)` 个原始条目；重复和无效条目也占限额。达到边界会明确报告截断，不能把返回数量作为全部命中数。综述类型漏标不按标题补猜；未知引用数保留为未知并排在末尾。日期只有年份时，Semantic Scholar 按其接口约定换为当年 1 月 1 日，并报告日期精度提示。
+
+两个来源也保存实际 `publication_types` 和 `citation_count`。库内这些事实只首次补空，不覆盖旧值；总被引数仅是来源快照，阅读路线使用另外统计的课题内引用数。畸形可选字段会被忽略并提示，不丢弃其余有效元数据。
+
+参数依据：[OpenAlex 筛选](https://help.openalex.org/api/filtering.md)、[排序](https://help.openalex.org/api/sorting.md)、[文献类型](https://help.openalex.org/data/work-types.md)及 [Semantic Scholar Graph API](https://api.semanticscholar.org/api-docs/graph)。本次契约测试全部使用模拟响应，未请求真实来源 API。
+
 ## 已知限制
 
 | 来源 | 限制 |

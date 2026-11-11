@@ -1,9 +1,10 @@
 """信号源查询。适配器只认识查询，不认识主题。"""
 
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, Literal
+from datetime import date
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
 from litgleaner.domain.base import FrozenModel
 from litgleaner.domain.hashing import stable_hash
@@ -26,6 +27,29 @@ class KeywordSearch(_QueryBase):
     kind: Literal["keyword_search"] = "keyword_search"
     terms: tuple[str, ...]
     exclude: tuple[str, ...] = ()
+
+
+_HistoricalTerm = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)
+]
+
+
+class HistoricalSearch(_QueryBase):
+    """用户显式发起的有界历史查询，不随日常发现计划运行。"""
+
+    kind: Literal["historical_search"] = "historical_search"
+    terms: tuple[_HistoricalTerm, ...] = Field(min_length=1, max_length=100)
+    exclude: tuple[_HistoricalTerm, ...] = Field(default=(), max_length=100)
+    since: date
+    until: date
+    category: Literal["reviews", "highly_cited", "recent"]
+    limit: int = Field(default=100, strict=True, ge=1, le=1000)
+
+    @model_validator(mode="after")
+    def _date_order(self) -> Self:
+        if self.since > self.until:
+            raise ValueError("历史查询开始日期不能晚于结束日期")
+        return self
 
 
 class CitationWatch(_QueryBase):
@@ -60,6 +84,7 @@ class IdentifierLookup(_QueryBase):
 Query = (
     JournalWatch
     | KeywordSearch
+    | HistoricalSearch
     | CitationWatch
     | ReferenceList
     | AuthorWatch

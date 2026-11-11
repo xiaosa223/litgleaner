@@ -16,6 +16,7 @@ from litgleaner.domain.identity import Alias
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
+    HistoricalSearch,
     InboxDrain,
     JournalWatch,
     KeywordSearch,
@@ -51,6 +52,7 @@ def test_declares_query_types_and_rejects_inbox():
         CitationWatch,
         AuthorWatch,
         ReferenceList,
+        HistoricalSearch,
     }
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(InboxDrain(), None)

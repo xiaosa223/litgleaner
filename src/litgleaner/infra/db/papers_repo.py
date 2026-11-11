@@ -4,7 +4,7 @@ import json
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from sqlalchemy import Row, func, select, update
+from sqlalchemy import ColumnElement, Row, func, or_, select, update
 from sqlalchemy.dialects.sqlite import insert
 
 from litgleaner.domain.identity import Alias
@@ -22,7 +22,9 @@ from litgleaner.infra.db.schema import (
 )
 from litgleaner.ports.store import Artifact, Extraction, FullTextState, FullTextStatus
 
-_FILLABLE = frozenset({"abstract", "venue", "issn", "published_at"})
+_FILLABLE = frozenset(
+    {"abstract", "venue", "issn", "published_at", "publication_types", "citation_count"}
+)
 
 
 def _to_paper(row: Row[Any]) -> Paper:
@@ -36,6 +38,8 @@ def _to_paper(row: Row[Any]) -> Paper:
         issn=row.issn,
         published_at=row.published_at,
         first_seen_at=row.first_seen_at,
+        publication_types=tuple(json.loads(row.publication_types)) if row.publication_types else (),
+        citation_count=row.citation_count,
     )
 
 
@@ -70,21 +74,38 @@ class SqlPaperRepo:
                 issn=item.issn,
                 published_at=item.published_at,
                 first_seen_at=item.first_seen_at,
+                publication_types=(
+                    json.dumps(item.publication_types, ensure_ascii=False)
+                    if item.publication_types
+                    else None
+                ),
+                citation_count=item.citation_count,
             )
         )
 
-    def fill_missing(self, paper_id: str, fields: Mapping[str, str | None]) -> None:
+    def fill_missing(self, paper_id: str, fields: Mapping[str, str | int | None]) -> None:
         """只补空字段，不覆盖已有内容。"""
         for name, value in fields.items():
             if name not in _FILLABLE:
                 raise ValueError(f"不允许补全的字段：{name}")
-            if value is not None:
-                column = paper.c[name]
-                self._db.write(
-                    update(paper)
-                    .where(paper.c.id == paper_id, column.is_(None))
-                    .values({name: value})
-                )
+            if value is None:
+                continue
+            if name == "citation_count" and (type(value) is not int or value < 0):
+                raise ValueError("citation_count 必须是非负整数")
+            column = paper.c[name]
+            empty: ColumnElement[bool] = column.is_(None)
+            if name == "publication_types":
+                if not isinstance(value, str):
+                    raise ValueError("publication_types 必须是 JSON 数组")
+                types = json.loads(value)
+                if not isinstance(types, list) or any(
+                    not isinstance(kind, str) or not kind.strip() for kind in types
+                ):
+                    raise ValueError("publication_types 必须是非空字符串的 JSON 数组")
+                if not types:
+                    continue
+                empty = or_(empty, func.json_array_length(column) == 0)
+            self._db.write(update(paper).where(paper.c.id == paper_id, empty).values({name: value}))
 
     def add_aliases(self, paper_id: str, aliases: Iterable[Alias]) -> None:
         for alias in aliases:

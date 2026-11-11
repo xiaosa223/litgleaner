@@ -26,12 +26,28 @@ from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
+from litgleaner.adapters.sources.historical_common import (
+    HistoryCollector,
+    citation_count,
+    publication_types,
+)
+from litgleaner.adapters.sources.semantic_scholar_history import SemanticScholarHistory
 from litgleaner.adapters.sources.semantic_scholar_references import SemanticScholarReferences
 from litgleaner.domain.errors import SchemaChanged
-from litgleaner.domain.query import AuthorWatch, CitationWatch, KeywordSearch, Query, ReferenceList
+from litgleaner.domain.query import (
+    AuthorWatch,
+    CitationWatch,
+    HistoricalSearch,
+    KeywordSearch,
+    Query,
+    ReferenceList,
+)
 from litgleaner.ports.source import FetchResult
 
-_FIELDS = "paperId,title,abstract,authors,venue,publicationDate,year,externalIds,journal"
+_FIELDS = (
+    "paperId,title,abstract,authors,venue,publicationDate,year,externalIds,journal,"
+    "publicationTypes,citationCount"
+)
 _INTERVAL_WITH_KEY = 1.0
 _INTERVAL_WITHOUT_KEY = 3.0
 
@@ -64,7 +80,7 @@ class _Quota:
 
 class SemanticScholarSource:
     capabilities: frozenset[type] = frozenset(
-        {KeywordSearch, CitationWatch, AuthorWatch, ReferenceList}
+        {KeywordSearch, CitationWatch, AuthorWatch, ReferenceList, HistoricalSearch}
     )
 
     def __init__(
@@ -96,6 +112,14 @@ class SemanticScholarSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
+        if isinstance(query, HistoricalSearch):
+            return SemanticScholarHistory(
+                self._http,
+                HistoryCollector(query, RecordBuilder(self.name), options.max_records, "Review"),
+                _FIELDS,
+                lambda paper: _paper_fields(paper, _published(paper)),
+                bulk_query,
+            ).fetch(query)
         if isinstance(query, ReferenceList):
             return SemanticScholarReferences(
                 self._http,
@@ -290,22 +314,28 @@ def _add_all(builder: RecordBuilder, papers: list[Mapping[str, Any]], window: Wi
 
 
 def _add(builder: RecordBuilder, paper: Mapping[str, Any], published: Any) -> None:
+    builder.add(**_paper_fields(paper, published))
+
+
+def _paper_fields(paper: Mapping[str, Any], published: Any) -> dict[str, Any]:
     ids = paper.get("externalIds")
     ids = ids if isinstance(ids, Mapping) else {}
     journal = paper.get("journal")
     journal_name = journal.get("name") if isinstance(journal, Mapping) else None
     authors = [a.get("name") for a in paper.get("authors") or [] if isinstance(a, Mapping)]
-    builder.add(
-        title=paper.get("title") or "",
-        abstract=strip_markup(paper.get("abstract")),
-        authors=tuple(str(a) for a in authors if a),
-        venue=paper.get("venue") or journal_name or None,
-        published_at=published,
-        doi=ids.get("DOI"),
-        arxiv_id=ids.get("ArXiv"),
-        external_ids={
+    return {
+        "title": paper.get("title") or "",
+        "abstract": strip_markup(paper.get("abstract")),
+        "authors": tuple(str(a) for a in authors if a),
+        "venue": paper.get("venue") or journal_name or None,
+        "published_at": published,
+        "doi": ids.get("DOI"),
+        "arxiv_id": ids.get("ArXiv"),
+        "publication_types": publication_types(paper.get("publicationTypes")),
+        "citation_count": citation_count(paper.get("citationCount")),
+        "external_ids": {
             "s2": paper.get("paperId"),
             "pmid": ids.get("PubMed"),
             "pmcid": _pmcid(ids.get("PubMedCentral")),
         },
-    )
+    }

@@ -20,6 +20,7 @@ from litgleaner.domain.identity import Alias
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
+    HistoricalSearch,
     JournalWatch,
     KeywordSearch,
     ReferenceList,
@@ -65,6 +66,7 @@ def test_declares_keyword_citation_author_and_reference_queries():
         CitationWatch,
         AuthorWatch,
         ReferenceList,
+        HistoricalSearch,
     }
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(JournalWatch(issns=("1234-5678",)), None)

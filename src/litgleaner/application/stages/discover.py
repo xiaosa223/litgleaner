@@ -1,6 +1,7 @@
 """发现阶段：调用信号源，原始响应先落盘，再去重入库。"""
 
 import hashlib
+import json
 import logging
 from collections.abc import Iterable, Mapping
 from datetime import datetime
@@ -36,6 +37,8 @@ def _new_paper(record: SourceRecord, key: str, now: str) -> Paper:
         issn=record.issn,
         published_at=record.published_at.isoformat() if record.published_at else None,
         first_seen_at=now,
+        publication_types=record.publication_types,
+        citation_count=record.citation_count,
     )
 
 
@@ -70,12 +73,18 @@ def resolve_record(papers: PaperRepo, record: SourceRecord, now: str) -> str:
     return paper.id
 
 
-def _optional_fields(record: SourceRecord) -> dict[str, str | None]:
+def _optional_fields(record: SourceRecord) -> dict[str, str | int | None]:
     return {
         "abstract": record.abstract,
         "venue": record.venue,
         "issn": record.issn,
         "published_at": record.published_at.isoformat() if record.published_at else None,
+        "publication_types": (
+            json.dumps(record.publication_types, ensure_ascii=False)
+            if record.publication_types
+            else None
+        ),
+        "citation_count": record.citation_count,
     }
 
 
