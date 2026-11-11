@@ -19,6 +19,7 @@ from litgleaner.domain.query import (
     InboxDrain,
     JournalWatch,
     KeywordSearch,
+    ReferenceList,
 )
 from litgleaner.ports.fulltext import FullTextRequest
 
@@ -42,9 +43,15 @@ def source(router: Router, api_key: str | None = None, **options) -> OpenAlexSou
     )
 
 
-def test_declares_four_query_types_and_rejects_inbox():
+def test_declares_query_types_and_rejects_inbox():
     capabilities = source(Router()).capabilities
-    assert set(capabilities) == {JournalWatch, KeywordSearch, CitationWatch, AuthorWatch}
+    assert set(capabilities) == {
+        JournalWatch,
+        KeywordSearch,
+        CitationWatch,
+        AuthorWatch,
+        ReferenceList,
+    }
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(InboxDrain(), None)
 

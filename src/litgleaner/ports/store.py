@@ -11,6 +11,7 @@ from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import Annotation, NewAnnotation, ReadingState, ReadingStatus
 from litgleaner.domain.rubric import ScoreResult
 from litgleaner.ports.catalog import CatalogRepo
+from litgleaner.ports.citation import CitationRepo
 from litgleaner.ports.knowledge import KnowledgeRepo
 from litgleaner.ports.qa import QARepo
 from litgleaner.ports.search import SearchRepo
@@ -373,6 +374,8 @@ class Store(Protocol):
     def qa(self) -> QARepo: ...
     @property
     def knowledge(self) -> KnowledgeRepo: ...
+    @property
+    def citations(self) -> CitationRepo: ...
 
     def atomic(self) -> AbstractContextManager[None]: ...
     def stats(self) -> dict[str, int]: ...

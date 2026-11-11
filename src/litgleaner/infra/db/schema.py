@@ -16,6 +16,7 @@ from sqlalchemy import (
     false,
 )
 
+from litgleaner.infra.db.schema_citation import define_citation
 from litgleaner.infra.db.schema_knowledge import define_knowledge
 
 metadata = MetaData()
@@ -350,3 +351,4 @@ qa_message = Table(
 )
 
 concept, concept_alias, concept_occurrence = define_knowledge(metadata)
+citation = define_citation(metadata)

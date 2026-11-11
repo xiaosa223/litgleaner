@@ -33,6 +33,13 @@ class CitationWatch(_QueryBase):
     dois: tuple[str, ...]
 
 
+class ReferenceList(_QueryBase):
+    """一次性读取种子论文引用的文献，不进入日常发现计划。"""
+
+    kind: Literal["reference_list"] = "reference_list"
+    dois: tuple[str, ...]
+
+
 class AuthorWatch(_QueryBase):
     kind: Literal["author_watch"] = "author_watch"
     names: tuple[str, ...]
@@ -50,7 +57,15 @@ class IdentifierLookup(_QueryBase):
     arxiv_id: str | None = None
 
 
-Query = JournalWatch | KeywordSearch | CitationWatch | AuthorWatch | InboxDrain | IdentifierLookup
+Query = (
+    JournalWatch
+    | KeywordSearch
+    | CitationWatch
+    | ReferenceList
+    | AuthorWatch
+    | InboxDrain
+    | IdentifierLookup
+)
 
 _ADAPTER: TypeAdapter[Query] = TypeAdapter(Annotated[Query, Field(discriminator="kind")])
 

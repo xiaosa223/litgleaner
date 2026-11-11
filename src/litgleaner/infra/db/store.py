@@ -5,6 +5,7 @@ from contextlib import AbstractContextManager
 from sqlalchemy import func, select
 
 from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
+from litgleaner.infra.db.citation_repo import SqlCitationRepo
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.feedback_repo import SqlFeedbackRepo
 from litgleaner.infra.db.inbox_repo import SqlInboxRepo
@@ -69,6 +70,7 @@ class SqlStore:
         self._search = SqlSearchRepo(self._db)
         self._qa = SqlQARepo(self._db)
         self._knowledge = SqlKnowledgeRepo(self._db)
+        self._citations = SqlCitationRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -121,6 +123,10 @@ class SqlStore:
     @property
     def knowledge(self) -> SqlKnowledgeRepo:
         return self._knowledge
+
+    @property
+    def citations(self) -> SqlCitationRepo:
+        return self._citations
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

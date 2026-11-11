@@ -28,9 +28,17 @@ from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
+from litgleaner.adapters.sources.openalex_references import OpenAlexReferences
 from litgleaner.domain.errors import SchemaChanged
 from litgleaner.domain.identity import normalize_arxiv_id, normalize_doi
-from litgleaner.domain.query import AuthorWatch, CitationWatch, JournalWatch, KeywordSearch, Query
+from litgleaner.domain.query import (
+    AuthorWatch,
+    CitationWatch,
+    JournalWatch,
+    KeywordSearch,
+    Query,
+    ReferenceList,
+)
 from litgleaner.ports.source import FetchResult
 
 _SELECT = (
@@ -52,7 +60,7 @@ class OpenAlexOptions(SourceOptions):
 
 class OpenAlexSource:
     capabilities: frozenset[type] = frozenset(
-        {JournalWatch, KeywordSearch, CitationWatch, AuthorWatch}
+        {JournalWatch, KeywordSearch, CitationWatch, AuthorWatch, ReferenceList}
     )
 
     def __init__(
@@ -84,6 +92,15 @@ class OpenAlexSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
+        if isinstance(query, ReferenceList):
+            return OpenAlexReferences(
+                self._http,
+                RecordBuilder(self.name),
+                limit=options.max_records,
+                batch_size=min(options.per_page, _MAX_OR_VALUES),
+                params=self._polite({"select": _SELECT}),
+                fields=work_fields,
+            ).fetch(query)
         window = window_from_cursor(
             cursor,
             self._today(),

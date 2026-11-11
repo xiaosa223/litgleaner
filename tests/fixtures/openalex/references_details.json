@@ -1,0 +1,26 @@
+{
+  "meta": {"count": 2, "next_cursor": null},
+  "results": [
+    {
+      "id": "https://openalex.org/W2",
+      "title": "Reference without a DOI",
+      "publication_date": "1980-01-01",
+      "ids": {"openalex": "https://openalex.org/W2", "mag": "200"}
+    },
+    {
+      "id": "https://openalex.org/W1",
+      "title": "Historical reference",
+      "doi": "https://doi.org/10.1000/OLD",
+      "publication_date": "1990-02-03",
+      "ids": {
+        "openalex": "https://openalex.org/W1",
+        "doi": "https://doi.org/10.1000/OLD",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/123/",
+        "pmcid": "https://www.ncbi.nlm.nih.gov/pmc/articles/456/"
+      },
+      "locations": [{"doi": "10.48550/arXiv.1706.03762"}],
+      "authorships": [{"author": {"display_name": "Ada Example"}}],
+      "abstract_inverted_index": {"Historical": [0], "evidence": [1]}
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "offset": 2,
+  "data": [
+    {
+      "citedPaper": {"paperId": null, "title": "Unidentified reference", "year": 1970},
+      "contexts": [],
+      "intents": null,
+      "isInfluential": null
+    },
+    {
+      "citedPaper": {
+        "paperId": "paper-old",
+        "title": "Historical reference",
+        "publicationDate": "1990-02-03",
+        "externalIds": {"DOI": "10.1000/old"}
+      }
+    }
+  ]
+}

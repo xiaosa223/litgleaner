@@ -17,7 +17,13 @@ from litgleaner.adapters.fulltext.semantic_scholar import SemanticScholarFullTex
 from litgleaner.adapters.sources.semantic_scholar import SemanticScholarSource, bulk_query
 from litgleaner.domain.errors import ConfigError, RateLimited, SchemaChanged
 from litgleaner.domain.identity import Alias
-from litgleaner.domain.query import AuthorWatch, CitationWatch, JournalWatch, KeywordSearch
+from litgleaner.domain.query import (
+    AuthorWatch,
+    CitationWatch,
+    JournalWatch,
+    KeywordSearch,
+    ReferenceList,
+)
 from litgleaner.ports.fulltext import FullTextRequest
 
 TODAY = date(2026, 11, 5)
@@ -53,8 +59,13 @@ def paged(first: dict, second: dict, key: str) -> Router:
     return Router().on("/graph/v1/", handler)
 
 
-def test_declares_keyword_citation_and_author_queries():
-    assert set(source(Router()).capabilities) == {KeywordSearch, CitationWatch, AuthorWatch}
+def test_declares_keyword_citation_author_and_reference_queries():
+    assert set(source(Router()).capabilities) == {
+        KeywordSearch,
+        CitationWatch,
+        AuthorWatch,
+        ReferenceList,
+    }
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(JournalWatch(issns=("1234-5678",)), None)
 

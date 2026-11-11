@@ -4,6 +4,7 @@
 """
 
 import json
+import threading
 import time
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from email.utils import parsedate_to_datetime
@@ -94,7 +95,16 @@ class HttpClient:
         self._monotonic = monotonic
         self._sleep = sleep
         self._last: float | None = None
-        self._pages: list[bytes] = []
+        self._raw_local = threading.local()
+
+    @property
+    def _pages(self) -> list[bytes]:
+        # 同一同步客户端会被 HTTP 请求和调度线程复用；只共享连接，不共享调用归档。
+        pages: list[bytes] | None = getattr(self._raw_local, "pages", None)
+        if pages is None:
+            pages = []
+            self._raw_local.pages = pages
+        return pages
 
     def _drop_secrets_off_origin(self, request: httpx.Request) -> None:
         """重定向到其他主机时去掉带密钥的请求头（httpx 只会自动去掉 Authorization）。"""
@@ -195,11 +205,11 @@ class HttpClient:
         return None if response is None else response.text
 
     def raw_log(self) -> bytes:
-        """本次调用收到的所有页面，每行一个 JSON。发现阶段会原样落盘，便于重放。"""
+        """当前线程本次调用收到的所有页面，每行一个 JSON，供发现阶段留档重放。"""
         return b"\n".join(self._pages)
 
     def reset_raw_log(self) -> None:
-        self._pages = []
+        self._raw_local.pages = []
 
     def close(self) -> None:
         self._client.close()

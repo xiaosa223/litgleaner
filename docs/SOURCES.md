@@ -25,6 +25,8 @@ uv run python scripts/probe_sources.py           # 真实网络联调，不写�
 
 各列对应主题文件里的配置：期刊 = `journal_sets`，关键词 = `query`，引文 = `seeds.dois`，作者 = `seeds.authors`。收件箱每次运行都会查。
 
+OpenAlex 和 Semantic Scholar 另外支持 `ReferenceList`：查论文引用的参考文献，按单次条目上限取历史结果，不使用日常日期窗口或游标；原条目、引用句和来源标记保存为引文事实。显式刷新与本地归档登记接口见 [CITATIONS.md](CITATIONS.md)。它尚未并入课题调研流程。
+
 ### 通用选项
 
 每个信号源都支持下面这些选项（写在 `options` 下）：

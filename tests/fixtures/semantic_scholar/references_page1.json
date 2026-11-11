@@ -1,0 +1,32 @@
+{
+  "offset": 0,
+  "next": 2,
+  "data": [
+    {
+      "contexts": ["We build on this historical method.", "原始上下文，不作关系推断。"],
+      "intents": ["background", "methodology"],
+      "isInfluential": true,
+      "citedPaper": {
+        "paperId": "paper-old",
+        "title": "Historical reference",
+        "abstract": "A historical method.",
+        "publicationDate": "1990-02-03",
+        "year": 1990,
+        "authors": [{"name": "Ada Example"}],
+        "externalIds": {
+          "DOI": "10.1000/OLD",
+          "ArXiv": "1706.03762v2",
+          "PubMed": "123",
+          "PubMedCentral": "456",
+          "CorpusId": 789
+        }
+      }
+    },
+    {
+      "contexts": ["The target was deleted but this citation remains."],
+      "intents": [],
+      "isInfluential": false,
+      "citedPaper": null
+    }
+  ]
+}

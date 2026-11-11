@@ -26,8 +26,9 @@ from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
+from litgleaner.adapters.sources.semantic_scholar_references import SemanticScholarReferences
 from litgleaner.domain.errors import SchemaChanged
-from litgleaner.domain.query import AuthorWatch, CitationWatch, KeywordSearch, Query
+from litgleaner.domain.query import AuthorWatch, CitationWatch, KeywordSearch, Query, ReferenceList
 from litgleaner.ports.source import FetchResult
 
 _FIELDS = "paperId,title,abstract,authors,venue,publicationDate,year,externalIds,journal"
@@ -62,7 +63,9 @@ class _Quota:
 
 
 class SemanticScholarSource:
-    capabilities: frozenset[type] = frozenset({KeywordSearch, CitationWatch, AuthorWatch})
+    capabilities: frozenset[type] = frozenset(
+        {KeywordSearch, CitationWatch, AuthorWatch, ReferenceList}
+    )
 
     def __init__(
         self,
@@ -93,6 +96,15 @@ class SemanticScholarSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
+        if isinstance(query, ReferenceList):
+            return SemanticScholarReferences(
+                self._http,
+                RecordBuilder(self.name),
+                limit=options.max_records,
+                page_size=options.page_size,
+                fields=_FIELDS,
+                add_paper=lambda builder, paper: _add(builder, paper, _published(paper)),
+            ).fetch(query)
         window = window_from_cursor(
             cursor,
             self._today(),

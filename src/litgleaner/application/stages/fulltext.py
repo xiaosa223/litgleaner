@@ -5,6 +5,7 @@ import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
+from litgleaner.application.citations import ingest_parsed
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_chunks, pdf_key, save_document, save_parser_raw
 from litgleaner.application.stages.base import Stage
@@ -155,6 +156,7 @@ class ParseStage(Stage):
                 now,
             )
             ctx.store.search.replace_document(state.paper_id, key, document.blocks)
+            ingest_parsed(ctx, state.paper_id, document, chunked.references, now)
 
     def on_dead(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
         state = ctx.store.papers.get_fulltext(payload["paper_id"])
