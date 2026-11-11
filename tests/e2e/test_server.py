@@ -148,6 +148,20 @@ def test_serves_built_frontend_with_spa_fallback(
     assert client.get("/api/unknown").status_code == 404
 
 
+def test_index_html_is_never_cached(harness: Harness, security: LocalSecurity, tmp_path: Path):
+    # 重新构建或升级后，旧 index.html 引用的带哈希文件已不在，页面会打不开（15.5）
+    static = tmp_path / "static"
+    (static / "assets").mkdir(parents=True)
+    (static / "index.html").write_text("<!doctype html>", encoding="utf-8")
+    (static / "assets" / "app-1a2b.js").write_text("1", encoding="utf-8")
+    client = TestClient(create_app(harness.ctx, security, static_dir=static), base_url=BASE)
+    _login(client)
+
+    for path in ("/", "/index.html", "/papers/abc"):
+        assert client.get(path).headers.get("cache-control") == "no-cache", path
+    assert client.get("/assets/app-1a2b.js").headers.get("cache-control") != "no-cache"
+
+
 def test_wasm_is_served_as_wasm_even_without_system_mime_entry(
     harness: Harness, security: LocalSecurity, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

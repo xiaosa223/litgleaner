@@ -131,6 +131,15 @@ main.doc.pdf-mode { overflow: hidden; padding: 0; display: flex; }
 .pop { position: absolute; left: 0; right: 0; z-index: 8; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 14px; pointer-events: auto; }
 .pop .x { float: right; border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; }
 /* 原版双语：右侧对照栏 */
+/* 全文覆盖：页面始终是白纸，译文用固定的纸面颜色，不随主题变 */
+.ovl-wrap { display: contents; }
+.ovl { position: absolute; z-index: 2; overflow: hidden; background: #fff; color: #1a1a1a; font-family: var(--serif, serif); line-height: 1.38; text-align: justify; pointer-events: none; transition: opacity .15s; box-shadow: 0 0 0 2px #fff; }
+.ovl.warn { outline: 1px dashed #c98a0b; outline-offset: 1px; }
+.ovl-wrap.peek .ovl { opacity: 0; }
+.ovl-mark { position: absolute; z-index: 4; transform: translate(-100%, -50%); padding: 0 5px; min-width: 18px; height: 18px; border-radius: 9px; border: 0; font-size: 11px; line-height: 18px; background: var(--accent); color: #fff; }
+.ovl-mark.error, .ovl-mark.warn { background: #c98a0b; }
+.ovl-mark:disabled { opacity: .85; cursor: default; }
+.ovl-page { position: absolute; top: 6px; right: 6px; z-index: 5; font-size: 12px; background: var(--surface); }
 .trans-col { position: absolute; top: 0; }
 .trans-col .tb { position: absolute; left: 0; right: 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--line); font-size: 13.5px; line-height: 1.65; color: var(--text); }
 .trans-col .tb.pair, .trans-col .tb:hover { border-left-color: var(--accent); }

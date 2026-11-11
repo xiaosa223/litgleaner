@@ -9,7 +9,8 @@ import type { Annotation, Block, DocumentView, PaperView } from "./types";
 
 export interface FlowTranslation {
   translations: Translations;
-  bilingual: boolean;
+  bilingual: boolean; // 双栏对照
+  overlay: boolean; // 全文覆盖，只在原版视图
   open: Set<number>; // 单段展开译文的段落
   onToggle: (index: number) => void;
   pairing: Pairing;

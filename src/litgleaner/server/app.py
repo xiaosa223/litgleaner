@@ -110,12 +110,15 @@ def _static_routes(app: FastAPI, static_dir: Path | None) -> None:
             return JSONResponse({"detail": "接口不存在"}, status_code=404)
         if root is None:
             return PlainTextResponse(NOT_BUILT)
+        index = root / "index.html"
         target = (root / path).resolve()
-        if path and target.is_relative_to(root) and target.is_file():
+        if path and target.is_relative_to(root) and target.is_file() and target != index:
             # Windows 上 mimetypes 读注册表，可能认不出 .wasm；类型不对浏览器就不能编译 PDF 引擎
             media_type = "application/wasm" if target.suffix == ".wasm" else None
             return FileResponse(target, media_type=media_type)
-        return FileResponse(root / "index.html")  # 前端路由由页面处理
+        # 前端路由由页面处理。index.html 每次都向服务确认：重新构建或升级后，
+        # 旧页面引用的带哈希的文件已经不在，缓存它会打不开（ARCHITECTURE 15.5）
+        return FileResponse(index, headers={"Cache-Control": "no-cache"})
 
 
 def create_app(ctx: AppContext, security: LocalSecurity, static_dir: Path | None) -> FastAPI:

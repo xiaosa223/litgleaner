@@ -1,6 +1,6 @@
 // 设置：外观、阅读偏好、花费、界面预览。偏好存在浏览器里；渠道、模型等要等后端提供接口后再加。
 import { api } from "../api";
-import { usePref } from "../prefs";
+import { usePref, useTranslateMode } from "../prefs";
 import { usePreview } from "../preview/usePreview";
 import type { View } from "../ReaderHeader";
 import { useAsync } from "../useAsync";
@@ -20,7 +20,7 @@ function Seg<T extends string>({ value, options, onChange, label }: {
 export function Settings() {
   const [theme, setTheme] = usePref<Theme>("theme", "system");
   const [view, setView] = usePref<View>("view", "pdf");
-  const [bilingual, setBilingual] = usePref<boolean>("bilingual", false);
+  const [mode, setMode] = useTranslateMode();
   const [preview, setPreview] = usePreview();
   const [costs] = useAsync(() => api.costs(), []);
   return (
@@ -39,8 +39,8 @@ export function Settings() {
         <Seg label="视图" value={view} onChange={setView} options={[["pdf", "原版"], ["flow", "段落"]]} />
       </div>
       <div className="setting">
-        <div><b>打开论文时显示</b><span className="d">双语对照会按段落翻译，翻译会产生模型费用</span></div>
-        <Seg label="翻译" value={bilingual ? "bi" : "src"} onChange={(v) => setBilingual(v === "bi")} options={[["src", "原文"], ["bi", "双语对照"]]} />
+        <div><b>打开论文时显示</b><span className="d">覆盖和对照会按段落翻译，翻译会产生模型费用；段落视图里覆盖按对照显示</span></div>
+        <Seg label="翻译" value={mode} onChange={setMode} options={[["off", "原文"], ["overlay", "覆盖"], ["column", "对照"]]} />
       </div>
 
       <h2 className="block-title">模型花费</h2>

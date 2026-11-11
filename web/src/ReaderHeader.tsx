@@ -1,6 +1,7 @@
 // 阅读页顶栏：只放返回、目录、标题、原文与译文的切换、“显示”面板、侧栏和帮助（第 12.8 节）。
 import { ArrowLeft, Keyboard, PanelLeft, PanelRight, SlidersHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { TranslateMode } from "./prefs";
 import { goBack, paths } from "./router";
 import type { PaperView } from "./types";
 
@@ -53,11 +54,11 @@ function DisplayMenu({ view, canPdf, canFlow, costs, onView, onPure }: {
 
 export function ReaderHeader(props: {
   paper: PaperView; view: View; canPdf: boolean; canFlow: boolean; costs: Costs | null;
-  bilingual: boolean; canTranslate: boolean; onBilingual: (on: boolean) => void;
+  mode: TranslateMode; canTranslate: boolean; onMode: (mode: TranslateMode) => void;
   toc: { available: boolean; open: boolean; toggle: () => void }; panel: { open: boolean; toggle: () => void };
   onView: (view: View) => void; onPure: () => void; onHelp: () => void;
 }) {
-  const { paper, view, canPdf, canFlow, costs, bilingual, canTranslate, onBilingual, toc, panel, onView, onPure, onHelp } = props;
+  const { paper, view, canPdf, canFlow, costs, mode, canTranslate, onMode, toc, panel, onView, onPure, onHelp } = props;
   const small = [paper.venue, paper.published_at?.slice(0, 4), paper.has_pdf ? null : "只有摘要"].filter(Boolean).join(" · ");
   return (
     <header className="bar">
@@ -68,8 +69,11 @@ export function ReaderHeader(props: {
       <div className="title" title={paper.title}>{paper.title}{small && <small>{small}</small>}</div>
       {canTranslate && (
         <div className="seg" role="group" aria-label="翻译">
-          <button aria-pressed={!bilingual} onClick={() => onBilingual(false)}>原文</button>
-          <button aria-pressed={bilingual} title="整篇逐段对照（T）；选中句子也可以单独翻译" onClick={() => onBilingual(true)}>双语对照</button>
+          <button aria-pressed={mode === "off"} onClick={() => onMode("off")}>原文</button>
+          {view === "pdf" && (
+            <button aria-pressed={mode === "overlay"} title="译文盖在原文位置上，保留版式；鼠标移到段落上看原文" onClick={() => onMode("overlay")}>覆盖</button>
+          )}
+          <button aria-pressed={mode === "column"} title="原文和译文逐段对照（T）；选中句子也可以单独翻译" onClick={() => onMode("column")}>对照</button>
         </div>
       )}
       <DisplayMenu view={view} canPdf={canPdf} canFlow={canFlow} costs={costs} onView={onView} onPure={onPure} />

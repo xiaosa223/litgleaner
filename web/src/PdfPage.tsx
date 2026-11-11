@@ -1,4 +1,4 @@
-// 原版视图的一页：PDFium 渲染（低清底图 + 分块高清），字形选字层，再叠加段落区域、用户高亮和双语对照的译文栏。
+// 原版视图的一页：PDFium 渲染（低清底图 + 分块高清），字形选字层，再叠加段落区域、用户高亮、全文覆盖的译文或双栏对照的译文栏。
 // 叠加物都按页面千分比坐标定位，和页面实际尺寸无关。
 import { PagePointerProvider } from "@embedpdf/plugin-interaction-manager/react";
 import { RenderLayer } from "@embedpdf/plugin-render/react";
@@ -6,6 +6,7 @@ import { SelectionLayer } from "@embedpdf/plugin-selection/react";
 import { TilingLayer } from "@embedpdf/plugin-tiling/react";
 import { useLayoutEffect, useRef } from "react";
 import type { FlowTranslation } from "./FlowView";
+import { OverlayLayer } from "./OverlayLayer";
 import { ZhText } from "./TranslationView";
 import type { Annotation, Block } from "./types";
 
@@ -80,13 +81,13 @@ export function PdfPage(props: {
       ))}
       {blocks.filter((b) => b.page === index && b.bbox && b.kind !== "reference").map((b) => {
         const [x0, y0, x1, y1] = b.bbox!;
-        const pop = tr.open.has(b.index) && !tr.bilingual;
+        const pop = tr.open.has(b.index) && !tr.bilingual && !tr.overlay;
         const cls = ["ov", hovered === b.index ? "hov" : "", focused === b.index ? "focus" : "", pop ? "has-pop" : ""].join(" ");
         return (
           <div key={b.index} id={`o-${b.index}`} className={cls} style={{ left: pct(x0), top: pct(y0), width: pct(x1 - x0), height: pct(y1 - y0) }}>
             {isBody(b) && (
               <div className="acts">
-                {!tr.bilingual && <button disabled={!b.translatable} title={b.translatable ? "翻译这段" : "这段不需要翻译"} onClick={() => tr.onToggle(b.index)}>译</button>}
+                {!tr.bilingual && !tr.overlay && <button disabled={!b.translatable} title={b.translatable ? "翻译这段" : "这段不需要翻译"} onClick={() => tr.onToggle(b.index)}>译</button>}
                 {canAsk && <button onClick={() => onAction("ask", b)}>问</button>}
                 <button onClick={() => onAction("note", b)}>记</button>
               </div>
@@ -102,6 +103,9 @@ export function PdfPage(props: {
           </div>
         );
       })}
+      {tr.overlay && (
+        <OverlayLayer blocks={blocks.filter((b) => b.page === index && b.translatable && b.bbox)} pageWidth={width} tr={tr} hovered={hovered} />
+      )}
       <span className="no">第 {index + 1} 页</span>
       {tr.bilingual && (
         <TransColumn blocks={blocks.filter((b) => b.page === index && b.translatable && b.bbox)} height={height}

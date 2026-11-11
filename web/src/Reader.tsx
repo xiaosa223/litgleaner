@@ -1,5 +1,5 @@
 // 阅读页：顶栏 + 目录 | 正文（原版或段落视图）| 侧栏。正文优先：目录和侧栏可以折叠（第 12.8 节）。
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { FlowView, type FlowTranslation } from "./FlowView";
 import { Panel, type Tab } from "./panel/Panel";
@@ -7,7 +7,7 @@ import { usePdf } from "./pdf";
 import { MOD } from "./platform";
 import { usePreview } from "./preview/usePreview";
 import { PdfView, type BlockAction, type Focus } from "./PdfView";
-import { useMedia, usePref } from "./prefs";
+import { useMedia, usePref, useTranslateMode, type TranslateMode } from "./prefs";
 import { ReaderHeader, type View } from "./ReaderHeader";
 import { SelectionBar, NoteDialog, type NoteTarget } from "./SelectionBar";
 import { readSelection, type TextSelection } from "./selection";
@@ -22,7 +22,7 @@ import { currentPage, useReadingPosition } from "./useReadingPosition";
 
 const KEYS: [string, string][] = [
   ["选中文字", "翻译、高亮、记笔记"],
-  ["T", "原文 ↔ 双语对照"],
+  ["T", "原文 ↔ 上次用的翻译方式"],
   ["1 / 2", "原版视图 / 段落视图"],
   ["[ / ]", "收起或展开目录 / 侧栏"],
   [`${MOD} K`, "搜索"],
@@ -55,7 +55,8 @@ export function Reader({ paperId }: { paperId: string }) {
   const [help, setHelp] = useState(false);
   const [activeHeading, setActiveHeading] = useState<number | null>(null);
   const [restored, setRestored] = useState(false);
-  const [bilingual, setBilingual] = usePref<boolean>("bilingual", false);
+  const [mode, setMode] = useTranslateMode();
+  const lastMode = useRef<TranslateMode>(mode === "off" ? "column" : mode); // T 键在原文和上次的方式之间切换
   const [canAsk] = usePreview(); // 边读边问的服务还没有接上，只在界面预览里出现
   const [askQuote, setAskQuote] = useState<string | null>(null);
   const [open, setOpen] = useState(new Set<number>());
@@ -64,8 +65,16 @@ export function Reader({ paperId }: { paperId: string }) {
 
   const blocks = doc?.blocks ?? [];
   const translations = useTranslations(paperId, !!doc, reloadCosts);
+  const canPdf = !!paper?.has_pdf && !pdfError, canFlow = !!doc;
+  const view: View = preferred === "flow" && canFlow ? "flow" : canPdf ? "pdf" : canFlow ? "flow" : "pdf";
   const canTranslate = blocks.some((b) => b.translatable);
-  const showBilingual = bilingual && canTranslate;
+  // 段落视图没有版面可覆盖，全文覆盖在那里按双栏对照显示
+  const showOverlay = mode === "overlay" && canTranslate && view === "pdf";
+  const showBilingual = canTranslate && mode !== "off" && !showOverlay;
+  const chooseMode = (next: TranslateMode) => {
+    if (next !== "off") lastMode.current = next;
+    setMode(next);
+  };
   const toggleOpen = (index: number) => {
     const next = new Set(open);
     if (next.has(index)) next.delete(index);
@@ -76,11 +85,9 @@ export function Reader({ paperId }: { paperId: string }) {
     setOpen(next);
   };
   const translation: FlowTranslation = {
-    translations, bilingual: showBilingual, open, onToggle: toggleOpen,
+    translations, bilingual: showBilingual, overlay: showOverlay, open, onToggle: toggleOpen,
     pairing: { hover: hoverSentence, onHover: setHoverSentence },
   };
-  const canPdf = !!paper?.has_pdf && !pdfError, canFlow = !!doc;
-  const view: View = preferred === "flow" && canFlow ? "flow" : canPdf ? "pdf" : canFlow ? "flow" : "pdf";
   const savePosition = useReadingPosition(paper, view, reload);
   const hasToc = blocks.some((b) => b.kind === "heading");
   // 目录在 1180 像素以上停靠在左侧，侧栏在 820 像素以上停靠在右侧；更窄时是浮层，默认收起
@@ -165,7 +172,7 @@ export function Reader({ paperId }: { paperId: string }) {
       if (event.key === "1" && canPdf) setPreferred("pdf");
       if (event.key === "2" && canFlow) setPreferred("flow");
       if (event.key === "/" && canAsk) { event.preventDefault(); ask(null); }
-      if ((event.key === "t" || event.key === "T") && canTranslate) setBilingual(!bilingual);
+      if ((event.key === "t" || event.key === "T") && canTranslate) chooseMode(mode === "off" ? lastMode.current : "off");
       if (event.key === "[" && hasToc) toc.toggle();
       if (event.key === "]") panel.toggle();
       if (event.key === "?") setHelp(true);
@@ -183,7 +190,7 @@ export function Reader({ paperId }: { paperId: string }) {
   if (paperState.state === "error") return <div className="view-msg">{paperState.message}</div>;
   const data = paperState.data;
   function pure() {
-    setBilingual(false);
+    chooseMode("off");
     setOpen(new Set());
     toast("已回到纯原文，可以随时重新打开各项增强");
   }
@@ -193,7 +200,7 @@ export function Reader({ paperId }: { paperId: string }) {
     <div className="app">
       <ReaderHeader paper={data} view={view} canPdf={canPdf} canFlow={canFlow}
         costs={costState.state === "ready" ? costState.data : null}
-        bilingual={showBilingual} canTranslate={canTranslate} onBilingual={setBilingual}
+        mode={mode === "off" ? "off" : showOverlay ? "overlay" : "column"} canTranslate={canTranslate} onMode={chooseMode}
         toc={{ available: hasToc, open: toc.open, toggle: toc.toggle }} panel={panel}
         onView={setPreferred} onPure={pure} onHelp={() => setHelp(true)} />
       <div className={`layout${hasToc && toc.open ? " has-toc" : ""}${panel.open ? " has-panel" : ""}`}>

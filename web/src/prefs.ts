@@ -58,3 +58,13 @@ export function useMedia(query: string): boolean {
   );
   return useSyncExternalStore(subscribeMedia, () => window.matchMedia(query).matches);
 }
+
+/** 翻译的显示方式：原文、全文覆盖（译文盖在原文位置上）、双栏对照。 */
+export type TranslateMode = "off" | "overlay" | "column";
+
+/** 翻译方式偏好；旧版本只存了“是否双语对照”，读得到就沿用。 */
+export function useTranslateMode(): [TranslateMode, (mode: TranslateMode) => void] {
+  const [legacy] = usePref<boolean>("bilingual", false);
+  const [mode, setMode] = usePref<TranslateMode | null>("translate-mode", null);
+  return [mode ?? (legacy ? "column" : "off"), setMode];
+}
