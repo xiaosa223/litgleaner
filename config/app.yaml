@@ -17,6 +17,8 @@ chunker:
   overlap_sentences: 1
 assess:
   token_budget: 6000
+map:
+  token_budget: 12000
 # 课题调研先预览、再显式执行；各上限约束本轮候选范围。
 survey:
   rounds: 2

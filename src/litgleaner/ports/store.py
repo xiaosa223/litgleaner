@@ -21,6 +21,7 @@ from litgleaner.ports.translations import TranslationRepo
 
 if TYPE_CHECKING:
     from litgleaner.ports.reading_route import ReadingRouteRepo
+    from litgleaner.ports.topic_map import TopicMapRepo
 
 FullTextStatus = Literal["available", "parsed", "unavailable", "failed"]
 DeliveryStatus = Literal["pending", "sending", "sent", "failed"]
@@ -389,6 +390,8 @@ class Store(Protocol):
     def reading_routes(self) -> "ReadingRouteRepo": ...
     @property
     def surveys(self) -> SurveyRepo: ...
+    @property
+    def topic_maps(self) -> "TopicMapRepo": ...
 
     def atomic(self) -> AbstractContextManager[None]: ...
     def stats(self) -> dict[str, int]: ...

@@ -146,10 +146,12 @@ def test_pause_waits_without_failure_then_resumes(harness: Harness):
     run = queue(ctx, TOPIC, preview(ctx, TOPIC).id)
     pause_topic(ctx, TOPIC)
     report = run_on_demand(ctx)
-    assert report.stages[-1].retried == 1 and harness.llm_calls() == 0
+    assert next(stage for stage in report.stages if stage.name == "survey").retried == 1
+    assert harness.llm_calls() == 0
     assert ctx.store.jobs.get(f"survey:{run.run_id}").attempts == 0
     harness.clock.advance(days=4)
-    assert run_on_demand(ctx).stages[-1].retried == 1
+    report = run_on_demand(ctx)
+    assert next(stage for stage in report.stages if stage.name == "survey").retried == 1
     activate_topic(ctx, TOPIC)
     harness.clock.advance(minutes=1)
     assert run_on_demand(ctx).ok

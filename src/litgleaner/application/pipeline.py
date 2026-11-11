@@ -17,6 +17,7 @@ from litgleaner.application.stages.publish import PublishStage
 from litgleaner.application.stages.score import ScoreStage
 from litgleaner.application.stages.select import SelectStage
 from litgleaner.application.stages.survey import SurveyStage
+from litgleaner.application.stages.topic_map import TopicMapStage
 from litgleaner.application.stages.triage import TriageStage
 from litgleaner.application.topics import sync_topics
 from litgleaner.application.translation_plan import TranslatePaperStage
@@ -51,7 +52,7 @@ STAGES: tuple[Stage, ...] = (
 )
 STAGE_NAMES: tuple[str, ...] = tuple(stage.name for stage in STAGES)
 # 按需阶段（第 15.1 节）：用户在领读器里确认后才有任务，没有 plan；排在后台阶段之前执行
-ON_DEMAND: tuple[Stage, ...] = (AskStage(), TranslatePaperStage(), SurveyStage())
+ON_DEMAND: tuple[Stage, ...] = (AskStage(), TranslatePaperStage(), SurveyStage(), TopicMapStage())
 ON_DEMAND_NAMES: tuple[str, ...] = tuple(stage.name for stage in ON_DEMAND)
 
 

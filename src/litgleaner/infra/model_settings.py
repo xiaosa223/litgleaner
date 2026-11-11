@@ -21,7 +21,7 @@ from litgleaner.ports.model_settings import (
 )
 from litgleaner.ports.secrets import SecretStore
 
-TASKS: tuple[ModelTask, ...] = ("triage", "extract", "assess", "translate", "ask")
+TASKS: tuple[ModelTask, ...] = ("triage", "extract", "assess", "translate", "ask", "map")
 
 
 class SecretOverlay:

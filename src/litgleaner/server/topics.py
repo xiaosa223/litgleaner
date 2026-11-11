@@ -8,6 +8,7 @@ from litgleaner.application.survey import SurveyStatus, get_preview, preview, qu
 from litgleaner.application.survey_plan import require_topic
 from litgleaner.domain.survey import SurveyPreview, SurveyRound
 from litgleaner.server.runtime import Context
+from litgleaner.server.topic_maps import install_topic_map_routes
 
 
 class ConfirmSurvey(BaseModel):
@@ -23,6 +24,8 @@ _EMPTY_PREVIEW = PreviewSurvey()
 
 
 def install_topic_routes(app: FastAPI) -> None:
+    install_topic_map_routes(app)
+
     @app.get("/api/topics/{topic_id}/reading-route")
     def route(
         ctx: Context, topic_id: str, limit_per_group: int = Query(default=10, ge=1, le=100)

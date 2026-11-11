@@ -1,5 +1,6 @@
 """假大模型：输出完全确定。论文内容里的标记决定结果，方便测试和演示。"""
 
+import json
 import re
 from collections.abc import Iterator, Mapping
 from typing import Any
@@ -62,6 +63,8 @@ class FakeLLM:
         return LLMResponse(data, request.model, 100, 20, _COST_PER_CALL)
 
     def _answer(self, request: LLMRequest) -> Mapping[str, Any]:
+        if request.task == "map":
+            return self._topic_map(request)
         if request.task == "triage":
             relevant = "[[irrelevant]]" not in request.user
             return {"relevant": relevant, "reason": "演示判断"}
@@ -76,6 +79,20 @@ class FakeLLM:
                 ],
             }
         return self._assessment(request)
+
+    def _topic_map(self, request: LLMRequest) -> Mapping[str, Any]:
+        records = json.loads(_UNTRUSTED.sub("", request.user))["papers"]
+        ids = [record["paper_id"] for record in records]
+        return {
+            "groups": [
+                {
+                    "name": f"演示方向 {index + 1}",
+                    "description": "按输入论文生成的演示分组。",
+                    "paper_ids": ids[index::5],
+                }
+                for index in range(5)
+            ]
+        }
 
     def _assessment(self, request: LLMRequest) -> Mapping[str, Any]:
         match = _LEVEL.search(request.user)

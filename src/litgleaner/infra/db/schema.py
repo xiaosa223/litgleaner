@@ -19,9 +19,11 @@ from sqlalchemy import (
 from litgleaner.infra.db.schema_citation import define_citation
 from litgleaner.infra.db.schema_knowledge import define_knowledge
 from litgleaner.infra.db.schema_survey import define_survey
+from litgleaner.infra.db.schema_topic_map import define_topic_map
 
 metadata = MetaData()
 survey_preview, survey_work, survey_round = define_survey(metadata)
+topic_map = define_topic_map(metadata)
 
 paper = Table(
     "paper",

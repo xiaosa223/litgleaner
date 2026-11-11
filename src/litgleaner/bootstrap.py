@@ -387,6 +387,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
             reading_language=config.app.language.reading,
             survey=config.app.survey,
             survey_sources_version=_survey_sources_version(config),
+            map=config.app.map,
         ),
         topics=config.topics,
         glossaries=config.glossaries,

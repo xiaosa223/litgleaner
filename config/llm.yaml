@@ -59,6 +59,7 @@ tasks:
   triage: { provider: main, model: demo-cheap, prompt: triage }
   extract: { provider: main, model: demo-strong, prompt: extract }
   assess: { provider: main, model: demo-strong, prompt: assess }
+  map: { provider: main, model: demo-strong, prompt: map }
   # 领读器的段落翻译：流式返回，按课题术语表统一译名（ADR 0004）。用便宜、快的模型即可
   translate: { provider: main, model: demo-cheap, prompt: translate }
 budget:

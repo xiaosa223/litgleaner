@@ -19,6 +19,7 @@ from litgleaner.domain.routing import ALL_TOPICS, PUBLIC_TOPICS, Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.survey import SurveySettings
 from litgleaner.domain.topic import Topic
+from litgleaner.domain.topic_map import TopicMapSettings
 
 
 class AdapterConfig(FrozenModel):
@@ -95,6 +96,7 @@ class AppSettings(FrozenModel):
     parser: AdapterConfig = AdapterConfig(adapter="pdf_text")
     library: AdapterConfig | None = None  # 加入文献库，不写或 enabled: false 时关闭
     survey: SurveySettings = Field(default_factory=SurveySettings)
+    map: TopicMapSettings = Field(default_factory=TopicMapSettings)
 
 
 class SourcesFile(FrozenModel):
@@ -118,8 +120,8 @@ class LLMBudget(FrozenModel):
 
 class LLMFile(FrozenModel):
     providers: Mapping[str, AdapterConfig] = Field(default_factory=dict)
-    tasks: Mapping[Literal["triage", "extract", "assess", "translate", "ask"], LLMTask] = Field(
-        default_factory=dict
+    tasks: Mapping[Literal["triage", "extract", "assess", "translate", "ask", "map"], LLMTask] = (
+        Field(default_factory=dict)
     )
     budget: LLMBudget = LLMBudget(daily_usd=2)
 

@@ -13,6 +13,7 @@ from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.survey import SurveySettings
 from litgleaner.domain.topic import Topic
+from litgleaner.domain.topic_map import TopicMapSettings
 from litgleaner.ports.blobstore import BlobStore
 from litgleaner.ports.fulltext import FullTextProvider
 from litgleaner.ports.library import ReferenceLibrary
@@ -42,6 +43,7 @@ class RuntimeSettings:
     reading_language: LanguageCode = "zh-CN"
     survey: SurveySettings = field(default_factory=SurveySettings)
     survey_sources_version: str = ""
+    map: TopicMapSettings = field(default_factory=TopicMapSettings)
 
 
 @dataclass(frozen=True)
