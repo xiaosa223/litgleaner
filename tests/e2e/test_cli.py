@@ -1,6 +1,5 @@
 """命令行：用演示配置走一遍用户真正会执行的命令。"""
 
-import fcntl
 import json
 import logging
 import shutil
@@ -12,6 +11,7 @@ from alembic import command
 from typer.testing import CliRunner
 
 from litgleaner.cli import app, configure_logging
+from litgleaner.cli_shared import try_run_lock
 from litgleaner.infra.config import load_config
 from litgleaner.infra.db.migrate import alembic_config
 
@@ -128,10 +128,8 @@ def test_doctor_reports_adapter_config_errors_instead_of_crashing(config: Path, 
 
 def test_second_run_exits_while_lock_is_held(config: Path):
     invoke(config, "db", "upgrade")
-    lock = config.parent / "data" / "demo" / "litgleaner.lock"
-    lock.parent.mkdir(parents=True, exist_ok=True)
-    with lock.open("w") as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with try_run_lock(load_config(config)) as acquired:
+        assert acquired
         assert "已有流程" in invoke(config, "run", code=3)
         assert "已有流程" in invoke(config, "rubric", "rescore", code=3)
         assert "已有流程" in invoke(config, "archive", "rebuild", code=3)

@@ -1,6 +1,5 @@
 """常驻服务：真实端口上的领读器接口，加上和命令行共用运行锁的定时调度。"""
 
-import fcntl
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -9,6 +8,7 @@ import httpx
 import pytest
 
 from litgleaner.application import inbox
+from litgleaner.cli_shared import try_run_lock
 from litgleaner.infra.config import load_config
 from litgleaner.service import Service, open_in_browser, run_due
 from tests.e2e.conftest import Harness, paper
@@ -47,9 +47,8 @@ def test_stop_releases_the_port(harness: Harness):
 def test_scheduled_run_skips_when_another_run_holds_the_lock(harness: Harness):
     config = load_config(harness.root / "config")
     harness.write_papers([paper("Later Paper", 5)])
-    lock = config.path(config.app.database).with_suffix(".lock")
-    with lock.open("w") as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with try_run_lock(config) as acquired:
+        assert acquired
         assert run_due(config, harness.ctx) is None
     report = run_due(config, harness.ctx)
     assert report is not None and report.ok

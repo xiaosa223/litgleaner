@@ -1,6 +1,5 @@
 """综述骨架的 HTTP/CLI 授权边界、冻结历史与本地只读验收。"""
 
-import fcntl
 import json
 import socket
 import sqlite3
@@ -16,6 +15,7 @@ from litgleaner import cli_library
 from litgleaner.application import outline
 from litgleaner.application.pipeline import run_on_demand
 from litgleaner.cli import app as cli_app
+from litgleaner.cli_shared import try_run_lock
 from litgleaner.infra.config import load_config
 from litgleaner.server.app import create_app
 from litgleaner.server.security import LocalSecurity
@@ -295,12 +295,12 @@ def test_cli_explicit_execution_holds_lock_while_queuing_without_calling_model(
     outline_ui, monkeypatch
 ):
     harness, _, _, _ = outline_ui
-    path = load_config(harness.root / "config").database_path.with_suffix(".lock")
+    config = load_config(harness.root / "config")
     original_queue = outline.queue
 
     def queue_under_lock(*args):
-        with path.open("a") as handle, pytest.raises(BlockingIOError):
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with try_run_lock(config) as acquired:
+            assert not acquired
         return original_queue(*args)
 
     monkeypatch.setattr(outline, "queue", queue_under_lock)
@@ -317,10 +317,10 @@ def test_cli_explicit_execution_holds_lock_while_queuing_without_calling_model(
 def test_cli_execution_exits_without_writes_when_another_process_holds_lock(outline_ui):
     harness, _, _, _ = outline_ui
     preview = json.loads(_cli(harness).stdout)
-    path = load_config(harness.root / "config").database_path.with_suffix(".lock")
+    config = load_config(harness.root / "config")
     before = _snapshot(harness)
-    with path.open("a") as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with try_run_lock(config) as acquired:
+        assert acquired
         result = _cli(harness, "--execute", "--plan", preview["plan_hash"])
     assert result.exit_code == 3 and "已有流程" in result.output
     assert isinstance(result.exception, SystemExit) and "Traceback" not in result.output
