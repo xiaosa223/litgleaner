@@ -24,7 +24,7 @@ def paper(title: str, level: int | None = None, marker: str = "", **kw) -> dict:
     tag = f" [[level:{level}]]" if level is not None else ""
     return {
         "title": title,
-        "abstract": f"Abstract of {title}.{tag}{marker}",
+        "abstract": f"Abstract of {title}. Research on alpha and beta.{tag}{marker}",
         "authors": [f"Author {title}"],
         "doi": f"10.1000/{title.lower().replace(' ', '-')}",
         "published_at": "2026-10-01",

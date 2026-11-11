@@ -254,6 +254,7 @@ def _events(response) -> list[tuple[str, dict]]:
 def test_translate_streams_deltas_then_result_and_is_listed(client: TestClient):
     csrf = {"X-CSRF-Token": _login(client)}
     paper_id = _paper_id(client)
+    before_cost = client.get("/api/costs", params={"paper_id": paper_id}).json()["paper_usd"]
     url = f"/api/papers/{paper_id}/blocks/2/translate"
     assert client.post(url).status_code == 403  # 状态变更：要 CSRF 令牌
     with client.stream("POST", url, headers=csrf) as response:
@@ -268,7 +269,7 @@ def test_translate_streams_deltas_then_result_and_is_listed(client: TestClient):
     listed = client.get(f"/api/papers/{paper_id}/translations").json()
     assert [item["index"] for item in listed] == [2]
     costs = client.get("/api/costs", params={"paper_id": paper_id}).json()
-    assert costs["paper_usd"] == pytest.approx(0.001)
+    assert costs["paper_usd"] == pytest.approx(before_cost + 0.001)
 
 
 def test_translate_many_streams_each_block(client: TestClient):

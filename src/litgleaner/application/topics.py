@@ -96,7 +96,7 @@ def backfill_topic(ctx: AppContext, topic_id: str, since: str | None, dry_run: b
         return plan
     now = ctx.now_iso()
     for paper_id in papers:
-        ctx.store.jobs.enqueue(triage_job(paper_id, topic), now)
+        ctx.store.jobs.enqueue(triage_job(paper_id, topic), now, reopen=True)
     return plan
 
 
@@ -104,5 +104,5 @@ def triage_job(paper_id: str, topic: Topic) -> JobSpec:
     return JobSpec(
         key=f"triage:{paper_id}:{topic.id}:{topic.topic_hash}",
         stage="triage",
-        payload={"paper_id": paper_id, "topic_id": topic.id},
+        payload={"paper_id": paper_id, "topic_id": topic.id, "topic_hash": topic.topic_hash},
     )

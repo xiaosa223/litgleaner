@@ -52,6 +52,7 @@ def write_glossary(harness: Harness, terms: list[dict]) -> None:
 
 def test_streams_sentence_then_caches_verified_translation(harness: Harness, paper_id: str):
     calls = harness.llm_calls("translate")
+    before_cost = harness.ctx.store.runs.llm_cost_for_paper(paper_id)
     deltas, result = run(harness, paper_id)
 
     assert deltas == ["【译】We study the problem."]  # 每句到齐就先显示，不等校验
@@ -59,12 +60,13 @@ def test_streams_sentence_then_caches_verified_translation(harness: Harness, pap
     assert result.sentences == ("【译】We study the problem.",)
     assert (result.verified, result.cached) == (True, False)
     assert harness.llm_calls("translate") == calls + 1
-    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(0.001)
+    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(before_cost + 0.001)
     assert "[[1]] We study the problem." in harness.llm.text_calls[-1].user
 
     _, again = run(harness, paper_id)
     assert (again.cached, again.sentences) == (True, result.sentences)
     assert harness.llm_calls("translate") == calls + 1  # 同一段只翻一次
+    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(before_cost + 0.001)
     assert (
         translation.cached_translations(harness.ctx, paper_id)[BODY].sentences == result.sentences
     )

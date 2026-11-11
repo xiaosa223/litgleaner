@@ -152,7 +152,9 @@ def test_reassess_dry_run_estimates_then_runs(harness: Harness):
 
 
 def test_switch_topic_reuses_pdf_parse_and_extraction(harness: Harness):
-    harness.write_papers([paper("Shared", 5)])
+    harness.write_papers(
+        [paper("Shared", 5, abstract="Research on alpha and beta-topic. [[level:5]]")]
+    )
     harness.run()
     before = harness.ctx.store.stats()
 
@@ -214,7 +216,13 @@ def test_public_channel_only_gets_public_topics_and_whitelisted_fields(harness: 
     add_topic(harness, "open-topic", public=True)
     harness.rebuild()
     activate_topic(harness.ctx, "open-topic")
-    harness.write_papers([paper("Secret Abstract Paper", 5)])
+    harness.write_papers(
+        [
+            paper(
+                "Secret Abstract Paper", 5, abstract="Abstract of alpha and open-topic. [[level:5]]"
+            )
+        ]
+    )
     harness.clock.advance(minutes=1)
     harness.run()
 
@@ -286,7 +294,9 @@ def test_paper_hit_by_two_topics_is_pushed_once_per_channel(harness: Harness):
     harness.rebuild()
     activate_topic(harness.ctx, "beta-topic")
     harness.clock.before_push()
-    harness.write_papers([paper("Shared Hit", 5)])
+    harness.write_papers(
+        [paper("Shared Hit", 5, abstract="Research on alpha and beta-topic. [[level:5]]")]
+    )
     harness.clock.advance(hours=1)
     harness.run()
 

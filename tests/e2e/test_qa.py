@@ -47,6 +47,7 @@ def _reply(harness: Harness, source_paper_id: str, **changes):
 
 
 def test_queue_is_atomic_idempotent_and_answer_is_billed_once(harness: Harness, paper_id: str):
+    before_cost = harness.ctx.store.runs.llm_cost_for_paper(paper_id)
     _reply(harness, paper_id)
     question = qa.queue(harness.ctx, paper_id, "What worked?", request_id="request-1")
     assert qa.queue(harness.ctx, paper_id, "What worked?", request_id="request-1") == question
@@ -58,13 +59,14 @@ def test_queue_is_atomic_idempotent_and_answer_is_billed_once(harness: Harness, 
     assert answer is not None and answer.question_id == question.id
     assert answer.statements[0].citations[0].quote == "We found it works."
     assert not answer.statements[0].inference and answer.statements[1].inference
-    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(0.001)
+    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(before_cost + 0.001)
     harness.ctx.store.jobs.enqueue(
         JobSpec("duplicate-answer", "ask", job.payload), harness.ctx.now_iso()
     )
     assert run_on_demand(harness.ctx).ok
     assert harness.llm_calls("ask") == 1
     assert qa.history(harness.ctx, paper_id) == (question,)
+    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(before_cost + 0.001)
 
 
 def test_request_identity_precedes_current_model_and_language(harness: Harness, paper_id: str):
@@ -194,12 +196,13 @@ def test_question_and_job_rollback_together_if_enqueue_fails(
 def test_failed_ask_usage_is_billed_to_the_paper_and_budget_blocks_the_retry(
     harness: Harness, paper_id: str
 ):
+    before_cost = harness.ctx.store.runs.llm_cost_for_paper(paper_id)
     question = qa.queue(harness.ctx, paper_id, "Explain", request_id="failed-charge")
     error = TransientError("bad JSON with reported usage")
     error.model_usage = ModelUsage("strong", 100, 20, 0.02)
     harness.llm.fail_tasks["ask"] = [error]
     assert not run_on_demand(harness.ctx).ok
-    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(0.02)
+    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(before_cost + 0.02)
     assert harness.llm_calls("ask") == 1
     harness.clock.advance(seconds=301)
     harness.ctx = replace(harness.ctx, llm=replace(harness.ctx.llm, daily_budget_usd=0.01))
@@ -209,10 +212,11 @@ def test_failed_ask_usage_is_billed_to_the_paper_and_budget_blocks_the_retry(
 
 
 def test_schema_rejection_is_also_billed_to_the_paper(harness: Harness, paper_id: str):
+    before_cost = harness.ctx.store.runs.llm_cost_for_paper(paper_id)
     harness.llm.overrides["ask"] = {"statements": [{"text": "No citations field"}]}
     question = qa.queue(harness.ctx, paper_id, "Explain", request_id="bad-schema")
     assert not run_on_demand(harness.ctx).ok
-    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(0.001)
+    assert harness.ctx.store.runs.llm_cost_for_paper(paper_id) == pytest.approx(before_cost + 0.001)
     assert qa.answer(harness.ctx, question.id) is None
 
 

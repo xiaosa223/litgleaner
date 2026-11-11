@@ -1,7 +1,7 @@
 [
-  {"title": "Demo Must Read", "abstract": "A breakthrough. [[level:5]]", "authors": ["Ada Lovelace"], "doi": "10.1000/demo.1", "published_at": "2026-10-01"},
-  {"title": "Demo Average", "abstract": "A solid study. [[level:3]]", "authors": ["Alan Turing"], "doi": "10.1000/demo.2", "published_at": "2026-10-02"},
-  {"title": "Demo Weak", "abstract": "Barely related. [[level:1]]", "authors": ["Grace Hopper"], "doi": "10.1000/demo.3", "published_at": "2026-10-03"},
+  {"title": "Demo Must Read", "abstract": "A demo keyword breakthrough. [[level:5]]", "authors": ["Ada Lovelace"], "doi": "10.1000/demo.1", "published_at": "2026-10-01"},
+  {"title": "Demo Average", "abstract": "A solid demo keyword study. [[level:3]]", "authors": ["Alan Turing"], "doi": "10.1000/demo.2", "published_at": "2026-10-02"},
+  {"title": "Demo Weak", "abstract": "A barely related demo keyword study. [[level:1]]", "authors": ["Grace Hopper"], "doi": "10.1000/demo.3", "published_at": "2026-10-03"},
   {"title": "Demo Off Topic", "abstract": "Unrelated field. [[irrelevant]]", "authors": ["Claude Shannon"], "doi": "10.1000/demo.4", "published_at": "2026-10-04"},
-  {"title": "Demo NoPDF Paper", "abstract": "Paywalled but promising. [[level:4]]", "authors": ["Emmy Noether"], "doi": "10.1000/demo.5", "published_at": "2026-10-05"}
+  {"title": "Demo NoPDF Paper", "abstract": "Paywalled but promising demo keyword research. [[level:4]]", "authors": ["Emmy Noether"], "doi": "10.1000/demo.5", "published_at": "2026-10-05"}
 ]
