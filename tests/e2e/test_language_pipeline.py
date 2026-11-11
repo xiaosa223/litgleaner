@@ -113,6 +113,7 @@ def test_english_generation_keeps_author_quotes_unchanged_and_verified(harness: 
     quote = "We found it works."
     harness.llm.overrides["extract"] = {
         "summary": "A concise study summary.",
+        "key_concepts": [],
         "conclusion": "The method works in the reported setting.",
         "innovation": None,
         "limitations": [{"text": "The evidence is limited.", "source": "author", "quote": quote}],

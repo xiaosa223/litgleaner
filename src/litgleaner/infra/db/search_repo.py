@@ -10,7 +10,7 @@ from litgleaner.infra.db.database import Database
 from litgleaner.ports.search import Authorship, SearchDocument, SearchHit, SearchKind
 
 _WORDS = re.compile(r"\w+", re.UNICODE)
-_KINDS = "('paper', 'fulltext', 'note', 'highlight', 'extraction', 'qa')"
+_KINDS = "('paper', 'fulltext', 'note', 'highlight', 'extraction', 'qa', 'concept')"
 _SNIPPET_CHARS = 320
 
 

@@ -16,6 +16,8 @@ from sqlalchemy import (
     false,
 )
 
+from litgleaner.infra.db.schema_knowledge import define_knowledge
+
 metadata = MetaData()
 
 paper = Table(
@@ -346,3 +348,5 @@ qa_message = Table(
     CheckConstraint("json_valid(data)", name="ck_qa_data"),
     Index("ix_qa_paper_created", "paper_id", "created_at", "id"),
 )
+
+concept, concept_alias, concept_occurrence = define_knowledge(metadata)

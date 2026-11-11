@@ -5,10 +5,11 @@ from dataclasses import replace
 from typing import Any
 
 from litgleaner.application.context import AppContext
-from litgleaner.application.documents import full_text_of, load_chunks, paper_text
+from litgleaner.application.documents import full_text_of, load_chunks, load_document
+from litgleaner.application.knowledge_ingest import extraction_source, ingest_concepts
 from litgleaner.application.stages.base import Stage
 from litgleaner.domain.chunker import ChunkerConfig
-from litgleaner.domain.evidence import verify_quote
+from litgleaner.domain.evidence import clean_untrusted, verify_quote
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import language_name
 from litgleaner.ports.store import FullTextState, JobSpec
@@ -16,11 +17,26 @@ from litgleaner.ports.store import FullTextState, JobSpec
 EXTRACT_SCHEMA: Mapping[str, Any] = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["summary", "conclusion", "limitations", "innovation"],
+    "required": ["summary", "conclusion", "limitations", "innovation", "key_concepts"],
     "properties": {
         "summary": {"type": ["string", "null"], "maxLength": 300},
         "conclusion": {"type": ["string", "null"], "maxLength": 800},
         "innovation": {"type": ["string", "null"], "maxLength": 300},
+        "key_concepts": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["name", "role", "definition", "page"],
+                "properties": {
+                    "name": {"type": "string", "minLength": 1, "maxLength": 200},
+                    "role": {"enum": ["core", "prerequisite", "mentioned"]},
+                    "definition": {"type": ["string", "null"], "maxLength": 2000},
+                    "page": {"type": "integer", "minimum": 0},
+                },
+            },
+        },
         "limitations": {
             "type": "array",
             "maxItems": 10,
@@ -39,9 +55,17 @@ EXTRACT_SCHEMA: Mapping[str, Any] = {
 }
 
 
-def _with_verification(data: Mapping[str, Any], source_text: str) -> dict[str, Any]:
+def _with_verification(
+    data: Mapping[str, Any], source_text: str, sent_text: str | None = None
+) -> dict[str, Any]:
     limitations = [
-        {**item, "verified": verify_quote(item.get("quote"), source_text)}
+        {
+            **item,
+            "verified": verify_quote(item.get("quote"), source_text)
+            and verify_quote(
+                item.get("quote"), clean_untrusted(source_text if sent_text is None else sent_text)
+            ),
+        }
         for item in data["limitations"]
     ]
     return {**data, "limitations": limitations}
@@ -104,15 +128,27 @@ class ExtractStage(Stage):
         if ctx.store.papers.get_extraction(paper_id) is not None:
             return  # 与 plan 一致：历史结果只标记过期，重排/重复任务不自动重提取
         chunked = load_chunks(ctx, state.doc_key)
+        document = load_document(ctx, state.doc_key)
+        source = extraction_source(paper, document, chunked, ctx.settings.assess_token_budget)
         result = ctx.llm.call(
             "extract",
             {"output_language": language_name(ctx.settings.reading_language)},
-            paper_text(ctx, paper, chunked),
+            source.text,
             EXTRACT_SCHEMA,
         )
-        data = _with_verification(result.data, full_text_of(chunked))
+        data = _with_verification(result.data, full_text_of(chunked), source.text)
         now = ctx.now_iso()
         with ctx.store.atomic():
+            data = ingest_concepts(
+                ctx,
+                paper_id,
+                data,
+                document,
+                source,
+                input_hash=input_hash,
+                producer_version=result.prompt_version,
+                now=now,
+            )
             ctx.store.papers.insert_extraction(
                 paper_id,
                 input_hash,

@@ -10,6 +10,7 @@ from litgleaner.infra.db.feedback_repo import SqlFeedbackRepo
 from litgleaner.infra.db.inbox_repo import SqlInboxRepo
 from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
 from litgleaner.infra.db.judgments_repo import SqlJudgmentRepo
+from litgleaner.infra.db.knowledge_repo import SqlKnowledgeRepo
 from litgleaner.infra.db.outputs_repo import SqlOutputRepo
 from litgleaner.infra.db.papers_repo import SqlPaperRepo
 from litgleaner.infra.db.qa_repo import SqlQARepo
@@ -67,6 +68,7 @@ class SqlStore:
         self._catalog = SqlCatalogRepo(self._db)
         self._search = SqlSearchRepo(self._db)
         self._qa = SqlQARepo(self._db)
+        self._knowledge = SqlKnowledgeRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -115,6 +117,10 @@ class SqlStore:
     @property
     def qa(self) -> SqlQARepo:
         return self._qa
+
+    @property
+    def knowledge(self) -> SqlKnowledgeRepo:
+        return self._knowledge
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

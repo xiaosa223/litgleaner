@@ -58,7 +58,7 @@ export interface LibraryPage {
 }
 
 export interface SearchHit {
-  kind: "paper" | "fulltext" | "note" | "highlight" | "extraction" | "qa";
+  kind: "paper" | "fulltext" | "note" | "highlight" | "extraction" | "qa" | "concept";
   id: string;
   paper_id: string;
   title: string;

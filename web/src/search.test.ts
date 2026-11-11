@@ -40,3 +40,10 @@ test("问答检索区分用户提问和模型回答，并跳回对应页", () =>
   assert.match(shown[1].meta, /^模型生成/);
   assert.equal(shown[1].go, "/papers/p1?page=2");
 });
+
+test("概念检索显示原文来源，并按出现页跳转", () => {
+  const [found] = paletteHits([hit("concept", { page: 1 })]);
+  assert.equal(found.group, "概念");
+  assert.match(found.meta, /^作者原文/);
+  assert.equal(found.go, "/papers/p1?page=1");
+});

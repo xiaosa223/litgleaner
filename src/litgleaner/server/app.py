@@ -22,6 +22,7 @@ from litgleaner.domain.inbox import InboxItem
 from litgleaner.domain.reading import Annotation, NewAnnotation
 from litgleaner.ports.catalog import CatalogQuery, StatusFilter
 from litgleaner.ports.model_settings import ModelSettings
+from litgleaner.server.knowledge import install_knowledge_routes
 from litgleaner.server.model_setup import install_model_routes
 from litgleaner.server.qa import install_qa_routes
 from litgleaner.server.runtime import Context
@@ -240,5 +241,6 @@ def create_app(
     _inbox_routes(app)
     install_model_routes(app)
     install_qa_routes(app)
+    install_knowledge_routes(app)
     _static_routes(app, static_dir)
     return app

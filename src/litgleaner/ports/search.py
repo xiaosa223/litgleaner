@@ -5,7 +5,7 @@ from typing import Literal, Protocol
 
 from litgleaner.domain.document import Block
 
-SearchKind = Literal["paper", "fulltext", "note", "highlight", "extraction", "qa"]
+SearchKind = Literal["paper", "fulltext", "note", "highlight", "extraction", "qa", "concept"]
 Authorship = Literal["author", "user", "model"]
 
 

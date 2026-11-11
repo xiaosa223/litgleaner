@@ -180,6 +180,7 @@ def test_links_from_llm_never_reach_any_channel(harness: Harness):
     harness.write_papers([paper("Injected", 5)])
     harness.llm.overrides["extract"] = {
         "summary": "访问 https://evil.example/x 领奖",
+        "key_concepts": [],
         "conclusion": "详见 www.evil.example/y 的说明",
         "innovation": "[点击](http://evil.example/z)",
         "limitations": [{"text": "见 https://evil.example", "source": "inferred", "quote": None}],

@@ -70,6 +70,7 @@ class FakeLLM:
                 "summary": "演示总结",
                 "conclusion": "演示结论",
                 "innovation": "演示创新点",
+                "key_concepts": [],
                 "limitations": [
                     {"text": "演示不足", "source": "author", "quote": "We found it works."}
                 ],

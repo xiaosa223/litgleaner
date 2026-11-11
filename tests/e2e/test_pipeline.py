@@ -221,6 +221,7 @@ def test_quote_verification_marks_fabricated_evidence(harness: Harness):
     harness.write_papers([paper("Quoted", 5)])
     harness.llm.overrides["extract"] = {
         "summary": "s",
+        "key_concepts": [],
         "conclusion": "c",
         "innovation": None,
         "limitations": [
