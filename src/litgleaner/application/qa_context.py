@@ -1,5 +1,6 @@
 """问答的有界本地词法检索和页级引文核验；后续可替换为混合检索。"""
 
+import json
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -7,9 +8,9 @@ from typing import Any
 
 from litgleaner.domain.chunker import ChunkedDocument, estimate_tokens
 from litgleaner.domain.document import NormalizedDocument
-from litgleaner.domain.errors import InvalidRequest
-from litgleaner.domain.evidence import clean_untrusted, select_chunks, verify_quote
-from litgleaner.domain.qa import Citation, Statement
+from litgleaner.domain.errors import InvalidRequest, PermanentError
+from litgleaner.domain.evidence import clean_untrusted, select_chunks, verify_quote, wrap_untrusted
+from litgleaner.domain.qa import Citation, Question, Statement
 from litgleaner.domain.sections import split_sections
 
 TOKEN_BUDGET = 4000
@@ -149,6 +150,43 @@ def trim_context(context: QAContext) -> QAContext:
     """从末尾去掉最低优先级来源；保留先选中的原文片段及其文本。"""
     sources = context.sources[:-1]
     return QAContext("\n\n".join(f"[page={s.page}]\n{s.text}" for s in sources), sources)
+
+
+def build_inputs(
+    question: Question,
+    document: NormalizedDocument,
+    chunks: ChunkedDocument,
+    profile: str,
+    system: str,
+) -> tuple[QAContext, str]:
+    """构造模型实际收到的输入；在线问答与只读失效检查共用同一预算和上下文。"""
+    data = {
+        "paper_id": question.paper_id,
+        "question": question.text,
+        "selection": question.selection,
+        "research_profile": profile,
+    }
+    baseline = system + wrap_untrusted(json.dumps(data, ensure_ascii=False))
+    budget = TOKEN_BUDGET - qa_token_count(baseline) - 100
+    context = select_context(
+        document,
+        chunks,
+        question.text,
+        question.selection,
+        question.page,
+        token_budget=max(0, budget),
+    )
+    if question.selection is not None and (
+        not context.sources or context.sources[0].text != question.selection
+    ):
+        raise PermanentError("问答输入过长，无法容纳选区，请缩小范围后重新提问")
+    while True:
+        inputs = json.dumps({**data, "paper_sources": context.text}, ensure_ascii=False)
+        if qa_token_count(system + wrap_untrusted(inputs)) <= TOKEN_BUDGET:
+            return context, inputs
+        if not context.sources or (question.selection is not None and len(context.sources) == 1):
+            raise PermanentError("问答输入过长，请缩小问题或选区后重新提问")
+        context = trim_context(context)
 
 
 def verified_statements(

@@ -8,7 +8,7 @@ import time
 from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, cast, get_args
 
 import typer
 
@@ -18,6 +18,7 @@ from litgleaner.application.export import mine
 from litgleaner.application.library import find_paper, record_action, require_library
 from litgleaner.application.pipeline import run_pipeline
 from litgleaner.application.stages.publish import rerender
+from litgleaner.application.stale import report as stale_report
 from litgleaner.application.topic_export import (
     ReferenceFormat,
     TableFormat,
@@ -40,6 +41,7 @@ from litgleaner.cli_shared import (
 from litgleaner.domain.errors import ConfigError, InvalidRequest, LitGleanerError, NotFound
 from litgleaner.domain.library import CardAction
 from litgleaner.domain.outline_render import render_outline
+from litgleaner.domain.stale import StaleKind
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.infra.export_files import write_directory
 from litgleaner.ports.inbound import CardClick
@@ -51,6 +53,44 @@ LOCK_RETRIES = 30
 zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
 export_app = typer.Typer(help="导出课题对比表、引用、综述骨架与个人数据", no_args_is_help=True)
+
+
+@friendly
+def stale_command(
+    format: Annotated[str, typer.Option(help="输出格式：text 或 json")] = "text",
+    kind: Annotated[str | None, typer.Option(help="限定结果类型，逗号分隔")] = None,
+    include_current: Annotated[bool, typer.Option(help="文本中同时列出完整核验通过的记录")] = False,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """零费用报告派生结果是否过期；保留历史，不重新排队或调用模型。"""
+    if format not in ("text", "json"):
+        raise typer.BadParameter("格式必须是 text 或 json", param_hint="--format")
+    kinds = () if kind is None else tuple(part.strip() for part in kind.split(","))
+    if any(part not in get_args(StaleKind) for part in kinds):
+        raise typer.BadParameter(
+            "结果类型无效：" + ", ".join(get_args(StaleKind)), param_hint="--kind"
+        )
+    report = stale_report(context_or_exit(config))
+    items = tuple(entry for entry in report.items if not kinds or entry.kind in kinds)
+    counts = {
+        status: sum(entry.status == status for entry in items)
+        for status in ("current", "stale", "unknown")
+    }
+    if format == "json":
+        echo(
+            json.dumps(
+                {"total": len(items), **counts, "items": [asdict(entry) for entry in items]},
+                ensure_ascii=False,
+            )
+        )
+        return
+    echo(
+        f"核对 {len(items)} 项：有效 {counts['current']}，过期 {counts['stale']}，"
+        f"未完整核验 {counts['unknown']}"
+    )
+    for entry in items:
+        if include_current or entry.status != "current":
+            echo(json.dumps(asdict(entry), ensure_ascii=False))
 
 
 @export_app.command("mine")

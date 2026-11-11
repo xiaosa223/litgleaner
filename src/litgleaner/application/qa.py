@@ -1,6 +1,5 @@
 """用户确认的论文问答：幂等排队、限定原文上下文、核验后保存回答。"""
 
-import json
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -9,11 +8,9 @@ from ulid import ULID
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_chunks, load_document
 from litgleaner.application.qa_context import (
-    TOKEN_BUDGET,
     QAContext,
+    build_inputs,
     qa_token_count,
-    select_context,
-    trim_context,
     validate_selection,
     verified_statements,
 )
@@ -21,7 +18,6 @@ from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics
 from litgleaner.domain.document import NormalizedDocument
 from litgleaner.domain.errors import InvalidRequest, NotFound, PermanentError
-from litgleaner.domain.evidence import wrap_untrusted
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import language_name
 from litgleaner.domain.qa import Answer, Question
@@ -154,35 +150,9 @@ def _profile(ctx: AppContext) -> str:
 def _inputs(
     ctx: AppContext, question: Question, doc_key: str, document: NormalizedDocument
 ) -> tuple[QAContext, str]:
-    data = {
-        "paper_id": question.paper_id,
-        "question": question.text,
-        "selection": question.selection,
-        "research_profile": _profile(ctx),
-    }
     route = ctx.llm.require_route(TASK)
     system = route.prompt.render({"output_language": language_name(question.reading_language)})
-    baseline = system + wrap_untrusted(json.dumps(data, ensure_ascii=False))
-    budget = TOKEN_BUDGET - qa_token_count(baseline) - 100
-    context = select_context(
-        document,
-        load_chunks(ctx, doc_key),
-        question.text,
-        question.selection,
-        question.page,
-        token_budget=max(0, budget),
-    )
-    if question.selection is not None and (
-        not context.sources or context.sources[0].text != question.selection
-    ):
-        raise PermanentError("问答输入过长，无法容纳选区，请缩小范围后重新提问")
-    while True:
-        inputs = json.dumps({**data, "paper_sources": context.text}, ensure_ascii=False)
-        if qa_token_count(system + wrap_untrusted(inputs)) <= TOKEN_BUDGET:
-            return context, inputs
-        if not context.sources or (question.selection is not None and len(context.sources) == 1):
-            raise PermanentError("问答输入过长，请缩小问题或选区后重新提问")
-        context = trim_context(context)
+    return build_inputs(question, document, load_chunks(ctx, doc_key), _profile(ctx), system)
 
 
 class AskStage(Stage):

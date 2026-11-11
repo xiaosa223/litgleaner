@@ -23,7 +23,7 @@ from litgleaner.application.topics import (
     pause_topic,
 )
 from litgleaner.bootstrap import build_context, zotero_status
-from litgleaner.cli_library import export_app, feishu_app, zotero_app
+from litgleaner.cli_library import export_app, feishu_app, stale_command, zotero_app
 from litgleaner.cli_shared import DEFAULT_CONFIG as _DEFAULT_CONFIG
 from litgleaner.cli_shared import ConfigOption, fake_adapters, missing_credentials, missing_optional
 from litgleaner.cli_shared import context_or_exit as _context
@@ -56,6 +56,7 @@ for name, group in (
     ("export", export_app),
 ):
     app.add_typer(group, name=name)
+app.command("stale")(stale_command)
 
 SinceOption = Annotated[
     datetime | None, typer.Option(formats=["%Y-%m-%d"], help="只处理此日期之后的论文")

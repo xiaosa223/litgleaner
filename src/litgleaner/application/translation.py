@@ -9,7 +9,7 @@
 """
 
 import logging
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_document
@@ -30,7 +30,8 @@ from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import LanguageCode, needs_translation
 from litgleaner.domain.numbered import group_batches
 from litgleaner.domain.paragraphs import Paragraph, paragraphs
-from litgleaner.ports.translations import TranslationKey
+from litgleaner.domain.topic import Topic
+from litgleaner.ports.translations import CachedTranslation, TranslationKey
 
 __all__ = [
     "BlockTranslation",
@@ -64,15 +65,25 @@ def translatable(block: Block, target_lang: LanguageCode = "zh-CN") -> bool:
 
 def paper_glossary(ctx: AppContext, paper_id: str) -> Glossary:
     """这篇论文命中的主题的术语表合并；没有命中的就用全部启用中的主题。"""
-    topics = active_topics(ctx)
-    hit = [
-        t
-        for t, h in ctx.store.judgments.relevant_topics(paper_id)
-        if t in topics and topics[t].topic_hash == h
-    ]
-    merged = Glossary(target_lang=ctx.settings.reading_language)
+    return merged_glossary(
+        ctx.settings.reading_language,
+        active_topics(ctx),
+        ctx.store.judgments.relevant_topics(paper_id),
+        ctx.glossaries,
+    )
+
+
+def merged_glossary(
+    target_lang: LanguageCode,
+    topics: Mapping[str, Topic],
+    hits: Iterable[tuple[str, str]],
+    glossaries: Mapping[str, Glossary],
+) -> Glossary:
+    """只用已读课题事实合并术语表，与在线阅读采用相同优先级。"""
+    hit = [t for t, h in hits if t in topics and topics[t].topic_hash == h]
+    merged = Glossary(target_lang=target_lang)
     for topic_id in hit or sorted(topics):
-        glossary = ctx.glossaries.get(topic_id)
+        glossary = glossaries.get(topic_id)
         if glossary and glossary.target_lang == merged.target_lang:
             merged = merged.merged(glossary)
     return merged
@@ -111,6 +122,21 @@ def cache_key(ctx: AppContext, paragraph: Paragraph, glossary: Glossary) -> Tran
     )
 
 
+def choose_cached(
+    paragraph: Paragraph,
+    found: Sequence[CachedTranslation],
+    key: TranslationKey | None,
+) -> CachedTranslation | None:
+    """从已按时间降序的同语言、同单位缓存中，优先选当前指纹。"""
+    source_hash = stable_hash(paragraph.text)
+    mine = [
+        c
+        for c in found
+        if c.key.source_hash == source_hash and len(c.sentences) == len(paragraph.sentences)
+    ]
+    return next((c for c in mine if c.key == key), None) or (mine[0] if mine else None)
+
+
 def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTranslation]:
     """已有的译文，按块给出。当前指纹的优先；没有时用最新的旧译文并标记 stale。不调用模型。"""
     found_paragraphs = paper_paragraphs(ctx, paper_id)
@@ -123,16 +149,11 @@ def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTransl
     result: dict[int, BlockTranslation] = {}
     for paragraph in found_paragraphs:
         key = cache_key(ctx, paragraph, glossary) if TASK in ctx.llm.routes else None
-        source_hash = stable_hash(paragraph.text)
-        mine = [
-            c
-            for c in found
-            if c.key.source_hash == source_hash and len(c.sentences) == len(paragraph.sentences)
-        ]
-        exact = next((c for c in mine if c.key == key), None)
-        chosen = exact or (mine[0] if mine else None)
+        chosen = choose_cached(paragraph, found, key)
         if chosen is not None:
-            blocks = block_results(paragraph, chosen.sentences, cached=True, stale=exact is None)
+            blocks = block_results(
+                paragraph, chosen.sentences, cached=True, stale=chosen.key != key
+            )
             result.update((b.index, b) for b in blocks)
     return result
 
