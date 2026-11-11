@@ -82,4 +82,4 @@ class FakeLLM:
         level = int(match.group(1)) if match else _DEFAULT_LEVEL
         keys = request.schema["properties"]["dimensions"]["required"]
         answer = {"level": level, "reason": "演示理由", "quote": None}
-        return {"dimensions": dict.fromkeys(keys, answer)}
+        return {"dimensions": dict.fromkeys(keys, answer), "goal_links": []}

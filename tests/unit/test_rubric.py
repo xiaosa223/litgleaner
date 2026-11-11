@@ -161,7 +161,7 @@ def test_anchor_change_only_changes_semantic_hash():
 def test_assessment_schema_never_asks_llm_for_total_score():
     schema = rubric().assessment_schema()
     assert schema["additionalProperties"] is False
-    assert set(schema["properties"]) == {"dimensions"}
+    assert set(schema["properties"]) == {"dimensions", "goal_links"}
     dims = schema["properties"]["dimensions"]["properties"]
     assert set(dims) == {"relevance", "novelty", "evidence", "reusability"}
     assert dims["relevance"]["properties"]["level"]["maximum"] == 5

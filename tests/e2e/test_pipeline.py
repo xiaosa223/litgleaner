@@ -241,7 +241,8 @@ def _assess_override(harness: Harness, **levels: int | None) -> None:
     harness.llm.overrides["assess"] = {
         "dimensions": {
             key: {"level": levels.get(key, 5), "reason": "演示理由", "quote": None} for key in keys
-        }
+        },
+        "goal_links": [],
     }
 
 

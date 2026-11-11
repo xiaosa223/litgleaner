@@ -42,6 +42,7 @@ from litgleaner.server.security import (
     install_guard,
 )
 from litgleaner.server.streaming import sse_response
+from litgleaner.server.topics import install_topic_routes
 
 NOT_BUILT = "前端还没有构建：在 web/ 目录执行 pnpm install && pnpm build。接口照常可用。"
 
@@ -244,5 +245,6 @@ def create_app(
     install_qa_routes(app)
     install_knowledge_routes(app)
     install_citation_routes(app)
+    install_topic_routes(app)
     _static_routes(app, static_dir)
     return app

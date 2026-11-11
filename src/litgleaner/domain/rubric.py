@@ -7,6 +7,7 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from litgleaner.domain.base import FrozenModel
+from litgleaner.domain.goal_links import goal_links_schema
 from litgleaner.domain.hashing import stable_hash
 
 Levels = Mapping[str, int | None]
@@ -147,7 +148,7 @@ class Rubric(FrozenModel):
         return min(self.tiers, key=lambda tier: tier.min_score).key
 
     def assessment_schema(self) -> dict[str, Any]:
-        """LLM 的输出结构。只有维度等级和证据，没有总分字段。"""
+        """输出维度等级、证据和目标关联；关联理由不参与算分。"""
         dimension = {
             "type": "object",
             "additionalProperties": False,
@@ -166,14 +167,15 @@ class Rubric(FrozenModel):
         return {
             "type": "object",
             "additionalProperties": False,
-            "required": ["dimensions"],
+            "required": ["dimensions", "goal_links"],
             "properties": {
                 "dimensions": {
                     "type": "object",
                     "additionalProperties": False,
                     "required": keys,
                     "properties": dict.fromkeys(keys, dimension),
-                }
+                },
+                "goal_links": goal_links_schema(),
             },
         }
 

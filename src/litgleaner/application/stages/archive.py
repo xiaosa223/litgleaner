@@ -47,6 +47,7 @@ def _topic_entries(ctx: AppContext, paper_id: str) -> tuple[dict[str, dict[str, 
                 state,
                 ctx.settings.chunker,
                 reading_language=ctx.settings.reading_language,
+                token_budget=ctx.settings.assess_token_budget,
             )
             if paper and topic and state
             else None

@@ -135,6 +135,7 @@ class ExtractStage(Stage):
             {"output_language": language_name(ctx.settings.reading_language)},
             source.text,
             EXTRACT_SCHEMA,
+            paper_id=paper.id,
         )
         data = _with_verification(result.data, full_text_of(chunked), source.text)
         now = ctx.now_iso()

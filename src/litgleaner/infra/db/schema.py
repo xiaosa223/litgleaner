@@ -162,6 +162,11 @@ assessment = Table(
     Column("model", String, nullable=False),
     Column("prompt_version", String, nullable=False),
     Column("created_at", String, nullable=False),
+    Column("goal_links", Text, nullable=False, server_default="[]"),
+    CheckConstraint(
+        "CASE WHEN json_valid(goal_links) THEN json_type(goal_links)='array' ELSE 0 END",
+        name="ck_assessment_goal_links",
+    ),
     UniqueConstraint("paper_id", "topic_id", "topic_hash", "semantic_hash", "input_hash"),
     Index("ix_assessment_topic", "topic_id", "topic_hash", "semantic_hash"),
 )

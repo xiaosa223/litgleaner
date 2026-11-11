@@ -35,6 +35,7 @@ def _pending_papers(ctx: AppContext, topic_id: str, since: str | None) -> tuple[
             state,
             ctx.settings.chunker,
             reading_language=ctx.settings.reading_language,
+            token_budget=ctx.settings.assess_token_budget,
         )
         keys = {
             (key.semantic_hash, key.topic_hash, key.input_hash)

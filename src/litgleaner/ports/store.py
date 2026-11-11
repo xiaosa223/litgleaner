@@ -3,8 +3,9 @@
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
+from litgleaner.domain.goal_links import GoalLink
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.inbox import InboxItem, InboxStatus
 from litgleaner.domain.paper import Paper
@@ -16,6 +17,9 @@ from litgleaner.ports.knowledge import KnowledgeRepo
 from litgleaner.ports.qa import QARepo
 from litgleaner.ports.search import SearchRepo
 from litgleaner.ports.translations import TranslationRepo
+
+if TYPE_CHECKING:
+    from litgleaner.ports.reading_route import ReadingRouteRepo
 
 FullTextStatus = Literal["available", "parsed", "unavailable", "failed"]
 DeliveryStatus = Literal["pending", "sending", "sent", "failed"]
@@ -101,6 +105,7 @@ class NewAssessment:
     fulltext_used: bool
     model: str
     prompt_version: str
+    goal_links: tuple[GoalLink, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -122,6 +127,7 @@ class Assessment:
     levels: Mapping[str, int | None]
     evidence: Mapping[str, Any]
     fulltext_used: bool
+    goal_links: tuple[GoalLink, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -376,6 +382,8 @@ class Store(Protocol):
     def knowledge(self) -> KnowledgeRepo: ...
     @property
     def citations(self) -> CitationRepo: ...
+    @property
+    def reading_routes(self) -> "ReadingRouteRepo": ...
 
     def atomic(self) -> AbstractContextManager[None]: ...
     def stats(self) -> dict[str, int]: ...

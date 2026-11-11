@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy import Row, func, or_, select
 from sqlalchemy.dialects.sqlite import insert
 
+from litgleaner.domain.goal_links import GoalLink
 from litgleaner.domain.rubric import ScoreResult
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import (
@@ -41,6 +42,7 @@ def _to_assessment(row: Row[Any]) -> Assessment:
         levels=json.loads(row.levels),
         evidence=json.loads(row.evidence),
         fulltext_used=bool(row.fulltext_used),
+        goal_links=tuple(GoalLink.model_validate(item) for item in json.loads(row.goal_links)),
     )
 
 
@@ -210,6 +212,11 @@ class SqlJudgmentRepo:
                 model=item.model,
                 prompt_version=item.prompt_version,
                 created_at=now,
+                goal_links=json.dumps(
+                    [link.model_dump(mode="json") for link in item.goal_links],
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
             )
             .on_conflict_do_nothing()
         )

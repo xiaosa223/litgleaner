@@ -5,11 +5,14 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from litgleaner.application.context import AppContext
-from litgleaner.application.documents import full_text_of, load_chunks, paper_text
+from litgleaner.application.documents import load_chunks, load_document, paper_header
+from litgleaner.application.goal_links import verified_goal_links
+from litgleaner.application.knowledge_ingest import ExtractionSource, extraction_source
+from litgleaner.application.llm_gateway import LLMResult
 from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics
 from litgleaner.domain.chunker import ChunkerConfig
-from litgleaner.domain.evidence import verify_quote
+from litgleaner.domain.evidence import clean_untrusted, verify_quote
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import language_name
 from litgleaner.domain.paper import Paper
@@ -41,6 +44,7 @@ def assessment_input_hash(
     chunker: ChunkerConfig,
     *,
     reading_language: str = "zh-CN",
+    token_budget: int = 6000,
 ) -> str:
     """评估输入的指纹。用全文时，切分规则决定送给模型的内容，所以计入切分版本。"""
     fulltext = _uses_fulltext(state)
@@ -51,6 +55,8 @@ def assessment_input_hash(
             "doc": state.doc_key if fulltext else None,
             "chunker": chunker.version if fulltext else None,
             "reading_language": reading_language,
+            "source_version": "page-blocks-v1" if fulltext else "metadata-v1",
+            "token_budget": token_budget if fulltext else None,
         }
     )
 
@@ -100,15 +106,71 @@ def _dimension_prompt(rubric: Rubric) -> str:
     )
 
 
-def _evidence(dimensions: Mapping[str, Any], source: str) -> dict[str, Any]:
+def _evidence(dimensions: Mapping[str, Any], source: str, sent: str) -> dict[str, Any]:
     return {
         key: {
             "reason": item["reason"],
             "quote": item["quote"],
-            "verified": verify_quote(item["quote"], source),
+            "verified": verify_quote(item["quote"], source) and verify_quote(item["quote"], sent),
         }
         for key, item in dimensions.items()
     }
+
+
+def _assessment_result(
+    ctx: AppContext,
+    paper: Paper,
+    topic: Topic,
+    state: FullTextState,
+    *,
+    input_hash: str,
+    result: LLMResult,
+    source: ExtractionSource,
+) -> NewAssessment:
+    fulltext_used = _uses_fulltext(state)
+    document = load_document(ctx, state.doc_key) if fulltext_used and state.doc_key else None
+    original = (
+        "\n".join(text for block in document.blocks for text in (block.caption, block.text) if text)
+        if document
+        else paper.abstract or ""
+    )
+    dimensions = result.data["dimensions"]
+    rubric = ctx.rubrics[topic.rubric]
+    raw_levels = {key: item["level"] for key, item in dimensions.items()}
+    return NewAssessment(
+        paper_id=paper.id,
+        topic_id=topic.id,
+        topic_hash=topic.topic_hash,
+        semantic_hash=rubric.semantic_hash,
+        input_hash=input_hash,
+        levels=apply_fulltext_constraint(rubric, raw_levels, fulltext_used),
+        evidence=_evidence(dimensions, original, clean_untrusted(source.text)),
+        fulltext_used=fulltext_used,
+        model=result.model,
+        prompt_version=result.prompt_version,
+        goal_links=verified_goal_links(
+            result.data["goal_links"],
+            topic,
+            source.text,
+            document=document,
+            abstract=paper.abstract,
+            sent_pages={
+                page: "\n".join(sent.text for sent in source.sources if sent.page == page)
+                for page in {sent.page for sent in source.sources}
+            },
+        ),
+    )
+
+
+def _assessment_source(ctx: AppContext, paper: Paper, state: FullTextState) -> ExtractionSource:
+    if _uses_fulltext(state) and state.doc_key:
+        return extraction_source(
+            paper,
+            load_document(ctx, state.doc_key),
+            load_chunks(ctx, state.doc_key),
+            ctx.settings.assess_token_budget,
+        )
+    return ExtractionSource(paper_header(paper), ())
 
 
 def _skip_processing(
@@ -164,6 +226,7 @@ class AssessStage(Stage):
             state,
             ctx.settings.chunker,
             reading_language=ctx.settings.reading_language,
+            token_budget=ctx.settings.assess_token_budget,
         )
         return assess_job(paper_id, topic, rubric, input_hash)
 
@@ -180,11 +243,11 @@ class AssessStage(Stage):
             state,
             ctx.settings.chunker,
             reading_language=ctx.settings.reading_language,
+            token_budget=ctx.settings.assess_token_budget,
         )
         if _skip_processing(ctx, paper.id, topic, rubric, input_hash, payload=payload):
             return
-        fulltext_used = _uses_fulltext(state)
-        chunked = load_chunks(ctx, state.doc_key) if state.doc_key and fulltext_used else None
+        source = _assessment_source(ctx, paper, state)
         result = ctx.llm.call(
             "assess",
             {
@@ -192,24 +255,13 @@ class AssessStage(Stage):
                 "rubric_dimensions": _dimension_prompt(rubric),
                 "output_language": language_name(ctx.settings.reading_language),
             },
-            paper_text(ctx, paper, chunked),
+            source.text,
             rubric.assessment_schema(),
+            paper_id=paper.id,
         )
-        dimensions = result.data["dimensions"]
-        source = full_text_of(chunked) if chunked else (paper.abstract or "")
-        raw_levels = {key: item["level"] for key, item in dimensions.items()}
         ctx.store.judgments.insert_assessment(
-            NewAssessment(
-                paper_id=paper.id,
-                topic_id=topic.id,
-                topic_hash=topic.topic_hash,
-                semantic_hash=rubric.semantic_hash,
-                input_hash=input_hash,
-                levels=apply_fulltext_constraint(rubric, raw_levels, fulltext_used),
-                evidence=_evidence(dimensions, source),
-                fulltext_used=fulltext_used,
-                model=result.model,
-                prompt_version=result.prompt_version,
+            _assessment_result(
+                ctx, paper, topic, state, input_hash=input_hash, result=result, source=source
             ),
             ctx.now_iso(),
         )

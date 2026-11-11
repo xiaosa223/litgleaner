@@ -16,6 +16,7 @@ from litgleaner.infra.db.outputs_repo import SqlOutputRepo
 from litgleaner.infra.db.papers_repo import SqlPaperRepo
 from litgleaner.infra.db.qa_repo import SqlQARepo
 from litgleaner.infra.db.reader_repo import SqlReaderRepo
+from litgleaner.infra.db.reading_route_repo import SqlReadingRouteRepo
 from litgleaner.infra.db.schema import (
     annotation,
     artifact,
@@ -71,6 +72,7 @@ class SqlStore:
         self._qa = SqlQARepo(self._db)
         self._knowledge = SqlKnowledgeRepo(self._db)
         self._citations = SqlCitationRepo(self._db)
+        self._reading_routes = SqlReadingRouteRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -127,6 +129,10 @@ class SqlStore:
     @property
     def citations(self) -> SqlCitationRepo:
         return self._citations
+
+    @property
+    def reading_routes(self) -> SqlReadingRouteRepo:
+        return self._reading_routes
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

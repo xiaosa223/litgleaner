@@ -126,7 +126,8 @@ def test_english_generation_keeps_author_quotes_unchanged_and_verified(harness: 
                 "quote": quote,
             }
             for dim in harness.ctx.rubrics["default"].dimensions
-        }
+        },
+        "goal_links": [],
     }
     paper_id = _processed(harness)
     extraction = harness.ctx.store.papers.get_extraction(paper_id)
