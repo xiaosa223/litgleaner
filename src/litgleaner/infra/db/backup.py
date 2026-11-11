@@ -9,11 +9,19 @@ import os
 import re
 import shutil
 import sqlite3
+import sys
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, tzinfo
 from pathlib import Path
+from typing import BinaryIO
+
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import fcntl
 
 from litgleaner.domain.errors import LitGleanerError
 from litgleaner.infra.db.migrate import (
@@ -27,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 _PREFIX = "litgleaner-"
 _SNAPSHOT = re.compile(r"^litgleaner-(\d{8}T\d{6}Z)(?:-[\w.-]+)?\.db$")
+_DAILY = re.compile(r"^litgleaner-(\d{8}T\d{6}Z)-daily(?:-(?:[2-9]\d*|1\d+))?\.db$")
 _VERSION_TABLE = "alembic_version"
 
 
@@ -52,6 +61,32 @@ def _sqlite_url(path: Path) -> str:
     return f"sqlite:///{path}"
 
 
+def _lock_file(handle: BinaryIO, *, acquire: bool) -> None:
+    if sys.platform == "win32":
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK if acquire else msvcrt.LK_UNLCK, 1)
+    else:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX if acquire else fcntl.LOCK_UN)
+
+
+@contextmanager
+def _backup_lock(backup_dir: Path) -> Iterator[None]:
+    """所有备份入口共用目录锁；固定保留锁文件，避免并发进程锁到不同 inode。"""
+    try:
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        with (backup_dir / ".backup.lock").open("a+b") as handle:
+            if handle.seek(0, os.SEEK_END) == 0:
+                handle.write(b"\0")  # Windows 的字节范围锁需要文件至少有一个字节。
+                handle.flush()
+            _lock_file(handle, acquire=True)
+            try:
+                yield
+            finally:
+                _lock_file(handle, acquire=False)
+    except (OSError, sqlite3.Error) as error:
+        raise LitGleanerError(f"备份失败：{error}") from error
+
+
 def _target(backup_dir: Path, now: datetime, label: str) -> Path:
     stamp = now.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
     suffix = f"-{label}" if label else ""
@@ -66,22 +101,25 @@ def _target(backup_dir: Path, now: datetime, label: str) -> Path:
 def _vacuum_into(database: Path, target: Path) -> None:
     partial = target.with_name(f".{target.name}.partial")
     partial.unlink(missing_ok=True)
-    connection = sqlite3.connect(database)
     try:
-        connection.execute("VACUUM INTO ?", (str(partial),))
+        connection = sqlite3.connect(database)
+        try:
+            connection.execute("VACUUM INTO ?", (str(partial),))
+        finally:
+            connection.close()
+        os.replace(partial, target)
     except BaseException:
         partial.unlink(missing_ok=True)
         raise
-    finally:
-        connection.close()
-    os.replace(partial, target)
 
 
-def _prune(backup_dir: Path, keep: int) -> tuple[Path, ...]:
-    # 先按文件名里的时间，同一秒内的多份再按写入先后
+def _prune(
+    backup_dir: Path, keep: int, *, database: Path, preserve: Path | None = None
+) -> tuple[Path, ...]:
+    # 保留本次已成功的快照，避免系统时钟回拨后刚写完就被删；其他先按时间，再按写入先后。
     snapshots = sorted(
-        (p for p in backup_dir.iterdir() if _SNAPSHOT.match(p.name)),
-        key=lambda p: (_stamp(p), p.stat().st_mtime_ns),
+        (p for p in backup_dir.iterdir() if _stamp(p) and p.is_file() and not p.samefile(database)),
+        key=lambda p: (p == preserve, _stamp(p), p.stat().st_mtime_ns),
     )
     removed = tuple(snapshots[:-keep]) if len(snapshots) > keep else ()
     for path in removed:
@@ -90,8 +128,14 @@ def _prune(backup_dir: Path, keep: int) -> tuple[Path, ...]:
 
 
 def _stamp(path: Path) -> str:
-    match = _SNAPSHOT.match(path.name)
-    return match.group(1) if match else ""
+    match = _SNAPSHOT.fullmatch(path.name)
+    if match is None:
+        return ""
+    try:
+        datetime.strptime(match.group(1), "%Y%m%dT%H%M%SZ")
+    except ValueError:
+        return ""
+    return match.group(1)
 
 
 def create_snapshot(
@@ -102,15 +146,56 @@ def create_snapshot(
         raise ValueError("keep 至少为 1")
     if not database.is_file():
         raise LitGleanerError(f"备份失败：数据库不存在：{database}")
-    try:
-        backup_dir.mkdir(parents=True, exist_ok=True)
-        target = _target(backup_dir, now, label)
-        _vacuum_into(database, target)
-        removed = _prune(backup_dir, keep)
-    except (OSError, sqlite3.Error) as error:
-        raise LitGleanerError(f"备份失败：{error}") from error
+    with _backup_lock(backup_dir):
+        return _create_snapshot(database, backup_dir, keep=keep, now=now, label=label)
+
+
+def _create_snapshot(
+    database: Path, backup_dir: Path, *, keep: int, now: datetime, label: str
+) -> BackupResult:
+    """调用方已持有目录锁，覆盖选名、发布和保留清理的完整操作。"""
+    target = _target(backup_dir, now, label)
+    _vacuum_into(database, target)
+    removed = _prune(backup_dir, keep, database=database, preserve=target)
     logger.info("数据库快照已写入 %s，清理旧快照 %d 份", target, len(removed))
     return BackupResult(target, removed)
+
+
+def _daily_date(path: Path, timezone: tzinfo) -> date | None:
+    match = _DAILY.fullmatch(path.name)
+    if match is None or not path.is_file() or path.stat().st_size == 0:
+        return None
+    try:
+        stamp = datetime.strptime(match.group(1), "%Y%m%dT%H%M%SZ").replace(tzinfo=UTC)
+    except ValueError:
+        return None
+    return stamp.astimezone(timezone).date()
+
+
+def ensure_daily_snapshot(
+    database: Path, backup_dir: Path, *, keep: int, now: datetime, timezone: tzinfo
+) -> Path:
+    """返回配置时区当天的自动快照；目录锁让全部备份入口串行执行。
+
+    最终文件名只在 VACUUM 成功后原子出现；临时文件不视为备份成功。
+    已有当天快照仍执行保留清理，让前次清理失败可以在下一轮恢复。
+    """
+    if keep < 1:
+        raise ValueError("keep 至少为 1")
+    day = now.astimezone(timezone).date()
+    with _backup_lock(backup_dir):
+        existing = [
+            path
+            for path in backup_dir.iterdir()
+            if path.is_file() and not path.samefile(database) and _daily_date(path, timezone) == day
+        ]
+        if existing:
+            selected = max(existing, key=lambda path: (_stamp(path), path.stat().st_mtime_ns))
+            _prune(backup_dir, keep, database=database, preserve=selected)
+            return selected
+        if not database.is_file():
+            raise LitGleanerError(f"备份失败：数据库不存在：{database}")
+        return _create_snapshot(database, backup_dir, keep=keep, now=now, label="daily").path
 
 
 def _row_counts(connection: sqlite3.Connection) -> dict[str, int]:

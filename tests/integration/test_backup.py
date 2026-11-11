@@ -71,7 +71,7 @@ def test_snapshot_is_a_complete_copy(database: Path, tmp_path: Path):
     assert result.path.name == "litgleaner-20261107T010203Z.db"
     assert _count(result.path, "source_cursor") == 1
     assert _revision(result.path) == head_revision()
-    assert not list((tmp_path / "backups").glob(".*"))
+    assert [path.name for path in (tmp_path / "backups").glob(".*")] == [".backup.lock"]
 
 
 def test_snapshot_keeps_newest_and_ignores_other_files(database: Path, tmp_path: Path):
@@ -81,7 +81,7 @@ def test_snapshot_keeps_newest_and_ignores_other_files(database: Path, tmp_path:
     for day in range(4):
         result = create_snapshot(database, backups, keep=2, now=NOW + timedelta(days=day))
 
-    names = sorted(path.name for path in backups.iterdir())
+    names = sorted(path.name for path in backups.iterdir() if path.name != ".backup.lock")
     assert names == [
         "litgleaner-20261109T010203Z.db",
         "litgleaner-20261110T010203Z.db",
@@ -102,7 +102,7 @@ def test_pruning_within_one_second_keeps_the_latest(database: Path, tmp_path: Pa
     create_snapshot(database, tmp_path / "b", keep=1, now=NOW)
     latest = create_snapshot(database, tmp_path / "b", keep=1, now=NOW)
 
-    assert [path.name for path in (tmp_path / "b").iterdir()] == [latest.path.name]
+    assert [path.name for path in (tmp_path / "b").glob("*.db")] == [latest.path.name]
 
 
 def test_snapshot_of_missing_database_fails_clearly(tmp_path: Path):

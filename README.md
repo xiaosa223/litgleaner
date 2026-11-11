@@ -47,7 +47,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 重新生成归档 | `archive rebuild` |
 | 导出课题对比表与引用 | `export table --topic <id>`、`export refs --topic <id>`，见 [docs/TOPIC-EXPORT.md](docs/TOPIC-EXPORT.md) |
 | 整理已读论文综述提纲 | `export outline --topic <id>` 只预览；显式确认后按需生成，见 [docs/OUTLINE.md](docs/OUTLINE.md) |
-| 备份数据库 | `backup`（保留份数见 `app.yaml` 的 `backup`）；`db upgrade` 迁移前会自动备份 |
+| 备份数据库 | `serve` 每天自动备份；`backup` 手动备份，`db upgrade` 迁移前备份；默认保留 14 份，见 [docs/BACKUP.md](docs/BACKUP.md) |
 | 统一翻译里的术语译名 | 写 `config/topics/<主题 id>.glossary.yaml`：`terms: [{en: self-attention, zh: 自注意力}]`，`en` 可以是多个写法的列表 |
 | 阅读、批注、管理待读 | `serve` 后在浏览器里操作；链接每次启动都会变，只能在本机打开 |
 | 恢复演练 | `restore --check <快照>`：在临时目录还原并校验，不改动正在用的数据库 |

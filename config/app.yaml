@@ -31,7 +31,7 @@ survey:
   seed_limit: 5
   since: '1900-01-01'
   coverage_threshold: 0.05
-# 数据库快照：litgleaner backup 手动生成，db upgrade 迁移前自动生成，只保留最新的 keep 份。
+# 数据库快照：serve 每天自动备份，backup 手动生成，db upgrade 迁移前备份，共保留 keep 份。
 # 恢复演练：litgleaner restore --check <快照>。
 backup:
   dir: data/demo/backups

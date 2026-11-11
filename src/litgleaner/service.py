@@ -2,6 +2,7 @@
 
 - 只监听 127.0.0.1，端口默认随机；每次启动生成新的启动令牌。
 - 调度和命令行共用同一把运行锁：命令行正在跑流程时，本轮直接跳过，下一轮再试。
+- 按配置时区每天备份一次；同日重启复用已完成快照，失败留到后续调度重试。
 - 飞书长连接目前仍由 litgleaner feishu listen 单独运行，之后并入这里。
 """
 
@@ -13,6 +14,7 @@ import threading
 import webbrowser
 from collections.abc import Callable
 from dataclasses import replace
+from datetime import date
 from pathlib import Path
 
 import uvicorn
@@ -24,6 +26,7 @@ from litgleaner.bootstrap import LLMS, build_llm, build_model_client
 from litgleaner.cli_shared import try_run_lock
 from litgleaner.domain.errors import ConfigError
 from litgleaner.infra.config import LoadedConfig
+from litgleaner.infra.db.backup import ensure_daily_snapshot
 from litgleaner.infra.model_settings import ModelConfigFile, SecretOverlay, prepare, settings_view
 from litgleaner.ports.llm import LLM
 from litgleaner.ports.model_settings import ModelDraft, ModelSettingsView
@@ -140,6 +143,8 @@ class Service:
         self._threads: list[threading.Thread] = []
         self._server: uvicorn.Server | None = None
         self._security: LocalSecurity | None = None
+        self._backup_day: date | None = None
+        self._backup_path: Path | None = None
         self._seen_inbox = ctx.store.inbox.ready_revision()  # 完成添加后才唤醒处理
 
     @property
@@ -200,11 +205,38 @@ class Service:
 
     def _schedule(self) -> None:
         while not self._stop.is_set():
+            self._backup_if_due()
             try:
                 run_due(self._config, self._models.snapshot())
             except Exception:  # 调度线程不能因为一次失败退出，详情写进日志
                 logger.exception("定时运行出错")
             self._serve_on_demand(self._interval)
+
+    def _backup_if_due(self) -> None:
+        """每天首轮可用调度补一次快照，失败不阻断其他工作，也不提前记为完成。"""
+        try:
+            now = self._ctx.clock()
+            day = now.astimezone(self._config.timezone).date()
+            if (
+                self._backup_day == day
+                and self._backup_path is not None
+                and self._backup_path.is_file()
+            ):
+                return
+            with try_run_lock(self._config) as acquired:
+                if not acquired:
+                    return
+                path = ensure_daily_snapshot(
+                    self._config.database_path,
+                    self._config.backup_dir,
+                    keep=self._config.app.backup.keep,
+                    now=now,
+                    timezone=self._config.timezone,
+                )
+            self._backup_path, self._backup_day = path, day
+            logger.info("每日备份已就绪：%s", path)
+        except Exception:
+            logger.exception("每日备份失败，将在后续调度重试")
 
     def _serve_on_demand(self, seconds: float) -> None:
         """两次定时运行之间，每隔几秒检查用户的操作：有按需任务或新添加的论文时立即跑一轮流程。
