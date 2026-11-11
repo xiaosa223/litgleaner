@@ -11,6 +11,7 @@ from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import Annotation, NewAnnotation, ReadingState, ReadingStatus
 from litgleaner.domain.rubric import ScoreResult
 from litgleaner.ports.catalog import CatalogRepo
+from litgleaner.ports.qa import QARepo
 from litgleaner.ports.search import SearchRepo
 from litgleaner.ports.translations import TranslationRepo
 
@@ -367,6 +368,8 @@ class Store(Protocol):
     def catalog(self) -> CatalogRepo: ...
     @property
     def search(self) -> SearchRepo: ...
+    @property
+    def qa(self) -> QARepo: ...
 
     def atomic(self) -> AbstractContextManager[None]: ...
     def stats(self) -> dict[str, int]: ...

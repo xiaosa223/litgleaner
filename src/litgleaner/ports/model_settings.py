@@ -5,7 +5,7 @@ from typing import Literal, Protocol
 
 from litgleaner.ports.llm import LLM
 
-ModelTask = Literal["triage", "extract", "assess", "translate"]
+ModelTask = Literal["triage", "extract", "assess", "translate", "ask"]
 
 
 @dataclass(frozen=True)

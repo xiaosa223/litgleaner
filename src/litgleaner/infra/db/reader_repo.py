@@ -34,6 +34,7 @@ def _to_annotation(row: Row[Any]) -> Annotation:
         created_at=row.created_at,
         updated_at=row.updated_at,
         rects=rects,
+        qa_question_id=row.qa_question_id,
     )
 
 
@@ -85,11 +86,12 @@ class SqlReaderRepo:
                 rects=json.dumps([list(rect) for rect in item.rects]) if item.rects else None,
                 created_at=now,
                 updated_at=now,
+                qa_question_id=item.qa_question_id,
             )
         )
         return Annotation(
             annotation_id, item.paper_id, item.kind, item.page, item.bbox,
-            item.quote, item.body, now, now, item.rects,
+            item.quote, item.body, now, now, item.rects, item.qa_question_id,
         )  # fmt: skip
 
     def annotations(self, paper_id: str) -> tuple[Annotation, ...]:

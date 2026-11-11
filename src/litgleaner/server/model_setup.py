@@ -17,7 +17,7 @@ class ModelBody(_Body):
     provider: str = Field(pattern=r"^[a-z][a-z0-9_-]{0,47}$")
     protocol: str = Field(min_length=1, max_length=80)
     model: str = Field(min_length=1, max_length=200, pattern=r"^\S(?:[^\r\n]*\S)?$")
-    tasks: list[ModelTask] = Field(min_length=1, max_length=4)
+    tasks: list[ModelTask] = Field(min_length=1, max_length=5)
     input_price: float = Field(ge=0, le=1_000_000, allow_inf_nan=False)
     output_price: float = Field(ge=0, le=1_000_000, allow_inf_nan=False)
     api_key: SecretStr | None = Field(default=None, min_length=1, max_length=4096)

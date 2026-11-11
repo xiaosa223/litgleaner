@@ -121,6 +121,8 @@ class LLMGateway:
         variables: Mapping[str, str],
         untrusted: str,
         schema: Mapping[str, Any],
+        *,
+        paper_id: str | None = None,
     ) -> LLMResult:
         route = self.require_route(task)
         self.check_budget()
@@ -143,10 +145,11 @@ class LLMGateway:
                         {}, usage.model, usage.input_tokens, usage.output_tokens, usage.cost_usd
                     ),
                     ok=False,
+                    paper_id=paper_id,
                 )
             raise
         errors = sorted(Draft202012Validator(schema).iter_errors(response.data), key=str)
-        self._record(task, route, response, ok=not errors)
+        self._record(task, route, response, ok=not errors, paper_id=paper_id)
         if errors:
             raise LLMOutputInvalid(f"{task} 输出不符合结构：{errors[0].message[:200]}")
         return LLMResult(response.data, response.model, route.prompt.version)
@@ -193,7 +196,15 @@ class LLMGateway:
         if spent >= self.daily_budget_usd:
             raise BudgetExceeded(f"今日 LLM 费用 {spent:.4f} 已达预算 {self.daily_budget_usd}")
 
-    def _record(self, task: str, route: TaskRoute, response: LLMResponse, ok: bool) -> None:
+    def _record(
+        self,
+        task: str,
+        route: TaskRoute,
+        response: LLMResponse,
+        ok: bool,
+        *,
+        paper_id: str | None = None,
+    ) -> None:
         self.runs.record_llm_call(
             LLMCall(
                 task=task,
@@ -203,6 +214,7 @@ class LLMGateway:
                 output_tokens=response.output_tokens,
                 cost_usd=response.cost_usd,
                 ok=ok,
+                paper_id=paper_id,
             ),
             self.clock().isoformat(),
         )

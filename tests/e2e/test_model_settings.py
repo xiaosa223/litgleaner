@@ -363,7 +363,7 @@ def test_model_mutations_require_csrf(model_ui, method, path):
 @pytest.mark.parametrize(
     "change",
     [
-        {"tasks": ["ask"]},
+        {"tasks": ["unimplemented_task"]},
         {"input_price": -1},
         {"api_key": ""},
         {"base_url": f"https://user:{SECRET}@models.test/v1?token={SECRET}"},

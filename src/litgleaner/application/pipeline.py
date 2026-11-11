@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from litgleaner.application.context import AppContext
+from litgleaner.application.qa import AskStage
 from litgleaner.application.stages.archive import ArchiveStage
 from litgleaner.application.stages.assess import AssessStage
 from litgleaner.application.stages.base import Stage
@@ -47,7 +48,7 @@ STAGES: tuple[Stage, ...] = (
 )
 STAGE_NAMES: tuple[str, ...] = tuple(stage.name for stage in STAGES)
 # 按需阶段（第 15.1 节）：用户在领读器里确认后才有任务，没有 plan；排在后台阶段之前执行
-ON_DEMAND: tuple[Stage, ...] = (TranslatePaperStage(),)
+ON_DEMAND: tuple[Stage, ...] = (AskStage(), TranslatePaperStage())
 ON_DEMAND_NAMES: tuple[str, ...] = tuple(stage.name for stage in ON_DEMAND)
 
 

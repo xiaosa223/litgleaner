@@ -58,7 +58,7 @@ export interface LibraryPage {
 }
 
 export interface SearchHit {
-  kind: "paper" | "fulltext" | "note" | "highlight" | "extraction";
+  kind: "paper" | "fulltext" | "note" | "highlight" | "extraction" | "qa";
   id: string;
   paper_id: string;
   title: string;
@@ -83,6 +83,7 @@ export interface Annotation {
   created_at: string;
   updated_at: string;
   rects: Rect[];
+  qa_question_id?: string | null;
 }
 
 export interface ReadingState {

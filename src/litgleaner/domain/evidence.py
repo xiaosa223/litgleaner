@@ -45,7 +45,11 @@ def select_chunks(chunks: Iterable[Chunk], token_budget: int) -> tuple[Chunk, ..
     return tuple(chunk for chunk in ordered if chunk.chunk_id in picked)
 
 
+def clean_untrusted(text: str) -> str:
+    """清除不可信原文里的分隔标记，供发送内容和引用校验共用。"""
+    return _TAG_OPEN.sub("[removed]", _TAG_CLOSE.sub("[removed]", text))
+
+
 def wrap_untrusted(text: str) -> str:
     """论文内容只是数据。先清除分隔标记，防止内容提前闭合后伪装成指令。"""
-    cleaned = _TAG_OPEN.sub("[removed]", _TAG_CLOSE.sub("[removed]", text))
-    return f"<untrusted_paper>\n{cleaned}\n</untrusted_paper>"
+    return f"<untrusted_paper>\n{clean_untrusted(text)}\n</untrusted_paper>"

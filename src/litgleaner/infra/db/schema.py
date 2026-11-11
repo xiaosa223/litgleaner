@@ -2,6 +2,7 @@
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     Float,
     ForeignKey,
@@ -285,6 +286,7 @@ annotation = Table(
     Column("created_at", String, nullable=False),
     Column("updated_at", String, nullable=False),
     Column("deleted_at", String, nullable=True),
+    Column("qa_question_id", String, ForeignKey("qa_message.id"), nullable=True),
 )
 
 # 段落译文缓存（第 12.3 节）。同一段原文、同一术语表、同一译者版本只翻一次。
@@ -316,4 +318,31 @@ inbox = Table(
     Column("error", Text, nullable=True),
     Column("created_at", String, nullable=False),
     Column("updated_at", String, nullable=False),
+)
+
+# 用户提问和模型回答分别追加一行；parent_id 只能指向同篇论文的问题。
+qa_message = Table(
+    "qa_message",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("paper_id", String, ForeignKey("paper.id"), nullable=False),
+    Column("role", String, nullable=False),
+    Column("parent_id", String, ForeignKey("qa_message.id")),
+    Column("request_id", String),
+    Column("text", Text, nullable=False),
+    Column("page", Integer),
+    Column("data", Text, nullable=False),
+    Column("created_at", String, nullable=False),
+    UniqueConstraint("paper_id", "request_id", name="uq_qa_question_request"),
+    UniqueConstraint("parent_id", name="uq_qa_answer_parent"),
+    CheckConstraint(
+        "(role = 'question' AND parent_id IS NULL AND request_id IS NOT NULL "
+        "AND length(trim(request_id)) > 0) OR "
+        "(role = 'answer' AND parent_id IS NOT NULL AND request_id IS NULL)",
+        name="ck_qa_role_fields",
+    ),
+    CheckConstraint("length(trim(text)) > 0", name="ck_qa_text"),
+    CheckConstraint("page IS NULL OR (typeof(page) = 'integer' AND page >= 0)", name="ck_qa_page"),
+    CheckConstraint("json_valid(data)", name="ck_qa_data"),
+    Index("ix_qa_paper_created", "paper_id", "created_at", "id"),
 )

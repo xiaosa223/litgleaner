@@ -29,6 +29,7 @@ class NewAnnotation:
     quote: str | None  # 原文片段
     body: str | None  # 用户写的笔记
     rects: tuple[Rect, ...] = ()  # 原版视图里高亮的位置
+    qa_question_id: str | None = None  # 关联原问答；body 仍只属于用户
 
 
 @dataclass(frozen=True)
@@ -43,3 +44,4 @@ class Annotation:
     created_at: str
     updated_at: str
     rects: tuple[Rect, ...] = ()
+    qa_question_id: str | None = None

@@ -29,3 +29,14 @@ test("用户笔记和模型摘要保留作者身份，原文命中保留页码�
   assert.equal(found.meta, "我的记录 · 第 1 页 · 片段");
   assert.match(paletteHits([hit("extraction", { authorship: "model" })])[0].meta, /^模型生成/);
 });
+
+test("问答检索区分用户提问和模型回答，并跳回对应页", () => {
+  const shown = paletteHits([
+    hit("qa", { id: "question", authorship: "user" }),
+    hit("qa", { id: "answer", authorship: "model", page: 2 }),
+  ]);
+  assert.equal(shown[0].group, "问答");
+  assert.match(shown[0].meta, /^我的记录/);
+  assert.match(shown[1].meta, /^模型生成/);
+  assert.equal(shown[1].go, "/papers/p1?page=2");
+});
