@@ -15,7 +15,7 @@ routes:
     tiers: [must_read, need_fulltext]
     limit: 5
 # 飞书：一份推送一张卡片，每篇带“加入 Zotero / 不感兴趣”按钮。需要 uv sync --extra feishu，
-# 再常驻运行 litgleaner feishu listen 接收按钮点击。配置步骤见 docs/CHANNELS.md。
+# 启用后 litgleaner serve 自动接收按钮点击。配置步骤见 docs/CHANNELS.md。
 #  feishu_me:
 #    adapter: feishu
 #    renderer: feishu_card

@@ -12,12 +12,13 @@ from typing import Annotated, cast, get_args
 
 import typer
 
+from litgleaner.adapters.feishu.listener import answerers_from
 from litgleaner.application import outline
 from litgleaner.application.context import AppContext
 from litgleaner.application.export import mine
+from litgleaner.application.inbound import apply_click
 from litgleaner.application.library import find_paper, record_action, require_library
 from litgleaner.application.pipeline import run_pipeline
-from litgleaner.application.stages.publish import rerender
 from litgleaner.application.stale import report as stale_report
 from litgleaner.application.topic_export import (
     ReferenceFormat,
@@ -48,7 +49,6 @@ from litgleaner.ports.inbound import CardClick
 
 logger = logging.getLogger(__name__)
 LOCK_RETRY_SECONDS = 10
-LOCK_RETRIES = 30
 
 zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
@@ -251,13 +251,21 @@ def feishu_listen(
     loaded = load_or_exit(config)
     context_or_exit(config)  # 先检查配置和数据库，有问题立刻报出来；工作线程另建连接
     clicks: queue.Queue[CardClick] = queue.Queue()
-    listener, update = build_feishu_listener(loaded, channel, clicks.put)
+    try:
+        listener, update = build_feishu_listener(loaded, channel, clicks.put)
+    except ConfigError as error:
+        if str(error) == "inbound_disabled":
+            raise ConfigError(f"没有启用的飞书渠道：{channel}") from error
+        raise
     worker = threading.Thread(
         target=_work, args=(config, loaded, channel, clicks, update), daemon=True
     )
     worker.start()
     echo(f"开始监听飞书渠道 {channel} 的卡片按钮（Ctrl+C 退出）")
-    listener.start()
+    try:
+        listener.start()
+    finally:
+        listener.stop()
 
 
 def _work(
@@ -272,9 +280,13 @@ def _work(
     while True:
         click = clicks.get()
         try:
-            _handle_click(ctx, loaded, channel, click, update)
+            handled = _handle_click(ctx, loaded, channel, click, update)
         except Exception:
             logger.exception("处理飞书点击 %s 失败", click.event_id)
+            handled = False
+        if not handled:
+            clicks.put(click)
+            time.sleep(LOCK_RETRY_SECONDS)
 
 
 def _handle_click(
@@ -283,24 +295,19 @@ def _handle_click(
     channel: str,
     click: CardClick,
     update: Callable[[str, str], None],
-) -> None:
-    record_action(ctx, click.action, channel=channel, actor=click.actor, external_id=click.event_id)
-    if click.action.action == "save_to_library" and ctx.library is not None:
-        _save_now(ctx, loaded)
-    if click.message_id and click.action.digest_id:
-        rendered = rerender(ctx, click.action.digest_id, channel)
-        if rendered is not None:
+) -> bool:
+    """与服务共用核验和运行锁；锁被占用时由工作线程保留点击稍后再试。"""
+    settings = loaded.channels.get(channel)
+    if settings is None or not settings.enabled:
+        return True
+    allowed = {channel: answerers_from(settings.options)}
+    with try_run_lock(loaded) as acquired:
+        if not acquired:
+            return False
+        rendered = apply_click(ctx, click, allowed)
+    if click.message_id and rendered is not None:
+        try:
             update(click.message_id, rendered.body)
-
-
-def _save_now(ctx: AppContext, loaded: LoadedConfig) -> None:
-    """每日流程正在跑时等一会儿；一直拿不到锁就留给下一次运行。"""
-    for _ in range(LOCK_RETRIES):
-        with try_run_lock(loaded) as locked:
-            if locked:
-                report = run_pipeline(ctx, only="library")
-                if not report.ok:
-                    logger.warning("加入文献库没有完成：%s", report.summary())
-                return
-        time.sleep(LOCK_RETRY_SECONDS)
-    logger.warning("流程一直在运行，选中的论文留在队列里，下次运行时加入")
+        except Exception:
+            logger.exception("更新飞书卡片失败，已记录的反馈保留")
+    return True

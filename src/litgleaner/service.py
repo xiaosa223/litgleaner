@@ -1,14 +1,15 @@
-"""常驻服务（第 15.5 节）：一个进程里组合领读器接口和定时调度。
+"""常驻服务（第 15.5 节）：组合领读器、定时调度和可选的渠道监听。
 
 - 只监听 127.0.0.1，端口默认随机；每次启动生成新的启动令牌。
 - 调度和命令行共用同一把运行锁：命令行正在跑流程时，本轮直接跳过，下一轮再试。
 - 按配置时区每天备份一次；同日重启复用已完成快照，失败留到后续调度重试。
-- 飞书长连接目前仍由 litgleaner feishu listen 单独运行，之后并入这里。
+- 渠道回调只入队，由调度线程持共享锁执行反馈和文献库任务。
 """
 
 import html
 import logging
 import os
+import queue
 import socket
 import threading
 import webbrowser
@@ -19,15 +20,18 @@ from pathlib import Path
 
 import uvicorn
 
+from litgleaner.adapters.feishu.listener import FeishuListener
 from litgleaner.adapters.secrets import SystemSecretStore
 from litgleaner.application.context import AppContext
+from litgleaner.application.inbound import apply_click
 from litgleaner.application.pipeline import RunReport, has_on_demand_work, run_pipeline
-from litgleaner.bootstrap import LLMS, build_llm, build_model_client
+from litgleaner.bootstrap import LLMS, build_feishu_listener, build_llm, build_model_client
 from litgleaner.cli_shared import try_run_lock
 from litgleaner.domain.errors import ConfigError
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.infra.db.backup import ensure_daily_snapshot
 from litgleaner.infra.model_settings import ModelConfigFile, SecretOverlay, prepare, settings_view
+from litgleaner.ports.inbound import CardClick
 from litgleaner.ports.llm import LLM
 from litgleaner.ports.model_settings import ModelDraft, ModelSettingsView
 from litgleaner.ports.secrets import SecretStore
@@ -146,6 +150,9 @@ class Service:
         self._backup_day: date | None = None
         self._backup_path: Path | None = None
         self._seen_inbox = ctx.store.inbox.ready_revision()  # 完成添加后才唤醒处理
+        self._clicks: queue.Queue[CardClick] = queue.Queue()
+        self._listener: FeishuListener | None = None
+        self._update_message: Callable[[str, str], None] | None = None
 
     @property
     def base_url(self) -> str:
@@ -188,6 +195,45 @@ class Service:
         self._spawn("litgleaner-http", lambda: server.run(sockets=[sock]))
         self._spawn("litgleaner-scheduler", self._schedule)
         self._wait_until_listening()
+        self._spawn("litgleaner-channel", self._listen)
+
+    def _listen(self) -> None:
+        try:
+            listener, update = build_feishu_listener(self._config, None, self._clicks.put_nowait)
+            self._listener, self._update_message = listener, update
+            if self._stop.is_set():
+                listener.stop()
+                return
+            listener.start()
+        except ConfigError as error:
+            if str(error) != "inbound_disabled":
+                logger.error("渠道监听配置无效：%s", error)
+        except Exception:
+            logger.exception("渠道监听失败，领读器和定时流程继续运行")
+
+    def _drain_clicks(self) -> None:
+        listener = self._listener
+        if listener is None:
+            return
+        for _ in range(32):
+            with try_run_lock(self._config) as acquired:
+                if not acquired or self._stop.is_set():
+                    return
+                try:
+                    click = self._clicks.get_nowait()
+                except queue.Empty:
+                    return
+                try:
+                    rendered = apply_click(self._models.snapshot(), click, listener.channels)
+                except Exception:
+                    self._clicks.put_nowait(click)
+                    logger.exception("处理渠道点击 %s 失败，将稍后重试", click.event_id)
+                    return
+            if rendered is not None and click.message_id and self._update_message is not None:
+                try:
+                    self._update_message(click.message_id, rendered.body)
+                except Exception:
+                    logger.exception("更新渠道卡片失败，已记录的反馈保留")
 
     def _spawn(self, name: str, target: Callable[[], object]) -> None:
         thread = threading.Thread(target=target, name=name, daemon=True)
@@ -207,6 +253,7 @@ class Service:
         while not self._stop.is_set():
             self._backup_if_due()
             try:
+                self._drain_clicks()
                 run_due(self._config, self._models.snapshot())
             except Exception:  # 调度线程不能因为一次失败退出，详情写进日志
                 logger.exception("定时运行出错")
@@ -248,6 +295,7 @@ class Service:
             if self._stop.wait(min(seconds, ON_DEMAND_TICK_SECONDS)):
                 return
             try:
+                self._drain_clicks()
                 ctx = self._models.snapshot()
                 latest = ctx.store.inbox.ready_revision()
                 wanted = has_on_demand_work(ctx) or latest != self._seen_inbox
@@ -258,6 +306,8 @@ class Service:
 
     def stop(self) -> None:
         self._stop.set()
+        if self._listener is not None:
+            self._listener.stop()
         if self._server is not None:
             self._server.should_exit = True
         for thread in self._threads:

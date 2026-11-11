@@ -42,11 +42,7 @@ from litgleaner.adapters.sources.openreview import OpenReviewSource
 from litgleaner.adapters.sources.pubmed import PubMedSource
 from litgleaner.adapters.sources.semantic_scholar import SemanticScholarSource
 from litgleaner.adapters.zotero.fulltext import ZoteroFullText
-from litgleaner.adapters.zotero.local_api import (
-    default_key_file,
-    read_local_key,
-    save_local_key,
-)
+from litgleaner.adapters.zotero.local_api import default_key_file, read_local_key, save_local_key
 from litgleaner.adapters.zotero.source import ZoteroSource
 from litgleaner.adapters.zotero.writer_local import ZoteroLocalLibrary
 from litgleaner.application.context import AppContext, ChannelBinding, RuntimeSettings
@@ -330,19 +326,25 @@ def zotero_status(config: LoadedConfig) -> list[str]:
 
 
 def build_feishu_listener(
-    config: LoadedConfig, channel: str, on_click: Callable[[CardClick], None]
+    config: LoadedConfig, channel: str | None, on_click: Callable[[CardClick], None]
 ) -> tuple[FeishuListener, Callable[[str, str], None]]:
-    """返回监听器和“更新某条消息的卡片”的函数。凭据与这个渠道的推送共用。"""
-    settings = config.channels.get(channel)
-    if settings is None or settings.adapter != "feishu" or not settings.enabled:
-        raise ConfigError(f"config/channels.yaml 里没有启用的飞书渠道 {channel}")
-    args = BuildArgs(
-        channel, settings.options, config.root, {env: env for env in settings.credentials_env}
-    )
+    """组装指定渠道或同一应用的全部渠道；无可用渠道时不读凭据、不加载 SDK。"""
+    channels = {
+        name: item
+        for name, item in config.channels.items()
+        if item.enabled and item.adapter == "feishu" and channel in (None, name)
+    }
+    if not channels:
+        raise ConfigError("inbound_disabled")
+    name, settings = next(iter(channels.items()))
+    envs = set.intersection(*(set(item.credentials_env) for item in channels.values()))
+    args = BuildArgs(name, settings.options, config.root, {env: env for env in envs})
     app_id, app_secret = args.secret(APP_ID_ENV), args.secret(APP_SECRET_ENV)
-    messenger = FeishuMessenger(app_id, app_secret)
-    listener = FeishuListener(app_id, app_secret, answerers_from(settings.options), on_click)
-    return listener, messenger.update
+    allowed = {name: answerers_from(item.options) for name, item in channels.items()}
+    listener = FeishuListener(
+        app_id, app_secret, frozenset().union(*allowed.values()), on_click, channels=allowed
+    )
+    return listener, FeishuMessenger(app_id, app_secret).update
 
 
 def _survey_sources_version(config: LoadedConfig) -> str:

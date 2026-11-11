@@ -40,7 +40,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 改评价维度的定义 | 改同一文件，执行 `rubric reassess <id>` 预览，加 `--execute` 执行（花钱） |
 | 查看历史结果是否过期 | `stale` 零费用核对；`--format json` 输出全部历史及无法完整核验的原因，见 [docs/STALE.md](docs/STALE.md) |
 | 增减推送渠道和时间 | 改 `config/channels.yaml` |
-| 飞书卡片推送、点按钮加入 Zotero | 见 [docs/CHANNELS.md](docs/CHANNELS.md)：`zotero authorize`、`feishu listen` |
+| 飞书卡片推送、点按钮加入 Zotero | 配置渠道及 `zotero authorize` 后，`serve` 自动监听按钮，见 [docs/CHANNELS.md](docs/CHANNELS.md) |
 | 手动把一篇论文加入 Zotero | `zotero add <DOI 或论文编号>` |
 | 查看和重试失败任务 | `jobs list`、`jobs retry` |
 | 处理发送结果未知的推送 | `delivery list`，确认后执行 `delivery resolve <digest> <渠道> --sent` 或 `--resend` |

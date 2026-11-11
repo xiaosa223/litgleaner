@@ -59,7 +59,7 @@ uv run pytest tests/architecture
 ### 分层与强制机制
 
 ```text
-入口：cli → cli_library → service（组合 server、调度；飞书监听待并入）→ server → cli_shared；mcp_server（待实现）
+入口：cli → cli_library → service（组合 server、调度、可选渠道监听）→ server → cli_shared；mcp_server（待实现）
   → bootstrap → adapters | infra → application → ports → domain
 ```
 

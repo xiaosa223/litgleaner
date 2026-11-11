@@ -9,9 +9,11 @@
 
 import logging
 from collections.abc import Callable, Iterable, Mapping
+from types import MappingProxyType
 from typing import Any
 
-from litgleaner.adapters.feishu.api import card_response, sdk
+from litgleaner.adapters.feishu.api import card_response
+from litgleaner.adapters.feishu.lifecycle import ListenerRuntime
 from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.library import decode_action
 from litgleaner.ports.inbound import CardClick
@@ -64,6 +66,8 @@ class FeishuListener:
         app_secret: str,
         answerers: frozenset[str],
         on_click: Callable[[CardClick], None],
+        *,
+        channels: Mapping[str, frozenset[str]] | None = None,
     ) -> None:
         if not app_id or not app_secret:
             raise ConfigError("飞书监听需要环境变量 FEISHU_APP_ID 和 FEISHU_APP_SECRET")
@@ -71,6 +75,14 @@ class FeishuListener:
         self._app_secret = app_secret
         self._answerers = answerers
         self._on_click = on_click
+        self._channels = MappingProxyType(
+            {name: frozenset(answerers) for name, answerers in (channels or {}).items()}
+        )
+        self._runtime = ListenerRuntime()
+
+    @property
+    def channels(self) -> Mapping[str, frozenset[str]]:
+        return self._channels
 
     def handle(self, payload: Any) -> dict[str, Any]:
         """处理一次回调，返回飞书要求的答复内容。任何异常都不能让长连接断掉。"""
@@ -86,21 +98,11 @@ class FeishuListener:
         return toast_for(result)
 
     def start(self) -> None:
-        """阻塞运行，断线自动重连。"""
-        lark = sdk()
-
-        def callback(payload: Any) -> Any:
-            return card_response(self.handle(payload))
-
-        handler = (
-            lark.EventDispatcherHandler.builder("", "")
-            .register_p2_card_action_trigger(callback)
-            .build()
+        """阻塞运行并自动重连；stop 可取消初连、重连和后台任务。"""
+        self._runtime.run(
+            self._app_id, self._app_secret, lambda payload: card_response(self.handle(payload))
         )
-        client = lark.ws.Client(
-            self._app_id,
-            self._app_secret,
-            event_handler=handler,
-            log_level=lark.LogLevel.WARNING,
-        )
-        client.start()
+
+    def stop(self) -> None:
+        """可从服务线程调用，也可在 start 之前调用。"""
+        self._runtime.stop()
