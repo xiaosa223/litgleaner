@@ -1,6 +1,7 @@
 # ADR 0008：本机 agent 只用于边读边问，先用 API 跑通
 
 - 状态：已接受（2026-11-08，用户决定）
+- 被修订：第 3 条（首次向导先配置 API 提供方，改为第一次用到模型时在原地配置）由 [ADR 0009](0009-survey-read-retain.md) 修订
 - 修订：ADR 0005 第 6、8 条，以及第 2 条的安全前提；ARCHITECTURE.md 第 1、12.1、12.3、12.4、15.2、15.3、15.5 节；REQUIREMENTS.md R19、R20、R24
 - 依据：[API 端到端与本机 agent 实测](../experiments/2026-11-08-api-e2e-and-acp-probe.md)
 

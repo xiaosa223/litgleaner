@@ -1,6 +1,7 @@
 # ADR 0006：网页优先、多平台路线，领读器借用 Agentero
 
 - 状态：已接受（2026-11-08，按推荐方案）
+- 被修订：第 3 条（界面只有中文）由 [ADR 0009](0009-survey-read-retain.md) 修订
 - 修订：ADR 0003 第 2 条（前端用 pdfjs-dist）；ARCHITECTURE.md 第 12.2、12.3、15.5 节；REQUIREMENTS.md R2、R25
 - 依据：[Agentero 复用调研](../experiments/2026-11-08-agentero-reuse.md)
 
