@@ -377,3 +377,20 @@ def test_invalid_settings_never_echo_raw_input_or_api_key(model_ui, change):
     assert response.json()["code"] == "invalid_request"
     assert SECRET not in response.text and "input" not in response.json()
     assert model_ui.peer.requests == [] and model_ui.secrets.writes == []
+
+
+@pytest.mark.parametrize(
+    "tasks",
+    [
+        ["outline"],
+        ["triage", "extract", "assess", "translate", "ask", "map", "outline"],
+    ],
+)
+def test_http_model_settings_support_outline_alone_and_all_seven_tasks(model_ui, tasks):
+    ui = model_ui
+    before = ui.harness.llm_calls()
+    response = ui.client.put(SETTINGS, json=draft(tasks=tasks))
+    assert response.status_code == 200
+    assert {task["task"] for task in response.json()["tasks"] if task["ready"]} == set(tasks)
+    assert ui.runtime.snapshot().llm.routes["outline"].prompt.name == "outline"
+    assert ui.peer.requests == [] and ui.harness.llm_calls() == before

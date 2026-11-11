@@ -63,6 +63,8 @@ class FakeLLM:
         return LLMResponse(data, request.model, 100, 20, _COST_PER_CALL)
 
     def _answer(self, request: LLMRequest) -> Mapping[str, Any]:
+        if request.task == "outline":
+            return self._outline(request)
         if request.task == "map":
             return self._topic_map(request)
         if request.task == "triage":
@@ -109,6 +111,23 @@ class FakeLLM:
                 }
                 for index in range(5)
             ]
+        }
+
+    def _outline(self, request: LLMRequest) -> Mapping[str, Any]:
+        records = json.loads(_UNTRUSTED.sub("", request.user))["papers"]
+        ids = [record["paper_id"] for record in records]
+        count = min(3, len(ids))
+        return {
+            "groups": [
+                {
+                    "name": f"演示提纲 {index + 1}",
+                    "description": "对已发送论文的演示分组，属于模型概括。",
+                    "goal_ids": [],
+                    "paper_ids": ids[index::count],
+                }
+                for index in range(count)
+            ],
+            "gaps": [],
         }
 
     def _assessment(self, request: LLMRequest) -> Mapping[str, Any]:

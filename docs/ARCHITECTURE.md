@@ -184,6 +184,7 @@ litgleaner/
 | 判断 | `score` | `(assessment, policy_hash)` | 最终分、等级、是否临时、是否有无法判断的维度，由代码算出 |
 | 判断 | `rubric_snapshot` | `hash` | 首次使用时保存指标全文，历史分数可追溯 |
 | 判断 | `topic_map` | `(topic, topic_hash, input_hash, producer_version)` | 课题地图：子方向的名称、说明和所含论文，由 LLM 任务 `map` 显式生成（第 7.5 节） |
+| 判断 | `topic_outline` | `(topic, topic_hash, input_hash, producer_version)` | 已读综述骨架：短分组、覆盖缺口候选与生成时的对比表、来源引用附件，由 `outline` 显式生成，只追加保存（第 14 节） |
 | 输出 | `digest` / `digest_item` | ULID / `(digest, position)` | 一次推送的不可变内容 |
 | 输出 | `delivery` | `(digest, channel)` | 发送状态，保证不重复推送 |
 | 反馈 | `feedback` | ULID；渠道事件号 `external_id` 唯一 | 只追加：加入文献库、不感兴趣、有用、需要全文 |
@@ -1047,6 +1048,8 @@ litgleaner export outline --topic example-topic   # 综述骨架
 - **综述骨架**：按研究目标或方法类别把已读论文分组成提纲，每组附对比表和可核验引用，并列出“研究空白候选”（对比表中没有被覆盖的方法与数据组合等），每条都指向具体论文。**不生成成段正文**。
 - 对比表、引用、综述骨架都可以在领读器里查看和导出。
 - 对比表和引用导出不花费 LLM 费用；综述骨架的分组说明由 LLM 生成，按需执行。
+- **综述骨架执行合同**：使用独立 `outline` 任务，先只读预览，再由用户确认固定输入并排队。范围为当前画像下相关且已读的论文；只使用已有提取，不补抓全文。模型仅返回短组名、短说明、论文编号及有编号依据的覆盖缺口候选；代码检查实际发送的论文编号和研究目标编号，附上由原始元数据生成的引用与由提取生成的对比表。缺少提取内容不构成研究空白证据；候选只描述当前已读输入集合的覆盖缺口。
+- 结果以 `topic_outline` 只追加保存，带画像、实际发送输入、来源与生产者指纹；同时保存实际输入、预算遗漏和未分组编号，以及生成时的表格与来源引用附件。模型、提示词、阅读语言、预算或已发送来源改变时标记过期，不自动重做；新增已读论文单独提示。历史结果不随来源后续更新而被改写，相同输入与生产者重复确认复用缓存。
 
 ## 15. 运行与 LLM
 
@@ -1074,6 +1077,7 @@ tasks:
   assess:      { provider: main, model: STRONG_MODEL, prompt: assess }
   topic_draft: { provider: main, model: STRONG_MODEL, prompt: topic_draft }
   map:         { provider: main, model: STRONG_MODEL, prompt: map }         # 课题地图（第 7.5 节）
+  outline:     { provider: main, model: STRONG_MODEL, prompt: outline }     # 已读论文综述骨架（第 14 节）
   review:      { provider: main, model: STRONG_MODEL, prompt: review }
   explain:     { provider: main, model: STRONG_MODEL, prompt: explain }     # 背景卡、章节导读、前置阅读
   translate:   { provider: main, model: CHEAP_MODEL,  prompt: translate }

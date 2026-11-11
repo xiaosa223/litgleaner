@@ -6,11 +6,13 @@ import queue
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated, cast
 
 import typer
 
+from litgleaner.application import outline
 from litgleaner.application.context import AppContext
 from litgleaner.application.export import mine
 from litgleaner.application.library import find_paper, record_action, require_library
@@ -37,6 +39,7 @@ from litgleaner.cli_shared import (
 )
 from litgleaner.domain.errors import ConfigError, InvalidRequest, LitGleanerError, NotFound
 from litgleaner.domain.library import CardAction
+from litgleaner.domain.outline_render import render_outline
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.infra.export_files import write_directory
 from litgleaner.ports.inbound import CardClick
@@ -47,7 +50,7 @@ LOCK_RETRIES = 30
 
 zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
-export_app = typer.Typer(help="导出课题对比表、引用与个人数据", no_args_is_help=True)
+export_app = typer.Typer(help="导出课题对比表、引用、综述骨架与个人数据", no_args_is_help=True)
 
 
 @export_app.command("mine")
@@ -111,6 +114,37 @@ def export_refs(
         )
     for warning in result.references.warnings:
         typer.echo("警告：" + json.dumps(warning, ensure_ascii=False), err=True)
+
+
+@export_app.command("outline")
+@friendly
+def export_outline(
+    topic: Annotated[str, typer.Option(help="当前研究课题编号")],
+    execute: Annotated[
+        bool, typer.Option("--execute", help="确认预览并排队，会使用模型预算")
+    ] = False,
+    plan: Annotated[str | None, typer.Option(help="预览返回的 plan_hash")] = None,
+    result: Annotated[str | None, typer.Option(help="导出指定历史结果编号的 Markdown")] = None,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """默认只预览已读论文范围和费用；生成需 --execute --plan，下载需 --result。"""
+    if (execute and plan is None) or (plan is not None and not execute):
+        raise typer.BadParameter("生成必须同时提供 --execute 和 --plan")
+    if result is not None and execute:
+        raise typer.BadParameter("--result 不能与 --execute 一起使用")
+    ctx = context_or_exit(config)
+    try:
+        if result is not None:
+            typer.echo(render_outline(outline.result(ctx, topic, result)), nl=False)
+        elif execute:
+            with run_lock(load_or_exit(config)):
+                status = outline.queue(ctx, topic, plan or "")
+            echo(json.dumps(asdict(status), ensure_ascii=False, default=lambda v: v.model_dump()))
+        else:
+            echo(json.dumps(asdict(outline.preview(ctx, topic)), ensure_ascii=False))
+    except LitGleanerError as error:
+        typer.secho(str(error), fg="red", err=True)
+        raise typer.Exit(2) from error
 
 
 @zotero_app.command("authorize")

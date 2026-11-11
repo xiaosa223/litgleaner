@@ -39,4 +39,4 @@ uv run litgleaner export refs --topic example-topic --format csl-json --only-rea
 - Markdown 对 HTML、表格分隔符、换行和链接语法转义；CSV 使用标准字段转义，并防止标题或编号被表格软件解释成公式。
 - 正式引用复用 [个人导出](PERSONAL-EXPORT.md) 的来源元数据渲染器，只使用有效且无歧义的标识符。缺失或冲突标识符单列核对；不联网补全、不猜作者姓/名或书目信息。
 
-课题页查看和下载按钮尚未接线。综述骨架需要单独的按需模型任务及结果契约，不由这些只读请求触发。
+课题页查看和下载按钮尚未接线。[综述骨架](OUTLINE.md) 使用独立 `outline` 按需任务，需预览和显式确认，不由这些只读请求触发。

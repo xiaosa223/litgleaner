@@ -9,6 +9,7 @@ from litgleaner.application.llm_gateway import LLMGateway
 from litgleaner.domain.chunker import ChunkerConfig
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
+from litgleaner.domain.outline import TopicOutlineSettings
 from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.survey import SurveySettings
@@ -44,6 +45,7 @@ class RuntimeSettings:
     survey: SurveySettings = field(default_factory=SurveySettings)
     survey_sources_version: str = ""
     map: TopicMapSettings = field(default_factory=TopicMapSettings)
+    outline: TopicOutlineSettings = field(default_factory=TopicOutlineSettings)
 
 
 @dataclass(frozen=True)

@@ -19,6 +19,9 @@ assess:
   token_budget: 6000
 map:
   token_budget: 12000
+# 综述骨架只整理已读论文的已有提取，先预览确认；限制实际发送给模型的输入量。
+outline:
+  token_budget: 12000  # 整数 512–64000；改预算标记旧结果过期，不自动重做
 # 课题调研先预览、再显式执行；各上限约束本轮候选范围。
 survey:
   rounds: 2

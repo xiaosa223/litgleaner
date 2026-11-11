@@ -40,13 +40,13 @@ def test_map_budget_rejects_invalid_or_coerced_values(value):
         )
 
 
-def test_model_settings_accept_all_six_available_tasks():
+def test_model_settings_accept_all_seven_available_tasks():
     body = ModelBody(
         provider="personal",
         protocol="openai_chat",
         model="chosen",
-        tasks=["triage", "extract", "assess", "translate", "ask", "map"],
+        tasks=["triage", "extract", "assess", "translate", "ask", "map", "outline"],
         input_price=0,
         output_price=0,
     )
-    assert body.draft().tasks[-1] == "map"
+    assert body.draft().tasks[-1] == "outline"

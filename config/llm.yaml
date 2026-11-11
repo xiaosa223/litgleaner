@@ -60,6 +60,8 @@ tasks:
   extract: { provider: main, model: demo-strong, prompt: extract }
   assess: { provider: main, model: demo-strong, prompt: assess }
   map: { provider: main, model: demo-strong, prompt: map }
+  # 已读论文的综述骨架：先预览并确认固定输入才运行，与课题地图独立；旧配置可以不写
+  outline: { provider: main, model: demo-strong, prompt: outline }
   # 领读器的段落翻译：流式返回，按课题术语表统一译名（ADR 0004）。用便宜、快的模型即可
   translate: { provider: main, model: demo-cheap, prompt: translate }
 budget:

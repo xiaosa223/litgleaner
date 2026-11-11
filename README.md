@@ -44,6 +44,8 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 查看和重试失败任务 | `jobs list`、`jobs retry` |
 | 处理发送结果未知的推送 | `delivery list`，确认后执行 `delivery resolve <digest> <渠道> --sent` 或 `--resend` |
 | 重新生成归档 | `archive rebuild` |
+| 导出课题对比表与引用 | `export table --topic <id>`、`export refs --topic <id>`，见 [docs/TOPIC-EXPORT.md](docs/TOPIC-EXPORT.md) |
+| 整理已读论文综述提纲 | `export outline --topic <id>` 只预览；显式确认后按需生成，见 [docs/OUTLINE.md](docs/OUTLINE.md) |
 | 备份数据库 | `backup`（保留份数见 `app.yaml` 的 `backup`）；`db upgrade` 迁移前会自动备份 |
 | 统一翻译里的术语译名 | 写 `config/topics/<主题 id>.glossary.yaml`：`terms: [{en: self-attention, zh: 自注意力}]`，`en` 可以是多个写法的列表 |
 | 阅读、批注、管理待读 | `serve` 后在浏览器里操作；链接每次启动都会变，只能在本机打开 |

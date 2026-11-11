@@ -14,6 +14,7 @@ from litgleaner.infra.db.inbox_repo import SqlInboxRepo
 from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
 from litgleaner.infra.db.judgments_repo import SqlJudgmentRepo
 from litgleaner.infra.db.knowledge_repo import SqlKnowledgeRepo
+from litgleaner.infra.db.outline_repo import SqlOutlineRepo
 from litgleaner.infra.db.outputs_repo import SqlOutputRepo
 from litgleaner.infra.db.papers_repo import SqlPaperRepo
 from litgleaner.infra.db.qa_repo import SqlQARepo
@@ -83,6 +84,7 @@ class SqlStore:
         self._reading_routes = SqlReadingRouteRepo(self._db)
         self._surveys = SqlSurveyRepo(self._db)
         self._topic_maps = SqlTopicMapRepo(self._db)
+        self._topic_outlines = SqlOutlineRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -151,6 +153,10 @@ class SqlStore:
     @property
     def topic_maps(self) -> SqlTopicMapRepo:
         return self._topic_maps
+
+    @property
+    def topic_outlines(self) -> SqlOutlineRepo:
+        return self._topic_outlines
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

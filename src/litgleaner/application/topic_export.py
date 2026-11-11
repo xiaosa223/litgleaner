@@ -47,7 +47,8 @@ def _topic(ctx: AppContext, topic_id: str) -> Topic:
     return topic
 
 
-def _snapshot(ctx: AppContext, topic: Topic) -> TopicExportSnapshot:
+def snapshot(ctx: AppContext, topic: Topic) -> TopicExportSnapshot:
+    """对比、引用与综述共用同一课题范围的一致来源快照。"""
     rubric = ctx.rubrics[topic.rubric]
     return ctx.store.topic_export_snapshot(
         TopicExportQuery(topic.id, topic.topic_hash, rubric.semantic_hash, rubric.policy_hash)
@@ -104,7 +105,7 @@ def _current_score(
     return score if score.assessment.input_hash == expected else None
 
 
-def _row(
+def comparison_row(
     ctx: AppContext, topic: Topic, paper: Paper, snapshot: TopicExportSnapshot
 ) -> ComparisonRow:
     state = snapshot.fulltexts.get(paper.id)
@@ -129,23 +130,23 @@ def comparison(ctx: AppContext, topic_id: str, *, tier: str | None = None) -> To
     """暂停课题也能导出；不补抽事实，不重评，不读文档 blob。"""
     topic = _topic(ctx, topic_id)
     tiers = _tiers(ctx, topic, tier)
-    snapshot = _snapshot(ctx, topic)
-    rows = tuple(_row(ctx, topic, paper, snapshot) for paper in snapshot.papers)
+    saved = snapshot(ctx, topic)
+    rows = tuple(comparison_row(ctx, topic, paper, saved) for paper in saved.papers)
     selected = tuple(row for row in rows if not tiers or row.tier in tiers)
     return TopicComparison(topic.id, topic.topic_hash, len(rows), tiers, selected)
 
 
 def references(ctx: AppContext, topic_id: str, *, only_read: bool = False) -> TopicReferences:
     topic = _topic(ctx, topic_id)
-    snapshot = _snapshot(ctx, topic)
+    saved = snapshot(ctx, topic)
     papers = tuple(
         paper
-        for paper in snapshot.papers
+        for paper in saved.papers
         if not only_read
-        or ((reading := snapshot.reading.get(paper.id)) is not None and reading.status == "read")
+        or ((reading := saved.reading.get(paper.id)) is not None and reading.status == "read")
     )
     rendered = render_references(
-        tuple((paper, snapshot.aliases.get(paper.id, ())) for paper in papers)
+        tuple((paper, saved.aliases.get(paper.id, ())) for paper in papers)
     )
     missing = frozenset(rendered.unverified_ids)
     return TopicReferences(
