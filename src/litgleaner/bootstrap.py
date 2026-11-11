@@ -345,6 +345,12 @@ def build_feishu_listener(
     return listener, messenger.update
 
 
+def _survey_sources_version(config: LoadedConfig) -> str:
+    sources = {name: item.model_dump(mode="json") for name, item in config.sources.items()}
+    fulltext = [item.model_dump(mode="json") for item in config.app.fulltext]
+    return stable_hash((sources, fulltext, config.app.parser.model_dump(mode="json")))
+
+
 def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = None) -> AppContext:
     now = clock or (lambda: datetime.now(UTC))
     store = SqlStore(config.database_url)
@@ -379,6 +385,8 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
             timezone=config.timezone,
             ui_language=config.app.language.ui,
             reading_language=config.app.language.reading,
+            survey=config.app.survey,
+            survey_sources_version=_survey_sources_version(config),
         ),
         topics=config.topics,
         glossaries=config.glossaries,

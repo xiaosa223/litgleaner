@@ -5,7 +5,7 @@ from datetime import date
 from typing import Any
 
 from litgleaner.adapters.common.records import RecordBuilder
-from litgleaner.domain.query import HistoricalSearch
+from litgleaner.domain.query import HistoricalCitations, HistoricalSearch
 from litgleaner.ports.source import FetchResult
 
 Fields = Callable[[Mapping[str, Any]], dict[str, Any]]
@@ -23,7 +23,11 @@ def publication_types(value: Any) -> tuple[str, ...]:
 
 class HistoryCollector:
     def __init__(
-        self, query: HistoricalSearch, builder: RecordBuilder, max_records: int, review_type: str
+        self,
+        query: HistoricalSearch | HistoricalCitations,
+        builder: RecordBuilder,
+        max_records: int,
+        review_type: str,
     ) -> None:
         self.query, self.builder = query, builder
         self.limit, self.max_records = min(query.limit, max_records), max_records
@@ -34,6 +38,10 @@ class HistoryCollector:
     @property
     def full(self) -> bool:
         return self.seen >= self.limit
+
+    @property
+    def category(self) -> str:
+        return self.query.category if isinstance(self.query, HistoricalSearch) else "citations"
 
     def consume(self, items: list[Any], fields: Fields) -> None:
         room = self.limit - self.seen
@@ -48,7 +56,7 @@ class HistoryCollector:
             valid_date = (
                 isinstance(published, date) and self.query.since <= published <= self.query.until
             )
-            valid_type = self.query.category != "reviews" or self.review_type in data.get(
+            valid_type = self.category != "reviews" or self.review_type in data.get(
                 "publication_types", ()
             )
             if not valid_date or not valid_type:
@@ -68,7 +76,7 @@ class HistoryCollector:
             self.builder.note(
                 f"{self.year_only} 条仅有年份，按来源规则使用该年 1 月 1 日；日期精度有限"
             )
-        if self.unknown_counts and self.query.category == "highly_cited":
+        if self.unknown_counts and self.category == "highly_cited":
             self.builder.note(
                 f"{self.unknown_counts} 条来源被引数缺失或无效，保留为未知并排在已知数之后"
             )
@@ -79,12 +87,12 @@ class HistoryCollector:
         if truncated:
             boundary = []
             if self.limit == self.query.limit:
-                boundary.append(f"HistoricalSearch.limit={self.query.limit}")
+                boundary.append(f"{type(self.query).__name__}.limit={self.query.limit}")
             if self.limit == self.max_records:
                 boundary.append(f"SourceOptions.max_records={self.max_records}")
             self.builder.note(f"达到历史查询原始条目上限 {' / '.join(boundary)}，结果已截断")
         records = self.builder.records
-        if self.query.category == "highly_cited":
+        if self.category == "highly_cited":
             records = tuple(
                 sorted(
                     records,

@@ -35,6 +35,7 @@ from litgleaner.infra.db.schema import (
     triage,
 )
 from litgleaner.infra.db.search_repo import SqlSearchRepo
+from litgleaner.infra.db.survey_repo import SqlSurveyRepo
 from litgleaner.infra.db.translation_repo import SqlTranslationRepo
 
 _COUNTED = (
@@ -73,6 +74,7 @@ class SqlStore:
         self._knowledge = SqlKnowledgeRepo(self._db)
         self._citations = SqlCitationRepo(self._db)
         self._reading_routes = SqlReadingRouteRepo(self._db)
+        self._surveys = SqlSurveyRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -133,6 +135,10 @@ class SqlStore:
     @property
     def reading_routes(self) -> SqlReadingRouteRepo:
         return self._reading_routes
+
+    @property
+    def surveys(self) -> SqlSurveyRepo:
+        return self._surveys
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()

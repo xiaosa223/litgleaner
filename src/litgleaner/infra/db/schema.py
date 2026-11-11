@@ -18,8 +18,10 @@ from sqlalchemy import (
 
 from litgleaner.infra.db.schema_citation import define_citation
 from litgleaner.infra.db.schema_knowledge import define_knowledge
+from litgleaner.infra.db.schema_survey import define_survey
 
 metadata = MetaData()
+survey_preview, survey_work, survey_round = define_survey(metadata)
 
 paper = Table(
     "paper",
@@ -254,6 +256,7 @@ llm_call = Table(
     Column("ok", Boolean, nullable=False),
     Column("created_at", String, nullable=False, index=True),
     Column("paper_id", String, nullable=True, index=True),  # 领读器的按需任务按论文计费
+    Column("scope_id", String, nullable=True, index=True),
 )
 
 # 反馈只追加。external_id 是渠道给的事件编号，同一次点击重复送达时靠它去重。

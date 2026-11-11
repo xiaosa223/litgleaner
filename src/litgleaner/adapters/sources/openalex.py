@@ -36,6 +36,7 @@ from litgleaner.domain.identity import normalize_arxiv_id, normalize_doi
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
+    HistoricalCitations,
     HistoricalSearch,
     JournalWatch,
     KeywordSearch,
@@ -63,7 +64,15 @@ class OpenAlexOptions(SourceOptions):
 
 class OpenAlexSource:
     capabilities: frozenset[type] = frozenset(
-        {JournalWatch, KeywordSearch, CitationWatch, AuthorWatch, ReferenceList, HistoricalSearch}
+        {
+            JournalWatch,
+            KeywordSearch,
+            CitationWatch,
+            AuthorWatch,
+            ReferenceList,
+            HistoricalSearch,
+            HistoricalCitations,
+        }
     )
 
     def __init__(
@@ -95,7 +104,7 @@ class OpenAlexSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
-        if isinstance(query, HistoricalSearch):
+        if isinstance(query, HistoricalSearch | HistoricalCitations):
             return OpenAlexHistory(
                 self._http,
                 HistoryCollector(query, RecordBuilder(self.name), options.max_records, "review"),

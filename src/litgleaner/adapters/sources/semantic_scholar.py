@@ -31,12 +31,14 @@ from litgleaner.adapters.sources.historical_common import (
     citation_count,
     publication_types,
 )
+from litgleaner.adapters.sources.semantic_scholar_citations import SemanticScholarCitations
 from litgleaner.adapters.sources.semantic_scholar_history import SemanticScholarHistory
 from litgleaner.adapters.sources.semantic_scholar_references import SemanticScholarReferences
 from litgleaner.domain.errors import SchemaChanged
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
+    HistoricalCitations,
     HistoricalSearch,
     KeywordSearch,
     Query,
@@ -80,7 +82,14 @@ class _Quota:
 
 class SemanticScholarSource:
     capabilities: frozenset[type] = frozenset(
-        {KeywordSearch, CitationWatch, AuthorWatch, ReferenceList, HistoricalSearch}
+        {
+            KeywordSearch,
+            CitationWatch,
+            AuthorWatch,
+            ReferenceList,
+            HistoricalSearch,
+            HistoricalCitations,
+        }
     )
 
     def __init__(
@@ -112,6 +121,14 @@ class SemanticScholarSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
+        if isinstance(query, HistoricalCitations):
+            return SemanticScholarCitations(
+                self._http,
+                HistoryCollector(query, RecordBuilder(self.name), options.max_records, "Review"),
+                _FIELDS,
+                lambda paper: _paper_fields(paper, _published(paper)),
+                options.page_size,
+            ).fetch(query)
         if isinstance(query, HistoricalSearch):
             return SemanticScholarHistory(
                 self._http,
@@ -129,6 +146,10 @@ class SemanticScholarSource:
                 fields=_FIELDS,
                 add_paper=lambda builder, paper: _add(builder, paper, _published(paper)),
             ).fetch(query)
+        return self._daily(query, cursor)
+
+    def _daily(self, query: Query, cursor: str | None) -> FetchResult:
+        options = self._options
         window = window_from_cursor(
             cursor,
             self._today(),

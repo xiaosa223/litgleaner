@@ -105,6 +105,7 @@ class LLMGateway:
     runs: RunRepo
     daily_budget_usd: float
     clock: Callable[[], datetime]
+    scope_id: str | None = None
 
     def require_route(self, task: str) -> TaskRoute:
         route = self.routes.get(task)
@@ -174,18 +175,12 @@ class LLMGateway:
         return TextStream(self, task, request, paper_id)
 
     def record_stream(self, task: str, done: StreamDone, paper_id: str | None) -> None:
-        self.runs.record_llm_call(
-            LLMCall(
-                task=task,
-                model=done.model,
-                prompt_version=self.require_route(task).prompt.version,
-                input_tokens=done.input_tokens,
-                output_tokens=done.output_tokens,
-                cost_usd=done.cost_usd,
-                ok=done.error is None,
-                paper_id=paper_id,
-            ),
-            self.clock().isoformat(),
+        self._record(
+            task,
+            self.require_route(task),
+            LLMResponse({}, done.model, done.input_tokens, done.output_tokens, done.cost_usd),
+            ok=done.error is None,
+            paper_id=paper_id,
         )
 
     def check_budget(self) -> None:
@@ -215,6 +210,7 @@ class LLMGateway:
                 cost_usd=response.cost_usd,
                 ok=ok,
                 paper_id=paper_id,
+                scope_id=self.scope_id,
             ),
             self.clock().isoformat(),
         )

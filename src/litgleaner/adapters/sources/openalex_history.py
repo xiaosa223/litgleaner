@@ -4,15 +4,18 @@
 综述类型来自来源元数据，漏标的综述不会靠标题补齐。
 """
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote
 
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.sources.historical_common import Fields, HistoryCollector
 from litgleaner.domain.errors import SchemaChanged
-from litgleaner.domain.query import HistoricalSearch, KeywordSearch
+from litgleaner.domain.identity import normalize_doi
+from litgleaner.domain.query import HistoricalCitations, HistoricalSearch, KeywordSearch
 from litgleaner.ports.source import FetchResult
 
 
@@ -25,23 +28,11 @@ class OpenAlexHistory:
     per_page: int
     keyed: bool
 
-    def fetch(self, query: HistoricalSearch) -> FetchResult:
+    def fetch(self, query: HistoricalSearch | HistoricalCitations) -> FetchResult:
         self.http.reset_raw_log()
-        dates = (
-            f"from_publication_date:{query.since.isoformat()},"
-            f"to_publication_date:{query.until.isoformat()}"
-        )
-        params = {
-            **self.params,
-            "search.title_abstract_keywords": boolean_query(
-                KeywordSearch(terms=query.terms, exclude=query.exclude)
-            ),
-            "filter": f"{dates},type:review" if query.category == "reviews" else dates,
-            "sort": "cited_by_count:desc"
-            if query.category == "highly_cited"
-            else "publication_date:desc",
-            "per_page": str(min(self.per_page, self.collector.limit)),
-        }
+        params = self._params(query)
+        if params is None:
+            return self.collector.result(self.http.raw_log(), truncated=False)
         page, cursor, visited = 1, "*", {"*"}
         while True:
             paging = {"cursor": cursor} if self.keyed else {"page": str(page)}
@@ -56,6 +47,47 @@ class OpenAlexHistory:
                 )
             page, cursor = page + 1, more
             visited.add(cursor)
+
+    def _params(self, query: HistoricalSearch | HistoricalCitations) -> dict[str, str] | None:
+        dates = (
+            f"from_publication_date:{query.since.isoformat()},"
+            f"to_publication_date:{query.until.isoformat()}"
+        )
+        params = {
+            **self.params,
+            "filter": f"{dates},type:review" if self.collector.category == "reviews" else dates,
+            "sort": "cited_by_count:desc"
+            if self.collector.category == "highly_cited"
+            else "publication_date:desc",
+            "per_page": str(min(self.per_page, self.collector.limit)),
+        }
+        if isinstance(query, HistoricalSearch):
+            params["search.title_abstract_keywords"] = boolean_query(
+                KeywordSearch(terms=query.terms, exclude=query.exclude)
+            )
+        else:
+            seeds = self._seeds(query)
+            if not seeds:
+                return None
+            params["filter"] += f",cites:{'|'.join(seeds)}"
+        return params
+
+    def _seeds(self, query: HistoricalCitations) -> list[str]:
+        found = []
+        for doi in sorted({normalize_doi(value) or value for value in query.dois}):
+            body = self.http.get_json(
+                f"/works/doi:{quote(doi, safe='/')}",
+                {**self.params, "select": "id"},
+                allow_missing=True,
+            )
+            raw = body.get("id") if isinstance(body, Mapping) else None
+            if not isinstance(raw, str) or not re.fullmatch(
+                r"W\d+", raw.rstrip("/").rsplit("/", 1)[-1]
+            ):
+                self.collector.builder.note(f"种子 DOI {doi} 没有来源编号，未覆盖被引查询")
+            else:
+                found.append(raw.rstrip("/").rsplit("/", 1)[-1])
+        return found
 
     def _more(
         self,

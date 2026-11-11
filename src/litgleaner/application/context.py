@@ -1,7 +1,7 @@
 """运行时依赖。所有阶段都通过它拿到接口，不直接构造任何实现。"""
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -11,6 +11,7 @@ from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
+from litgleaner.domain.survey import SurveySettings
 from litgleaner.domain.topic import Topic
 from litgleaner.ports.blobstore import BlobStore
 from litgleaner.ports.fulltext import FullTextProvider
@@ -39,6 +40,8 @@ class RuntimeSettings:
     timezone: ZoneInfo
     ui_language: LanguageCode = "zh-CN"
     reading_language: LanguageCode = "zh-CN"
+    survey: SurveySettings = field(default_factory=SurveySettings)
+    survey_sources_version: str = ""
 
 
 @dataclass(frozen=True)

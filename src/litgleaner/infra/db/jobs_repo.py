@@ -3,12 +3,37 @@
 import json
 from typing import Any
 
-from sqlalchemy import Row, func, select, update
+from sqlalchemy import Row, func, select, text, update
 from sqlalchemy.dialects.sqlite import insert
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import job, llm_call
 from litgleaner.ports.store import Job, JobSpec, JobStatus, LLMCall
+
+_RETRY_DEAD = """
+WITH eligible AS MATERIALIZED (
+    SELECT child.key FROM job child WHERE child.status='dead' AND (
+        child.stage!='survey_child' OR CASE WHEN json_valid(child.payload) THEN (
+            json_type(child.payload,'$.survey_run_id')='text' AND
+            length(trim(json_extract(child.payload,'$.survey_run_id')))>0 AND
+            json_type(child.payload,'$.survey_iteration')='integer' AND
+            json_extract(child.payload,'$.survey_iteration')>=1 AND
+            EXISTS (
+                SELECT 1 FROM job parent
+                WHERE parent.key='survey:'||json_extract(child.payload,'$.survey_run_id')
+                  AND parent.status='pending'
+            ) AND NOT EXISTS (
+                SELECT 1 FROM survey_round r
+                WHERE r.run_id=json_extract(child.payload,'$.survey_run_id')
+                  AND r.iteration=json_extract(child.payload,'$.survey_iteration')
+            )
+        ) ELSE 0 END
+    )
+)
+UPDATE job SET status='pending',attempts=0,next_run_at=:now,updated_at=:now,first_deferred_at=NULL
+WHERE key IN (SELECT key FROM eligible)
+RETURNING key
+"""
 
 
 def _to_job(row: Row[Any]) -> Job:
@@ -125,17 +150,8 @@ class SqlJobRepo:
         return tuple(_to_job(row) for row in rows)
 
     def retry_dead(self, now: str) -> int:
-        return self._db.write(
-            update(job)
-            .where(job.c.status == "dead")
-            .values(
-                status="pending",
-                attempts=0,
-                next_run_at=now,
-                updated_at=now,
-                first_deferred_at=None,
-            )
-        )
+        # 固定更新前的 eligible，父任务本次复活不能反过来使终态 child 变为可重试。
+        return len(self._db.fetch(text(_RETRY_DEAD).bindparams(now=now)))
 
 
 class SqlRunRepo:
@@ -153,6 +169,7 @@ class SqlRunRepo:
                 cost_usd=call.cost_usd,
                 ok=call.ok,
                 paper_id=call.paper_id,
+                scope_id=call.scope_id,
                 created_at=now,
             )
         )
@@ -169,6 +186,14 @@ class SqlRunRepo:
         rows = self._db.fetch(
             select(func.coalesce(func.sum(llm_call.c.cost_usd), 0.0).label("total")).where(
                 llm_call.c.paper_id == paper_id
+            )
+        )
+        return float(rows[0].total)
+
+    def llm_cost_for_scope(self, scope_id: str) -> float:
+        rows = self._db.fetch(
+            select(func.coalesce(func.sum(llm_call.c.cost_usd), 0.0).label("total")).where(
+                llm_call.c.scope_id == scope_id
             )
         )
         return float(rows[0].total)

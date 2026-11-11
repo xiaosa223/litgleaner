@@ -17,6 +17,7 @@ from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.routing import ALL_TOPICS, PUBLIC_TOPICS, Route
 from litgleaner.domain.rubric import Rubric
+from litgleaner.domain.survey import SurveySettings
 from litgleaner.domain.topic import Topic
 
 
@@ -93,6 +94,7 @@ class AppSettings(FrozenModel):
     fulltext: tuple[AdapterConfig, ...] = ()
     parser: AdapterConfig = AdapterConfig(adapter="pdf_text")
     library: AdapterConfig | None = None  # 加入文献库，不写或 enabled: false 时关闭
+    survey: SurveySettings = Field(default_factory=SurveySettings)
 
 
 class SourcesFile(FrozenModel):

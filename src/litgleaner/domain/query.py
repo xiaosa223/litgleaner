@@ -8,6 +8,7 @@ from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
 from litgleaner.domain.base import FrozenModel
 from litgleaner.domain.hashing import stable_hash
+from litgleaner.domain.identity import normalize_doi
 from litgleaner.domain.topic import Topic
 
 
@@ -57,6 +58,25 @@ class CitationWatch(_QueryBase):
     dois: tuple[str, ...]
 
 
+class HistoricalCitations(_QueryBase):
+    """显式日期范围内的被引扩展，与日常跟踪使用不同查询指纹。"""
+
+    kind: Literal["historical_citations"] = "historical_citations"
+    dois: tuple[str, ...] = Field(min_length=1, max_length=50)
+    since: date
+    until: date
+    limit: int = Field(default=100, strict=True, ge=1, le=1000)
+
+    @model_validator(mode="after")
+    def _bounds(self) -> Self:
+        if self.since > self.until:
+            raise ValueError("历史被引查询开始日期不能晚于结束日期")
+        normalized = tuple(normalize_doi(value) for value in self.dois)
+        if any(value is None for value in normalized):
+            raise ValueError("历史被引查询需要有效 DOI")
+        return self
+
+
 class ReferenceList(_QueryBase):
     """一次性读取种子论文引用的文献，不进入日常发现计划。"""
 
@@ -86,6 +106,7 @@ Query = (
     | KeywordSearch
     | HistoricalSearch
     | CitationWatch
+    | HistoricalCitations
     | ReferenceList
     | AuthorWatch
     | InboxDrain
