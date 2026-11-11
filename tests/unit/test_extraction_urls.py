@@ -83,3 +83,10 @@ def test_internal_apostrophe_is_part_of_the_full_uri_and_cannot_create_a_prefix_
     assert rejected["verified"] and rejected["url"] is None and not rejected["url_verified"]
     accepted = checked(actual, quote)
     assert accepted["url"] == actual and accepted["url_verified"]
+
+
+@pytest.mark.parametrize("prefix", ["ftp://", "prefix/", "custom:", "redirect=", "query?"])
+def test_a_web_scheme_inside_another_uri_or_path_is_not_an_independent_complete_url(prefix):
+    url = "https://code.example/Repo"
+    result = checked(url, f"The source is available at {prefix}{url}")
+    assert result["verified"] is True and result["url"] is None and not result["url_verified"]

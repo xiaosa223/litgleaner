@@ -16,7 +16,7 @@ from litgleaner.domain.reading import BBox
 _SINGLE = ("problem", "prior_gap", "approach", "method")
 _LIST = ("claims", "datasets", "metrics", "results")
 _ISOLATION = re.compile(r"\[removed\]|<\s*/?\s*untrusted_paper\s*>", re.IGNORECASE)
-_URL_TOKEN = re.compile(r"(?<![A-Za-z0-9_])https?://[^\s<>\"`]+", re.IGNORECASE)
+_URL_TOKEN = re.compile(r"(?<![A-Za-z0-9_:/%@=+?.#&!$*,;~-])https?://[^\s<>\"`]+", re.IGNORECASE)
 _HOST_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?")
 _ENCODED_CONTROL = re.compile(r"%(?:0[0-9a-f]|1[0-9a-f]|7f)", re.IGNORECASE)
 
