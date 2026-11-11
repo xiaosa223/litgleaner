@@ -26,6 +26,7 @@ from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
+from litgleaner.adapters.sources.daily_citations import DailyCitations
 from litgleaner.adapters.sources.historical_common import (
     HistoryCollector,
     citation_count,
@@ -35,6 +36,7 @@ from litgleaner.adapters.sources.semantic_scholar_citations import SemanticSchol
 from litgleaner.adapters.sources.semantic_scholar_history import SemanticScholarHistory
 from litgleaner.adapters.sources.semantic_scholar_references import SemanticScholarReferences
 from litgleaner.domain.errors import SchemaChanged
+from litgleaner.domain.identity import Alias, normalize_doi
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
@@ -158,21 +160,23 @@ class SemanticScholarSource:
         )
         builder = RecordBuilder(self.name)
         quota = _Quota(options.max_records)
+        evidence = DailyCitations()
         self._http.reset_raw_log()
         if isinstance(query, KeywordSearch):
             self._keywords(query, window, builder, quota)
         elif isinstance(query, CitationWatch):
-            self._citations(query, window, builder, quota)
+            self._citations(query, window, builder, quota, evidence)
         elif isinstance(query, AuthorWatch):
             self._authors(query, window, builder, quota)
         if quota.truncated:
             builder.truncate(options.max_records)
         return FetchResult(
-            records=builder.records,
+            records=evidence.records if isinstance(query, CitationWatch) else builder.records,
             next_cursor=next_cursor(window),
             warnings=builder.warnings,
             truncated=builder.truncated,
             raw=self._http.raw_log(),
+            citations=tuple(evidence.items),
         )
 
     def _keywords(
@@ -196,7 +200,12 @@ class SemanticScholarSource:
                 return
 
     def _citations(
-        self, query: CitationWatch, window: Window, builder: RecordBuilder, quota: _Quota
+        self,
+        query: CitationWatch,
+        window: Window,
+        builder: RecordBuilder,
+        quota: _Quota,
+        evidence: DailyCitations,
     ) -> None:
         for doi in sorted(query.dois):
             if quota.full:
@@ -204,8 +213,14 @@ class SemanticScholarSource:
                 return
             path = f"/paper/{quote(f'DOI:{doi}', safe='/:')}/citations"
             pages = self._pages(path, window, quota)
-            if not _consume(pages, builder, window, lambda item: item.get("citingPaper")):
+            if pages is None:
                 builder.note(f"Semantic Scholar 找不到 DOI {doi}，已跳过")
+                continue
+            position = 0
+            for page in pages:
+                for item in page:
+                    _citation(item, doi, position, builder, window, evidence=evidence)
+                    position += 1
 
     def _authors(
         self, query: AuthorWatch, window: Window, builder: RecordBuilder, quota: _Quota
@@ -243,7 +258,9 @@ class SemanticScholarSource:
     ) -> Iterator[list[Mapping[str, Any]]] | None:
         """按 offset 翻页。路径对应的论文或作者不存在时返回 None。"""
         params = {
-            "fields": _FIELDS,
+            "fields": f"contexts,intents,isInfluential,{_FIELDS}"
+            if path.endswith("/citations")
+            else _FIELDS,
             "publicationDateOrYear": _date_range(window),
             "limit": str(self._options.page_size),
         }
@@ -276,6 +293,27 @@ def bulk_query(query: KeywordSearch) -> str:
         return included
     excluded = boolean_query(KeywordSearch(terms=query.exclude), or_op="|")
     return f"{included} -{excluded}"
+
+
+def _citation(
+    item: Mapping[str, Any],
+    doi: str,
+    position: int,
+    builder: RecordBuilder,
+    window: Window,
+    *,
+    evidence: DailyCitations,
+) -> None:
+    paper = item.get("citingPaper")
+    if not isinstance(paper, Mapping):
+        return
+    published = _published(paper)
+    if published is None or not window.since <= published <= window.until:
+        return
+    record = evidence.add_citing(builder, _paper_fields(paper, published))
+    cited = normalize_doi(doi)
+    if record is not None and cited:
+        evidence.add(record, (Alias("doi", cited),), position, item)
 
 
 def _date_range(window: Window) -> str:

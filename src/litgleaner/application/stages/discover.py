@@ -9,6 +9,7 @@ from typing import Any
 
 from ulid import ULID
 
+from litgleaner.application.citations import ingest_source_citations
 from litgleaner.application.codec import compress
 from litgleaner.application.context import AppContext
 from litgleaner.application.stages.base import Stage
@@ -20,7 +21,7 @@ from litgleaner.domain.identity import (
     title_key,
 )
 from litgleaner.domain.paper import Paper, SourceRecord
-from litgleaner.domain.query import plan_queries, query_from_payload
+from litgleaner.domain.query import CitationWatch, plan_queries, query_from_payload
 from litgleaner.ports.store import JobSpec, PaperRepo
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,8 @@ class DiscoverStage(Stage):
             for record in result.records:
                 paper_id = resolve_record(ctx.store.papers, record, now)
                 ctx.store.papers.record_sighting(paper_id, source.name, query.hash, raw_key, now)
+            if isinstance(query, CitationWatch) and result.citations:
+                ingest_source_citations(ctx, source.name, result.citations, result.records, now)
             if result.truncated:
                 logger.warning("信号源 %s 本次结果被截断，游标保持不变", source.name)
             else:

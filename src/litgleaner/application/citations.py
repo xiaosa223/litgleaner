@@ -4,11 +4,12 @@ from dataclasses import asdict, dataclass
 
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_chunks, load_document
-from litgleaner.domain.citation import Citation, ReferenceRecord, reference_aliases
+from litgleaner.domain.citation import Citation, ReferenceRecord, SourceCitation, reference_aliases
 from litgleaner.domain.document import NormalizedDocument
 from litgleaner.domain.errors import InvalidRequest, NotFound
 from litgleaner.domain.hashing import stable_hash
-from litgleaner.domain.identity import Alias
+from litgleaner.domain.identity import Alias, record_aliases
+from litgleaner.domain.paper import SourceRecord
 from litgleaner.domain.sections import split_sections
 
 
@@ -51,6 +52,45 @@ def store_reference(
             now,
         )
     )
+
+
+def _source_fingerprint(source: str, item: SourceCitation) -> str:
+    evidence = asdict(item)
+    evidence.pop("source_position")
+    for field in ("citing_aliases", "cited_aliases"):
+        evidence[field] = sorted({(alias.scheme, alias.value) for alias in getattr(item, field)})
+    return stable_hash({"source": source, "evidence": evidence})
+
+
+def ingest_source_citations(
+    ctx: AppContext,
+    source: str,
+    items: tuple[SourceCitation, ...],
+    records: tuple[SourceRecord, ...],
+    now: str,
+) -> None:
+    """在发现事务中只登记本批已采纳且能唯一精确关联的引用者关系。"""
+    accepted = {match for record in records if (match := exact_match(ctx, record_aliases(record)))}
+    for item in items:
+        citing = exact_match(ctx, item.citing_aliases)
+        if citing is None or citing not in accepted or not item.cited_aliases:
+            continue
+        ctx.store.citations.add(
+            Citation(
+                citing,
+                f"source:{source}:{_source_fingerprint(source, item)}",
+                item.raw_text,
+                source,
+                item.source_position,
+                exact_match(ctx, item.cited_aliases),
+                None,
+                item.cited_aliases,
+                item.contexts,
+                item.intents,
+                item.influential,
+                now,
+            )
+        )
 
 
 def ingest_parsed(

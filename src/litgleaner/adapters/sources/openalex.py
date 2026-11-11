@@ -27,12 +27,13 @@ from litgleaner.adapters.common.options import SourceOptions, Today, parse_optio
 from litgleaner.adapters.common.query import boolean_query
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
-from litgleaner.adapters.common.window import Window, next_cursor, window_from_cursor
+from litgleaner.adapters.common.window import next_cursor, window_from_cursor
 from litgleaner.adapters.sources.historical_common import HistoryCollector, citation_count
+from litgleaner.adapters.sources.openalex_daily import OpenAlexDaily, Seeds, work_id
 from litgleaner.adapters.sources.openalex_history import OpenAlexHistory
 from litgleaner.adapters.sources.openalex_references import OpenAlexReferences
 from litgleaner.domain.errors import SchemaChanged
-from litgleaner.domain.identity import normalize_arxiv_id, normalize_doi
+from litgleaner.domain.identity import Alias, normalize_arxiv_id, normalize_doi
 from litgleaner.domain.query import (
     AuthorWatch,
     CitationWatch,
@@ -122,6 +123,10 @@ class OpenAlexSource:
                 params=self._polite({"select": _SELECT}),
                 fields=work_fields,
             ).fetch(query)
+        return self._daily(query, cursor)
+
+    def _daily(self, query: Query, cursor: str | None) -> FetchResult:
+        options = self._options
         window = window_from_cursor(
             cursor,
             self._today(),
@@ -130,20 +135,36 @@ class OpenAlexSource:
         )
         builder = RecordBuilder(self.name)
         self._http.reset_raw_log()
-        seen = 0
-        for params in self._listings(query, builder):
-            seen = self._collect(params, window, builder, seen)
-            if seen >= options.max_records:
+        seeds: Seeds = {}
+        collector = OpenAlexDaily(
+            builder,
+            window,
+            seeds,
+            limit=options.max_records,
+            per_page=options.per_page,
+            select=_SELECT,
+            keyed=self._keyed,
+            page=self._page,
+            fields=work_fields,
+        )
+        for params in self._listings(query, builder, seeds):
+            collector.collect(params)
+            if collector.seen >= options.max_records:
                 break
         return FetchResult(
-            records=builder.records,
+            records=collector.evidence.records
+            if isinstance(query, CitationWatch)
+            else builder.records,
             next_cursor=next_cursor(window),
             warnings=builder.warnings,
             truncated=builder.truncated,
             raw=self._http.raw_log(),
+            citations=tuple(collector.evidence.items),
         )
 
-    def _listings(self, query: Query, builder: RecordBuilder) -> Iterator[dict[str, str]]:
+    def _listings(
+        self, query: Query, builder: RecordBuilder, seeds: Seeds
+    ) -> Iterator[dict[str, str]]:
         """把查询翻译成一组 /works 列表请求的参数（不含日期和分页）。"""
         if isinstance(query, KeywordSearch):
             yield {"search.title_abstract_keywords": boolean_query(query)}
@@ -151,7 +172,8 @@ class OpenAlexSource:
         if isinstance(query, JournalWatch):
             field, values = "primary_location.source.issn", sorted(set(query.issns))
         elif isinstance(query, CitationWatch):
-            field, values = "cites", self._seed_ids(query.dois, builder)
+            seeds.update(self._seed_ids(query.dois, builder))
+            field, values = "cites", list(seeds)
         elif isinstance(query, AuthorWatch):
             field, values = "authorships.author.id", self._author_ids(query.names, builder)
         else:  # pragma: no cover - ensure_supported 已拦截
@@ -159,20 +181,24 @@ class OpenAlexSource:
         for start in range(0, len(values), _MAX_OR_VALUES):
             yield {"filter": f"{field}:{'|'.join(values[start : start + _MAX_OR_VALUES])}"}
 
-    def _seed_ids(self, dois: tuple[str, ...], builder: RecordBuilder) -> list[str]:
+    def _seed_ids(self, dois: tuple[str, ...], builder: RecordBuilder) -> Seeds:
         """种子 DOI 换成 OpenAlex 的 W 编号。单篇查询免费。"""
-        ids: list[str] = []
+        ids: Seeds = {}
         for doi in dois:
             body = self._http.get_json(
                 f"/works/doi:{quote(doi.strip(), safe='/')}",
                 self._polite({"select": "id"}),
                 allow_missing=True,
             )
-            work_id = short_id(body.get("id")) if isinstance(body, Mapping) else None
-            if work_id is None:
+            wid = work_id(body.get("id")) if isinstance(body, Mapping) else None
+            if wid is None:
                 builder.note(f"种子 DOI {doi} 在 OpenAlex 中找不到，已跳过")
-            elif work_id not in ids:
-                ids.append(work_id)
+            else:
+                aliases = ids.get(wid, (Alias("openalex", wid),))
+                normalized = normalize_doi(doi)
+                if normalized and Alias("doi", normalized) not in aliases:
+                    aliases = (*aliases, Alias("doi", normalized))
+                ids[wid] = aliases
         return ids
 
     def _author_ids(self, names: tuple[str, ...], builder: RecordBuilder) -> list[str]:
@@ -194,37 +220,6 @@ class OpenAlexSource:
             elif author_id not in ids:
                 ids.append(author_id)
         return ids
-
-    def _collect(
-        self, base: Mapping[str, str], window: Window, builder: RecordBuilder, seen: int
-    ) -> int:
-        """按页读取一个列表请求，返回累计读到的条目数（按原始条目计，不按去重后的记录计）。"""
-        options = self._options
-        dates = (
-            f"from_publication_date:{window.since.isoformat()},"
-            f"to_publication_date:{window.until.isoformat()}"
-        )
-        joined = f"{base['filter']},{dates}" if "filter" in base else dates
-        params = {
-            **base,
-            "filter": joined,
-            "sort": "publication_date:desc",
-            "per_page": str(options.per_page),
-            "select": _SELECT,
-        }
-        page, page_cursor = 1, "*"
-        while True:
-            paging = {"cursor": page_cursor} if self._keyed else {"page": str(page)}
-            items, more = self._page({**params, **paging}, page)
-            for item in items:
-                builder.add(**work_fields(item))
-            seen += len(items)
-            if seen >= options.max_records:
-                builder.truncate(options.max_records)
-                return seen
-            if not items or not more:
-                return seen
-            page, page_cursor = page + 1, more
 
     def _page(self, params: Mapping[str, str], page: int) -> tuple[list[Mapping[str, Any]], str]:
         """返回本页条目和“还有下一页”的标记（cursor 模式下就是下一页的 cursor）。"""

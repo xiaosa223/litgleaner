@@ -45,6 +45,17 @@ class ReferenceRecord:
 
 
 @dataclass(frozen=True)
+class SourceCitation:
+    citing_aliases: tuple[Alias, ...]
+    cited_aliases: tuple[Alias, ...]
+    source_position: int
+    raw_text: str
+    contexts: tuple[str, ...] = ()
+    intents: tuple[str, ...] = ()
+    influential: bool | None = None
+
+
+@dataclass(frozen=True)
 class Citation:
     citing_paper_id: str
     position: str

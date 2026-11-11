@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from litgleaner.domain.citation import ReferenceRecord
+from litgleaner.domain.citation import ReferenceRecord, SourceCitation
 from litgleaner.domain.paper import SourceRecord
 from litgleaner.domain.query import Query
 
@@ -17,6 +17,7 @@ class FetchResult:
     # 达到单次上限、窗口没取完。发现阶段据此不推进游标，下次重新抓取这个窗口。
     truncated: bool = False
     references: tuple[ReferenceRecord, ...] = ()
+    citations: tuple[SourceCitation, ...] = ()
 
 
 class Source(Protocol):
