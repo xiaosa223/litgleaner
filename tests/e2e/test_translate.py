@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from litgleaner.application import translation
-from litgleaner.domain.errors import ConfigError, InvalidRequest, TransientError
+from litgleaner.domain.errors import InvalidRequest, ModelConfigurationRequired, TransientError
 from litgleaner.ports.llm import StreamDone, TextDelta, Thinking
 from tests.e2e.conftest import Harness, paper
 
@@ -173,10 +173,10 @@ def test_heading_and_unknown_block_are_rejected(harness: Harness, paper_id: str)
         run_many(harness, paper_id, [1, 3])
 
 
-def test_without_translate_task_reports_config_error(harness: Harness, paper_id: str):
+def test_without_translate_task_reports_configuration_required(harness: Harness, paper_id: str):
     harness.edit_yaml("llm.yaml", lambda d: d["tasks"].pop("translate"))
     harness.rebuild()
-    with pytest.raises(ConfigError, match="translate"):
+    with pytest.raises(ModelConfigurationRequired, match="translate"):
         run(harness, paper_id)
 
 

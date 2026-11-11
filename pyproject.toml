@@ -11,6 +11,7 @@ dependencies = [
   "fastapi>=0.115",
   "httpx>=0.28.1",
   "jsonschema>=4.21",
+  "keyring>=25.0",
   "pydantic>=2.7",
   "pypdf>=6.21.4",
   "python-ulid>=2.7",
@@ -128,6 +129,7 @@ modules = [
   "litgleaner.adapters.llm",
   "litgleaner.adapters.parsers",
   "litgleaner.adapters.renderers",
+  "litgleaner.adapters.secrets",
   "litgleaner.adapters.sources",
   "litgleaner.adapters.zotero",
 ]

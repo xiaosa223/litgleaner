@@ -2,7 +2,14 @@
 
 from typing import Any
 
-from litgleaner.adapters.llm.base import HttpLLM, Reply, StreamState, refused, truncated
+from litgleaner.adapters.llm.base import (
+    HttpLLM,
+    Reply,
+    StreamState,
+    refused,
+    token_count,
+    truncated,
+)
 from litgleaner.domain.errors import TransientError
 from litgleaner.ports.llm import LLMRequest
 
@@ -65,6 +72,14 @@ class AnthropicMessagesLLM(HttpLLM):
             raise truncated(self.service)
         usage = data["usage"]
         return Reply(text, data.get("model"), _input_tokens(usage), usage["output_tokens"])
+
+    def _usage(self, data: Any) -> tuple[str | None, int, int]:
+        usage = data["usage"]
+        tokens_in = token_count(usage["input_tokens"]) + sum(
+            token_count(usage.get(key, 0))
+            for key in ("cache_creation_input_tokens", "cache_read_input_tokens")
+        )
+        return data.get("model"), tokens_in, usage["output_tokens"]
 
 
 def _input_tokens(usage: dict[str, Any]) -> int:

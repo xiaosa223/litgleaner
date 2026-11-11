@@ -21,6 +21,7 @@ from litgleaner.domain.chunker import estimate_tokens
 from litgleaner.domain.errors import (
     ConfigError,
     LitGleanerError,
+    ModelUsage,
     PermanentError,
     SchemaChanged,
     TransientError,
@@ -128,6 +129,13 @@ def truncated(service: str) -> TransientError:
     return TransientError(f"{service} 输出被截断，可调大 max_output_tokens 或降低思考强度")
 
 
+def token_count(value: Any) -> int:
+    """用量必须是接口明确报告的非负整数，不能把缺失或异常值当作免费。"""
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("响应没有有效的 token 用量")
+    return value
+
+
 def parse_json_object(text: str, service: str) -> dict[str, Any]:
     stripped = text.strip()
     fenced = _FENCE.match(stripped)
@@ -197,19 +205,40 @@ class HttpLLM:
             self._path(request.model), deep_merge(body, self._options.extra_body)
         )
         try:
+            return self._response(data, request.model)
+        except LitGleanerError as error:
+            error.model_usage = self._known_usage(data, request.model)
+            raise
+
+    def _response(self, data: Any, model: str) -> LLMResponse:
+        try:
             reply = self._reply(data)
         except (KeyError, IndexError, TypeError, AttributeError) as error:
             raise SchemaChanged(
                 f"{self.service} 返回的结构与预期不符：{type(error).__name__} {error}"
             ) from error
-        price_in, price_out = self._options.prices[request.model]
+        price_in, price_out = self._options.prices[model]
         cost = (reply.input_tokens * price_in + reply.output_tokens * price_out) / _PER_MILLION
         return LLMResponse(
             data=parse_json_object(reply.text, self.service),
-            model=reply.model or request.model,
+            model=reply.model or model,
             input_tokens=reply.input_tokens,
             output_tokens=reply.output_tokens,
             cost_usd=cost,
+        )
+
+    def _known_usage(self, data: Any, model: str) -> ModelUsage | None:
+        try:
+            reported_model, tokens_in, tokens_out = self._usage(data)
+            tokens_in, tokens_out = token_count(tokens_in), token_count(tokens_out)
+        except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+            return None
+        price_in, price_out = self._options.prices[model]
+        return ModelUsage(
+            reported_model if isinstance(reported_model, str) and reported_model else model,
+            tokens_in,
+            tokens_out,
+            (tokens_in * price_in + tokens_out * price_out) / _PER_MILLION,
         )
 
     def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
@@ -312,4 +341,8 @@ class HttpLLM:
         raise NotImplementedError
 
     def _reply(self, data: Any) -> Reply:
+        raise NotImplementedError
+
+    def _usage(self, data: Any) -> tuple[str | None, int, int]:
+        """独立于输出内容提取已知用量；缺失时抛解析异常，由公共层保留未知状态。"""
         raise NotImplementedError

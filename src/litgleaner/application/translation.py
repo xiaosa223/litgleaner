@@ -24,7 +24,7 @@ from litgleaner.application.translation_run import (
     run_batch,
 )
 from litgleaner.domain.document import Block, body_start
-from litgleaner.domain.errors import ConfigError, InvalidRequest, NotFound, TransientError
+from litgleaner.domain.errors import InvalidRequest, NotFound, TransientError
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import LanguageCode, needs_translation
@@ -79,9 +79,7 @@ def paper_glossary(ctx: AppContext, paper_id: str) -> Glossary:
 
 
 def translator_version(ctx: AppContext) -> str:
-    route = ctx.llm.routes.get(TASK)
-    if route is None:
-        raise ConfigError("llm.yaml 没有配置 translate 任务，无法翻译")
+    route = ctx.llm.require_route(TASK)
     return stable_hash(
         {
             "prompt": route.prompt.version,
@@ -124,11 +122,12 @@ def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTransl
     )
     result: dict[int, BlockTranslation] = {}
     for paragraph in found_paragraphs:
-        key = cache_key(ctx, paragraph, glossary)
+        key = cache_key(ctx, paragraph, glossary) if TASK in ctx.llm.routes else None
+        source_hash = stable_hash(paragraph.text)
         mine = [
             c
             for c in found
-            if c.key.source_hash == key.source_hash and len(c.sentences) == len(paragraph.sentences)
+            if c.key.source_hash == source_hash and len(c.sentences) == len(paragraph.sentences)
         ]
         exact = next((c for c in mine if c.key == key), None)
         chosen = exact or (mine[0] if mine else None)

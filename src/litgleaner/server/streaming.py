@@ -13,7 +13,7 @@ from litgleaner.application.translation import (
     TranslationDelta,
     TranslationStatus,
 )
-from litgleaner.domain.errors import LitGleanerError
+from litgleaner.domain.errors import BudgetExceeded, LitGleanerError, ModelConfigurationRequired
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +33,17 @@ def _sse(events: Iterator[TranslateEvent]) -> Iterator[str]:
                 yield _event("block", asdict(event))
         yield _event("end", {})
     except LitGleanerError as error:  # 预算用完、参数不对、模型出错：都告诉界面，不中断服务
-        yield _event("error", {"message": str(error)})
+        code = "translation_error"
+        if isinstance(error, ModelConfigurationRequired):
+            code = error.code
+        elif isinstance(error, BudgetExceeded):
+            code = "budget_exceeded"
+        yield _event("error", {"message": str(error), "code": code})
     except Exception:
         logger.exception("翻译时出现程序错误")
-        yield _event("error", {"message": "翻译时出现程序错误，详情见服务日志"})
+        yield _event(
+            "error", {"message": "翻译时出现程序错误，详情见服务日志", "code": "internal_error"}
+        )
 
 
 def sse_response(events: Iterator[TranslateEvent]) -> StreamingResponse:

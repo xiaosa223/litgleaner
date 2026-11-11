@@ -288,5 +288,11 @@ def test_translate_errors_arrive_as_error_event(client: TestClient):
     with client.stream("POST", url, headers=csrf) as response:
         events = _events(response)
     assert events == [
-        ("error", {"message": "这一块不需要翻译（标题、公式、表格或与阅读语言相同的段落）"})
+        (
+            "error",
+            {
+                "message": "这一块不需要翻译（标题、公式、表格或与阅读语言相同的段落）",
+                "code": "translation_error",
+            },
+        )
     ]

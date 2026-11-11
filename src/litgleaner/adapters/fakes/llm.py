@@ -33,6 +33,9 @@ class FakeLLM:
         """固定价格，便于测试费用估算。"""
         return (1.0, 2.0)
 
+    def close(self) -> None:
+        """假适配器没有需要关闭的资源。"""
+
     def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
         """纯文本流：默认把每个编号行译成“[[n]] 【译】原文”，分两段吐出，便于测试增量显示。"""
         self.text_calls.append(request)

@@ -10,6 +10,7 @@ from typing import Annotated
 
 import typer
 
+from litgleaner.adapters.secrets import SystemSecretStore
 from litgleaner.application.context import AppContext
 from litgleaner.bootstrap import CONTACT_EMAIL, build_context
 from litgleaner.domain.errors import ConfigError
@@ -105,9 +106,11 @@ def enabled_adapters(config: LoadedConfig) -> list[tuple[str, tuple[str, ...]]]:
 
 def missing_optional(config: LoadedConfig) -> list[str]:
     groups = [*config.sources.values(), *config.app.fulltext]
+    secrets = SystemSecretStore()
     missing = sorted(
-        {name for item in groups if item.enabled for name in item.optional_env}
-        - {name for name in os.environ if os.environ[name]}
+        name
+        for name in {name for item in groups if item.enabled for name in item.optional_env}
+        if not secrets.get(name)
     )
     real = [i for i in groups if i.enabled and not i.adapter.startswith(_FAKE_PREFIX)]
     if real and not os.environ.get(CONTACT_EMAIL):
@@ -118,11 +121,12 @@ def missing_optional(config: LoadedConfig) -> list[str]:
 
 
 def missing_credentials(config: LoadedConfig) -> list[str]:
+    secrets = SystemSecretStore()
     return [
-        f"{adapter} 需要环境变量 {name}"
+        f"{adapter} 需要密钥 {name}"
         for adapter, names in enabled_adapters(config)
         for name in names
-        if not os.environ.get(name)
+        if not secrets.get(name)
     ]
 
 

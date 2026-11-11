@@ -91,7 +91,7 @@ class AppSettings(FrozenModel):
     assess: AssessSettings = AssessSettings()
     backup: BackupSettings = BackupSettings()
     fulltext: tuple[AdapterConfig, ...] = ()
-    parser: AdapterConfig
+    parser: AdapterConfig = AdapterConfig(adapter="pdf_text")
     library: AdapterConfig | None = None  # 加入文献库，不写或 enabled: false 时关闭
 
 
@@ -115,9 +115,11 @@ class LLMBudget(FrozenModel):
 
 
 class LLMFile(FrozenModel):
-    providers: Mapping[str, AdapterConfig]
-    tasks: Mapping[Literal["triage", "extract", "assess", "translate"], LLMTask]
-    budget: LLMBudget
+    providers: Mapping[str, AdapterConfig] = Field(default_factory=dict)
+    tasks: Mapping[Literal["triage", "extract", "assess", "translate"], LLMTask] = Field(
+        default_factory=dict
+    )
+    budget: LLMBudget = LLMBudget(daily_usd=2)
 
 
 class JournalSet(FrozenModel):
@@ -137,6 +139,11 @@ class LoadedConfig:
     journal_sets: Mapping[str, tuple[str, ...]]
     timezone: ZoneInfo
     glossaries: Mapping[str, Glossary] = field(default_factory=dict)
+    config_dir: Path | None = None
+
+    @property
+    def settings_dir(self) -> Path:
+        return self.config_dir or self.root / "config"
 
     @property
     def database_url(self) -> str:
@@ -266,10 +273,13 @@ def load_config(config_dir: Path) -> LoadedConfig:
         sources=_load(directory / "sources.yaml", SourcesFile).sources,
         channels=channels.channels,
         routes=channels.routes,
-        llm=_load(directory / "llm.yaml", LLMFile),
+        llm=_load(directory / "llm.yaml", LLMFile)
+        if (directory / "llm.yaml").exists()
+        else LLMFile(),
         topics=topics,
         rubrics=rubrics,
         journal_sets=journals,
         timezone=_zone(app.timezone),
         glossaries=_load_glossaries(directory / "topics", topics),
+        config_dir=directory,
     )

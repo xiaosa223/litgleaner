@@ -1,8 +1,22 @@
 """统一错误类型。调度器按类型决定是否重试，不解析错误文字。"""
 
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ModelUsage:
+    """模型响应已经报告的用量；解析失败时仍交给调用者记账。"""
+
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+
 
 class LitGleanerError(Exception):
     """所有业务错误的基类。"""
+
+    model_usage: ModelUsage | None = None
 
 
 class PermanentError(LitGleanerError):
@@ -44,6 +58,16 @@ class StillProcessing(Deferred):
 
 class BudgetExceeded(LitGleanerError):
     """超出 LLM 每日预算。任务保持待处理，第二天继续，不计失败次数。"""
+
+
+class ModelConfigurationRequired(LitGleanerError):
+    """任务还没有模型路由，等待用户完成配置后继续，不计失败次数。"""
+
+    code = "model_configuration_required"
+
+    def __init__(self, task: str) -> None:
+        self.task = task
+        super().__init__(f"尚未配置 {task} 任务的模型，请先完成模型配置")
 
 
 class InvalidRequest(LitGleanerError):

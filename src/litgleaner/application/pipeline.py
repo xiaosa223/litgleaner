@@ -23,6 +23,7 @@ from litgleaner.domain.errors import (
     BudgetExceeded,
     ConfigError,
     Deferred,
+    ModelConfigurationRequired,
     PermanentError,
     RateLimited,
 )
@@ -58,6 +59,7 @@ class StageReport:
     dead: int = 0
     errors: tuple[str, ...] = ()
     budget_stopped: bool = False
+    configuration_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -73,12 +75,22 @@ class RunReport:
     def budget_stopped(self) -> bool:
         return any(stage.budget_stopped for stage in self.stages)
 
+    @property
+    def configuration_required(self) -> bool:
+        return any(stage.configuration_required for stage in self.stages)
+
     def summary(self) -> str:
         lines = [
             f"{s.name}: 完成 {s.done}，待重试 {s.retried}，死信 {s.dead}"
             + ("，预算已用完" if s.budget_stopped else "")
+            + ("，等待完成模型配置" if s.configuration_required else "")
             for s in self.stages
-            if s.done or s.retried or s.dead or s.errors or s.budget_stopped
+            if s.done
+            or s.retried
+            or s.dead
+            or s.errors
+            or s.budget_stopped
+            or s.configuration_required
         ]
         lines += [error for stage in self.stages for error in stage.errors]
         lines += [f"警告：{warning}" for warning in self.warnings]
@@ -141,6 +153,11 @@ def run_stage(ctx: AppContext, stage: Stage) -> StageReport:
     for job in ctx.store.jobs.due(stage.name, now):
         try:
             stage.process(ctx, job.payload)
+        except ModelConfigurationRequired as error:
+            logger.info("%s", error)
+            return StageReport(
+                stage.name, done, retried, dead, tuple(errors), configuration_required=True
+            )
         except BudgetExceeded as error:
             logger.warning("%s", error)
             return StageReport(stage.name, done, retried, dead, tuple(errors), budget_stopped=True)

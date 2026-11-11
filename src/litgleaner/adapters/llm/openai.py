@@ -86,6 +86,10 @@ class OpenAIChatLLM(HttpLLM):
             usage["completion_tokens"],
         )
 
+    def _usage(self, data: Any) -> tuple[str | None, int, int]:
+        usage = data["usage"]
+        return data.get("model"), usage["prompt_tokens"], usage["completion_tokens"]
+
 
 class OpenAIResponsesLLM(HttpLLM):
     """Responses API（POST /responses）。store=false：不在 OpenAI 侧保存论文内容。"""
@@ -166,3 +170,7 @@ class OpenAIResponsesLLM(HttpLLM):
         text = "".join(p["text"] for p in parts if p.get("type") == "output_text")
         usage = data["usage"]
         return Reply(text, data.get("model"), usage["input_tokens"], usage["output_tokens"])
+
+    def _usage(self, data: Any) -> tuple[str | None, int, int]:
+        usage = data["usage"]
+        return data.get("model"), usage["input_tokens"], usage["output_tokens"]

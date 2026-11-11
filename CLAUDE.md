@@ -73,7 +73,7 @@ uv run pytest tests/architecture
 
 ### 适配器注册
 
-`bootstrap.py` 是唯一把配置名映射到具体实现的地方，用显式字典（`SOURCES`、`FULLTEXT`、`PARSERS`、`LLMS`、`PUBLISHERS`、`LIBRARIES`、`RENDERERS`），不做动态插件加载。加一个适配器 = 适配器文件 + 注册表一行 + `config/*.yaml` 一段 + 通过 `tests/contracts/` 的统一契约测试（外部响应录制到 `tests/fixtures/<vendor>/`）。密钥只从环境变量读，配置里只写 `credentials_env` / `optional_env` 变量名，`BuildArgs.secret()` 会拒绝未声明的变量。
+`bootstrap.py` 是唯一把配置名映射到具体实现的地方，用显式字典（`SOURCES`、`FULLTEXT`、`PARSERS`、`LLMS`、`PUBLISHERS`、`LIBRARIES`、`RENDERERS`），不做动态插件加载。加一个适配器 = 适配器文件 + 注册表一行 + `config/*.yaml` 一段 + 通过 `tests/contracts/` 的统一契约测试（外部响应录制到 `tests/fixtures/<vendor>/`）。密钥通过 `SecretStore` 读取，环境变量优先于系统钥匙串；配置只写 `credentials_env` / `optional_env` 密钥名，`BuildArgs.secret()` 会拒绝未声明的名字。设置接口与持久化说明见 `docs/MODEL-SETUP.md`。
 
 同一个 API 的元数据发现（`Source`）和全文获取（`FullTextProvider`）是两个独立适配器。HTTP 限速、错误分类、密钥脱敏、原始响应留档统一由 `adapters/common/http.py` 负责；第三方 PDF 一律走 `adapters/common/download.py`（SSRF、大小、文件头校验）；游标窗口用 `adapters/common/window.py`。适配器只抛 `domain/errors.py` 中的统一错误类型，重试和退避由调度负责。
 

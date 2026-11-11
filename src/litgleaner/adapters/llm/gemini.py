@@ -3,7 +3,14 @@
 from typing import Any
 from urllib.parse import quote
 
-from litgleaner.adapters.llm.base import HttpLLM, Reply, StreamState, refused, truncated
+from litgleaner.adapters.llm.base import (
+    HttpLLM,
+    Reply,
+    StreamState,
+    refused,
+    token_count,
+    truncated,
+)
 from litgleaner.ports.llm import LLMRequest
 
 _BLOCKED = frozenset(
@@ -89,3 +96,11 @@ class GeminiLLM(HttpLLM):
         usage = data["usageMetadata"]
         tokens_out = usage.get("candidatesTokenCount", 0) + usage.get("thoughtsTokenCount", 0)
         return Reply(text, data.get("modelVersion"), usage["promptTokenCount"], tokens_out)
+
+    def _usage(self, data: Any) -> tuple[str | None, int, int]:
+        usage = data["usageMetadata"]
+        output_keys = {"candidatesTokenCount", "thoughtsTokenCount"}.intersection(usage)
+        if not output_keys:
+            raise KeyError("candidatesTokenCount")
+        tokens_out = sum(token_count(usage[key]) for key in output_keys)
+        return data.get("modelVersion"), usage["promptTokenCount"], tokens_out

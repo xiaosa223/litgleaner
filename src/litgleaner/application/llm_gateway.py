@@ -7,7 +7,12 @@ from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from litgleaner.domain.errors import BudgetExceeded, TransientError
+from litgleaner.domain.errors import (
+    BudgetExceeded,
+    LitGleanerError,
+    ModelConfigurationRequired,
+    TransientError,
+)
 from litgleaner.domain.evidence import wrap_untrusted
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.ports.llm import (
@@ -76,7 +81,7 @@ class TextStream:
         self.result: TextResult | None = None
 
     def __iter__(self) -> Iterator[str | Thinking]:
-        route = self._gateway.routes[self._task]
+        route = self._gateway.require_route(self._task)
         parts: list[str] = []
         for event in route.llm.stream(self._request):
             if isinstance(event, Thinking):
@@ -101,8 +106,14 @@ class LLMGateway:
     daily_budget_usd: float
     clock: Callable[[], datetime]
 
+    def require_route(self, task: str) -> TaskRoute:
+        route = self.routes.get(task)
+        if route is None:
+            raise ModelConfigurationRequired(task)
+        return route
+
     def prompt_version(self, task: str) -> str:
-        return self.routes[task].prompt.version
+        return self.require_route(task).prompt.version
 
     def call(
         self,
@@ -111,17 +122,29 @@ class LLMGateway:
         untrusted: str,
         schema: Mapping[str, Any],
     ) -> LLMResult:
-        self._check_budget()
-        route = self.routes[task]
-        response = route.llm.complete(
-            LLMRequest(
-                task=task,
-                model=route.model,
-                system=route.prompt.render(variables),
-                user=wrap_untrusted(untrusted),
-                schema=schema,
+        route = self.require_route(task)
+        self.check_budget()
+        try:
+            response = route.llm.complete(
+                LLMRequest(
+                    task=task,
+                    model=route.model,
+                    system=route.prompt.render(variables),
+                    user=wrap_untrusted(untrusted),
+                    schema=schema,
+                )
             )
-        )
+        except LitGleanerError as error:
+            if (usage := error.model_usage) is not None:
+                self._record(
+                    task,
+                    route,
+                    LLMResponse(
+                        {}, usage.model, usage.input_tokens, usage.output_tokens, usage.cost_usd
+                    ),
+                    ok=False,
+                )
+            raise
         errors = sorted(Draft202012Validator(schema).iter_errors(response.data), key=str)
         self._record(task, route, response, ok=not errors)
         if errors:
@@ -137,8 +160,8 @@ class LLMGateway:
         paper_id: str | None = None,
     ) -> TextStream:
         """纯文本流式调用（ADR 0004）。预算在开始前检查；内容由调用方在结束后校验。"""
-        self._check_budget()
-        route = self.routes[task]
+        route = self.require_route(task)
+        self.check_budget()
         request = TextRequest(
             task=task,
             model=route.model,
@@ -152,7 +175,7 @@ class LLMGateway:
             LLMCall(
                 task=task,
                 model=done.model,
-                prompt_version=self.routes[task].prompt.version,
+                prompt_version=self.require_route(task).prompt.version,
                 input_tokens=done.input_tokens,
                 output_tokens=done.output_tokens,
                 cost_usd=done.cost_usd,
@@ -162,7 +185,8 @@ class LLMGateway:
             self.clock().isoformat(),
         )
 
-    def _check_budget(self) -> None:
+    def check_budget(self) -> None:
+        """调用前或连接测试前检查同一每日预算；不产生费用。"""
         now = self.clock().astimezone(UTC)
         day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         spent = self.runs.llm_cost_since(day_start.isoformat())

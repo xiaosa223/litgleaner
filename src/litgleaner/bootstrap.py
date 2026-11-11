@@ -32,6 +32,7 @@ from litgleaner.adapters.llm.openai import OpenAIChatLLM, OpenAIResponsesLLM
 from litgleaner.adapters.parsers.mineru_cloud import MinerUCloudParser
 from litgleaner.adapters.parsers.pdf_text import PdfTextParser
 from litgleaner.adapters.renderers.plain_text import PlainTextRenderer
+from litgleaner.adapters.secrets import SystemSecretStore
 from litgleaner.adapters.sources.arxiv import ArxivSource
 from litgleaner.adapters.sources.core import CoreSource
 from litgleaner.adapters.sources.crossref import CrossrefSource
@@ -61,7 +62,9 @@ from litgleaner.ports.library import ReferenceLibrary
 from litgleaner.ports.llm import LLM
 from litgleaner.ports.parser import Parser
 from litgleaner.ports.publisher import Publisher, Renderer
+from litgleaner.ports.secrets import SecretStore
 from litgleaner.ports.source import Source
+from litgleaner.ports.store import Store
 
 CONTACT_EMAIL = "LITGLEANER_CONTACT_EMAIL"
 S2_KEY = "SEMANTIC_SCHOLAR_API_KEY"
@@ -79,18 +82,19 @@ class BuildArgs:
     credentials: Mapping[str, str]
 
     optional: frozenset[str] = frozenset()
+    secrets: SecretStore | None = None
 
     def secret(self, env_name: str) -> str:
-        """密钥只从环境变量读取，配置文件里只写变量名。"""
+        """先读环境变量，再读系统钥匙串；配置文件里只写密钥名。"""
         if env_name not in self.credentials:
             raise ConfigError(f"{self.name} 需要在 credentials_env 中声明 {env_name}")
-        return os.environ.get(env_name, "")
+        return (self.secrets or SystemSecretStore()).get(env_name) or ""
 
     def optional_secret(self, env_name: str) -> str | None:
         """可选的 key 或联系邮箱：没有也能运行，只是额度更低。必须先在配置里声明。"""
         if env_name not in self.credentials and env_name not in self.optional:
             raise ConfigError(f"{self.name} 需要在 optional_env 中声明 {env_name}")
-        return os.environ.get(env_name) or None
+        return (self.secrets or SystemSecretStore()).get(env_name) or None
 
     def options_with_paths(self, *keys: str) -> dict[str, Any]:
         """把配置里的相对路径换成项目根目录下的绝对路径。"""
@@ -211,11 +215,13 @@ def _build[T](
     name: str,
     config: AdapterConfig,
     root: Path,
+    *,
+    secrets: SecretStore | None = None,
 ) -> T:
     factory = _pick(registry, kind, config.adapter)
     credentials = {env: env for env in config.credentials_env}
     optional = frozenset(config.optional_env)
-    return factory(BuildArgs(name, config.options, root, credentials, optional))
+    return factory(BuildArgs(name, config.options, root, credentials, optional, secrets))
 
 
 def _load_prompts(config: LoadedConfig) -> dict[str, Prompt]:
@@ -230,10 +236,19 @@ def _load_prompts(config: LoadedConfig) -> dict[str, Prompt]:
     return prompts
 
 
-def _build_llm(config: LoadedConfig, store: SqlStore, clock: Callable[[], datetime]) -> LLMGateway:
+def build_model_client(config: LoadedConfig, name: str, secrets: SecretStore | None = None) -> LLM:
+    return _build(LLMS, "大模型", name, config.llm.providers[name], config.root, secrets=secrets)
+
+
+def build_llm(
+    config: LoadedConfig,
+    store: Store,
+    clock: Callable[[], datetime],
+    secrets: SecretStore | None = None,
+) -> LLMGateway:
     prompts = _load_prompts(config)
     providers = {
-        name: _build(LLMS, "大模型", name, provider, config.root)
+        name: build_model_client(config, name, secrets)
         for name, provider in config.llm.providers.items()
         if provider.enabled
     }
@@ -347,7 +362,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
             if item.enabled
         ),
         parser=_build(PARSERS, "解析", config.app.parser.adapter, config.app.parser, config.root),
-        llm=_build_llm(config, store, now),
+        llm=build_llm(config, store, now),
         channels=_build_channels(config),
         library=build_library(config),
         blobs=LocalBlobStore(config.path(config.app.blob_root)),
