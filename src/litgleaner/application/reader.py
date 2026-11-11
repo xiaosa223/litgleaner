@@ -1,7 +1,7 @@
 """领读器的查询和操作。本地 HTTP 接口只做协议适配，逻辑都在这里，命令行和 MCP 共用。"""
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC
 from typing import Any
 
@@ -128,7 +128,7 @@ def _inbox_item(
     )
 
 
-def _unpushed_item(ctx: AppContext, paper_id: str, status: ReadingStatus) -> InboxItem:
+def _unpushed_item(ctx: AppContext, paper_id: str, status: ReadingStatus | None) -> InboxItem:
     """没推送过、但在待读或在读里的论文：只有元数据和提取结果。"""
     paper = _paper(ctx, paper_id)
     aliases = {alias.scheme: alias.value for alias in ctx.store.papers.aliases_of(paper_id)}
@@ -149,6 +149,28 @@ def _unpushed_item(ctx: AppContext, paper_id: str, status: ReadingStatus) -> Inb
         topic_name=None,
         pushed_at=None,
         reading_status=status,
+    )
+
+
+def library_item(
+    ctx: AppContext,
+    paper_id: str,
+    card_data: Mapping[str, Any] | None,
+    pushed_at: str | None,
+) -> InboxItem:
+    """文库显示当前元数据，并保留最近推荐的判断；不受首页推荐窗口限制。"""
+    state = ctx.store.reader.get_state(paper_id)
+    item = _unpushed_item(ctx, paper_id, state.status if state else None)
+    if card_data is None:
+        return item
+    card = card_from_dict(card_data)
+    return replace(
+        item,
+        score=card.score,
+        tier_label=card.tier_label or card.tier,
+        provisional=card.provisional,
+        summary=item.summary or card.summary,
+        pushed_at=pushed_at,
     )
 
 

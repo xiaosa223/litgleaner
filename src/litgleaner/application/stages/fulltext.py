@@ -154,6 +154,7 @@ class ParseStage(Stage):
                 ),
                 now,
             )
+            ctx.store.search.replace_document(state.paper_id, key, document.blocks)
 
     def on_dead(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
         state = ctx.store.papers.get_fulltext(payload["paper_id"])

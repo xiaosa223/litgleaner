@@ -3,15 +3,16 @@
 from pathlib import Path
 from urllib.parse import unquote
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Query, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, RedirectResponse
 
-from litgleaner.application import inbox, reader, translation, translation_plan
+from litgleaner.application import catalog, inbox, reader, search, translation, translation_plan
 from litgleaner.application.context import AppContext
 from litgleaner.domain.errors import InvalidRequest, NotFound
 from litgleaner.domain.inbox import InboxItem
 from litgleaner.domain.reading import Annotation, NewAnnotation
+from litgleaner.ports.catalog import CatalogQuery, StatusFilter
 from litgleaner.server.schemas import (
     AddPaperBody,
     AnnotationBody,
@@ -99,6 +100,23 @@ def _paper_routes(app: FastAPI, ctx: AppContext) -> None:
 
 
 def _inbox_routes(app: FastAPI, ctx: AppContext) -> None:
+    @app.get("/api/search")
+    def search_all(
+        q: str = Query(default="", max_length=500),
+        limit: int = Query(default=30, ge=1, le=100),
+    ) -> search.SearchResults:
+        return search.search(ctx, q, limit)
+
+    @app.get("/api/library")
+    def library(
+        status: StatusFilter = "all",
+        topic_id: str | None = Query(default=None, max_length=200),
+        q: str = Query(default="", max_length=500),
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+    ) -> catalog.LibraryPage:
+        return catalog.library(ctx, CatalogQuery(status, topic_id, q, limit, offset))
+
     @app.post("/api/inbox/papers")
     def add_paper(body: AddPaperBody) -> InboxItem:
         return inbox.add_identifier(ctx, body.text)

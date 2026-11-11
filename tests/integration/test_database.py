@@ -15,6 +15,7 @@ from litgleaner.domain.paper import Paper
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, is_up_to_date, upgrade_database
 from litgleaner.infra.db.schema import metadata, source_cursor
+from litgleaner.infra.db.schema_rules import include_schema_object
 from litgleaner.infra.db.store import SqlStore
 from litgleaner.ports.store import JobSpec
 
@@ -38,7 +39,10 @@ def test_migration_matches_schema_exactly(url: str):
     upgrade_database(url)
     engine = create_engine(url)
     with engine.connect() as connection:
-        diff = compare_metadata(MigrationContext.configure(connection), metadata)
+        context = MigrationContext.configure(
+            connection, opts={"include_object": include_schema_object}
+        )
+        diff = compare_metadata(context, metadata)
     engine.dispose()
     assert diff == []
 

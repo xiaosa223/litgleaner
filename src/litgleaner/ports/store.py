@@ -10,6 +10,8 @@ from litgleaner.domain.inbox import InboxItem, InboxStatus
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import Annotation, NewAnnotation, ReadingState, ReadingStatus
 from litgleaner.domain.rubric import ScoreResult
+from litgleaner.ports.catalog import CatalogRepo
+from litgleaner.ports.search import SearchRepo
 from litgleaner.ports.translations import TranslationRepo
 
 FullTextStatus = Literal["available", "parsed", "unavailable", "failed"]
@@ -361,6 +363,10 @@ class Store(Protocol):
     def translations(self) -> TranslationRepo: ...
     @property
     def inbox(self) -> InboxRepo: ...
+    @property
+    def catalog(self) -> CatalogRepo: ...
+    @property
+    def search(self) -> SearchRepo: ...
 
     def atomic(self) -> AbstractContextManager[None]: ...
     def stats(self) -> dict[str, int]: ...

@@ -43,7 +43,13 @@ def save_parser_raw(
 
 
 def load_document(ctx: AppContext, doc_key: str) -> NormalizedDocument:
-    return NormalizedDocument.from_dict(decompress_json(ctx.blobs.get(doc_key)))
+    try:
+        document = NormalizedDocument.from_dict(decompress_json(ctx.blobs.get(doc_key)))
+    except (KeyError, TypeError) as error:
+        raise ValueError("文档归档结构损坏") from error
+    if any(not isinstance(b.text, str) or not isinstance(b.page, int) for b in document.blocks):
+        raise ValueError("文档归档的文字或页码无效")
+    return document
 
 
 def load_chunks(ctx: AppContext, doc_key: str) -> ChunkedDocument:

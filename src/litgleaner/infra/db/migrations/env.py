@@ -4,10 +4,16 @@ from alembic import context
 from sqlalchemy import create_engine
 
 from litgleaner.infra.db.schema import metadata
+from litgleaner.infra.db.schema_rules import include_schema_object
 
 engine = create_engine(context.config.attributes["database_url"])
 with engine.connect() as connection:
-    context.configure(connection=connection, target_metadata=metadata, render_as_batch=True)
+    context.configure(
+        connection=connection,
+        target_metadata=metadata,
+        render_as_batch=True,
+        include_object=include_schema_object,
+    )
     with context.begin_transaction():
         context.run_migrations()
 engine.dispose()

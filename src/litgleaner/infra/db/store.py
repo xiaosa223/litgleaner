@@ -4,6 +4,7 @@ from contextlib import AbstractContextManager
 
 from sqlalchemy import func, select
 
+from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.feedback_repo import SqlFeedbackRepo
 from litgleaner.infra.db.inbox_repo import SqlInboxRepo
@@ -29,6 +30,7 @@ from litgleaner.infra.db.schema import (
     sighting,
     triage,
 )
+from litgleaner.infra.db.search_repo import SqlSearchRepo
 from litgleaner.infra.db.translation_repo import SqlTranslationRepo
 
 _COUNTED = (
@@ -61,6 +63,8 @@ class SqlStore:
         self._reader = SqlReaderRepo(self._db)
         self._translations = SqlTranslationRepo(self._db)
         self._inbox = SqlInboxRepo(self._db)
+        self._catalog = SqlCatalogRepo(self._db)
+        self._search = SqlSearchRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -97,6 +101,14 @@ class SqlStore:
     @property
     def inbox(self) -> SqlInboxRepo:
         return self._inbox
+
+    @property
+    def catalog(self) -> SqlCatalogRepo:
+        return self._catalog
+
+    @property
+    def search(self) -> SqlSearchRepo:
+        return self._search
 
     def atomic(self) -> AbstractContextManager[None]:
         return self._db.atomic()
