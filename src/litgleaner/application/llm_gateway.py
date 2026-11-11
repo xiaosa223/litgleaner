@@ -43,6 +43,7 @@ class TaskRoute:
     llm: LLM
     model: str
     prompt: Prompt
+    provider_version: str = ""
 
 
 @dataclass(frozen=True)

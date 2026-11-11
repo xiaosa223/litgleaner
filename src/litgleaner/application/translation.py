@@ -9,7 +9,6 @@
 """
 
 import logging
-import re
 from collections.abc import Iterator, Sequence
 
 from litgleaner.application.context import AppContext
@@ -28,6 +27,7 @@ from litgleaner.domain.document import Block, body_start
 from litgleaner.domain.errors import ConfigError, InvalidRequest, NotFound, TransientError
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.hashing import stable_hash
+from litgleaner.domain.language import LanguageCode, needs_translation
 from litgleaner.domain.numbered import group_batches
 from litgleaner.domain.paragraphs import Paragraph, paragraphs
 from litgleaner.ports.translations import TranslationKey
@@ -43,24 +43,23 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-TARGET_LANG = "zh"
 UNIT = "block"  # 单块段落的指纹与旧的按块缓存相同，旧译文仍能作为旧版本显示
 RULES_VERSION = "paragraph-numbered-masked-1"  # 段落合并、编号、占位符规则变了就改
-_CJK = re.compile(r"[㐀-鿿]")
-_CJK_RATIO = 0.3
 
 
-def translatable_indices(blocks: tuple[Block, ...]) -> frozenset[int]:
+def translatable_indices(
+    blocks: tuple[Block, ...], target_lang: LanguageCode = "zh-CN"
+) -> frozenset[int]:
     """正文开始之后的、需要翻译的段落。作者、单位等前置信息不翻译。"""
     start = body_start(blocks)
-    return frozenset(i for i, b in enumerate(blocks) if i >= start and translatable(b))
+    return frozenset(i for i, b in enumerate(blocks) if i >= start and translatable(b, target_lang))
 
 
-def translatable(block: Block) -> bool:
+def translatable(block: Block, target_lang: LanguageCode = "zh-CN") -> bool:
     text = block.text.strip()
     if block.kind != "text" or not text:
         return False
-    return len(_CJK.findall(text)) / len(text) < _CJK_RATIO
+    return needs_translation(text, target_lang)
 
 
 def paper_glossary(ctx: AppContext, paper_id: str) -> Glossary:
@@ -71,9 +70,11 @@ def paper_glossary(ctx: AppContext, paper_id: str) -> Glossary:
         for t, h in ctx.store.judgments.relevant_topics(paper_id)
         if t in topics and topics[t].topic_hash == h
     ]
-    merged = Glossary()
+    merged = Glossary(target_lang=ctx.settings.reading_language)
     for topic_id in hit or sorted(topics):
-        merged = merged.merged(ctx.glossaries.get(topic_id, Glossary()))
+        glossary = ctx.glossaries.get(topic_id)
+        if glossary and glossary.target_lang == merged.target_lang:
+            merged = merged.merged(glossary)
     return merged
 
 
@@ -82,7 +83,13 @@ def translator_version(ctx: AppContext) -> str:
     if route is None:
         raise ConfigError("llm.yaml 没有配置 translate 任务，无法翻译")
     return stable_hash(
-        {"prompt": route.prompt.version, "model": route.model, "rules": RULES_VERSION}
+        {
+            "prompt": route.prompt.version,
+            "model": route.model,
+            "provider": route.provider_version,
+            "rules": RULES_VERSION,
+            "target_lang": ctx.settings.reading_language,
+        }
     )[:16]
 
 
@@ -93,14 +100,14 @@ def paper_paragraphs(ctx: AppContext, paper_id: str) -> tuple[Paragraph, ...]:
     if state is None or state.doc_key is None:
         raise InvalidRequest("这篇论文还没有解析出的正文，无法翻译")
     blocks = load_document(ctx, state.doc_key).blocks
-    return paragraphs(blocks, translatable_indices(blocks))
+    return paragraphs(blocks, translatable_indices(blocks, ctx.settings.reading_language))
 
 
 def cache_key(ctx: AppContext, paragraph: Paragraph, glossary: Glossary) -> TranslationKey:
     return TranslationKey(
         UNIT,
         stable_hash(paragraph.text),
-        TARGET_LANG,
+        ctx.settings.reading_language,
         glossary.glossary_hash,
         translator_version(ctx),
     )
@@ -113,7 +120,7 @@ def cached_translations(ctx: AppContext, paper_id: str) -> dict[int, BlockTransl
         return {}
     glossary = paper_glossary(ctx, paper_id)
     found = ctx.store.translations.latest_for(
-        UNIT, (stable_hash(p.text) for p in found_paragraphs), TARGET_LANG
+        UNIT, (stable_hash(p.text) for p in found_paragraphs), ctx.settings.reading_language
     )
     result: dict[int, BlockTranslation] = {}
     for paragraph in found_paragraphs:
@@ -136,7 +143,7 @@ def translate_block(ctx: AppContext, paper_id: str, index: int) -> Iterator[Tran
     found = paper_paragraphs(ctx, paper_id)
     target = next((p for p in found if index in p.indices), None)
     if target is None:
-        raise InvalidRequest("这一块不需要翻译（标题、公式、表格或中文段落）")
+        raise InvalidRequest("这一块不需要翻译（标题、公式、表格或与阅读语言相同的段落）")
     yield from _translate(ctx, paper_id, [target], retry=False)
 
 

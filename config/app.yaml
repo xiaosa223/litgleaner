@@ -5,6 +5,9 @@ blob_root: data/demo/blobs
 archive_dir: data/demo/archive
 prompts_dir: prompts
 timezone: Asia/Shanghai
+language:
+  ui: zh-CN         # 省略时跟随系统；首发支持 zh-CN / en
+  reading: zh-CN    # 译文、讲解、卡片等的输出语言；省略时跟随 ui
 jobs:
   max_attempts: 3
   backoff_seconds: 300

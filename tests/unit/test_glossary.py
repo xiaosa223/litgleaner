@@ -55,3 +55,18 @@ def test_check_translation_counts_sentences_and_required_terms():
     assert problems and "句数" in problems[0]
     problems = check_translation(sources, ["自我注意很快。", "我们报告 BLEU。"], glossary())
     assert problems == ("第 1 句缺少术语表译名“自注意力”（self-attention）",)
+
+
+def test_language_neutral_fields_and_target_language_are_supported():
+    value = Glossary.model_validate(
+        {
+            "target_lang": "en",
+            "terms": [{"forms": "注意力", "translation": "attention"}],
+        }
+    )
+    assert value.terms[0].forms == ("注意力",)
+    assert value.terms[0].translation == "attention"
+    assert "attention" in value.prompt_text("该方法使用注意力机制。")
+    assert check_translation(["该方法使用注意力机制。"], ["This method is useful."], value)
+    with pytest.raises(ValueError, match="不同目标语言"):
+        glossary().merged(value)

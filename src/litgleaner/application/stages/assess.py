@@ -8,9 +8,10 @@ from litgleaner.application.context import AppContext
 from litgleaner.application.documents import full_text_of, load_chunks, paper_text
 from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics
-from litgleaner.domain.chunker import ChunkedDocument, ChunkerConfig
+from litgleaner.domain.chunker import ChunkerConfig
 from litgleaner.domain.evidence import verify_quote
 from litgleaner.domain.hashing import stable_hash
+from litgleaner.domain.language import language_name
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.rubric import Rubric, apply_fulltext_constraint
 from litgleaner.domain.topic import Topic
@@ -34,7 +35,12 @@ def _is_ready(ctx: AppContext, paper_id: str) -> FullTextState | None:
 
 
 def assessment_input_hash(
-    paper: Paper, topic: Topic, state: FullTextState, chunker: ChunkerConfig
+    paper: Paper,
+    topic: Topic,
+    state: FullTextState,
+    chunker: ChunkerConfig,
+    *,
+    reading_language: str = "zh-CN",
 ) -> str:
     """评估输入的指纹。用全文时，切分规则决定送给模型的内容，所以计入切分版本。"""
     fulltext = _uses_fulltext(state)
@@ -44,6 +50,7 @@ def assessment_input_hash(
             "abstract": paper.abstract,
             "doc": state.doc_key if fulltext else None,
             "chunker": chunker.version if fulltext else None,
+            "reading_language": reading_language,
         }
     )
 
@@ -52,7 +59,12 @@ def assess_job(paper_id: str, topic: Topic, rubric: Rubric, input_hash: str) -> 
     return JobSpec(
         key=f"assess:{paper_id}:{topic.id}:{rubric.semantic_hash}:{input_hash}",
         stage="assess",
-        payload={"paper_id": paper_id, "topic_id": topic.id},
+        payload={
+            "paper_id": paper_id,
+            "topic_id": topic.id,
+            "input_hash": input_hash,
+            "semantic_hash": rubric.semantic_hash,
+        },
     )
 
 
@@ -99,6 +111,31 @@ def _evidence(dimensions: Mapping[str, Any], source: str) -> dict[str, Any]:
     }
 
 
+def _skip_processing(
+    ctx: AppContext,
+    paper_id: str,
+    topic: Topic,
+    rubric: Rubric,
+    input_hash: str,
+    *,
+    payload: Mapping[str, Any],
+) -> bool:
+    if (
+        payload.get("input_hash", input_hash) != input_hash
+        or payload.get("semantic_hash", rubric.semantic_hash) != rubric.semantic_hash
+    ):
+        return True
+    keys = ctx.store.judgments.assessment_keys(paper_id, topic.id)
+    if "input_hash" not in payload:
+        return bool(keys)  # 无计划指纹的旧任务只允许首次评估，不自动重评历史
+    return any(
+        key.input_hash == input_hash
+        and key.semantic_hash == rubric.semantic_hash
+        and key.topic_hash == topic.topic_hash
+        for key in keys
+    )
+
+
 class AssessStage(Stage):
     name = "assess"
 
@@ -121,7 +158,13 @@ class AssessStage(Stage):
         fulltext_now = _uses_fulltext(state)
         if not _needs_assessment(keys, rubric.semantic_hash, topic.topic_hash, fulltext_now):
             return None
-        input_hash = assessment_input_hash(paper, topic, state, ctx.settings.chunker)
+        input_hash = assessment_input_hash(
+            paper,
+            topic,
+            state,
+            ctx.settings.chunker,
+            reading_language=ctx.settings.reading_language,
+        )
         return assess_job(paper_id, topic, rubric, input_hash)
 
     def process(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
@@ -131,15 +174,23 @@ class AssessStage(Stage):
         state = ctx.store.papers.get_fulltext(payload["paper_id"])
         if paper is None or state is None:
             raise ValueError(f"论文未就绪：{payload['paper_id']}")
-        fulltext_used = _uses_fulltext(state)
-        chunked: ChunkedDocument | None = (
-            load_chunks(ctx, state.doc_key) if state.doc_key and fulltext_used else None
+        input_hash = assessment_input_hash(
+            paper,
+            topic,
+            state,
+            ctx.settings.chunker,
+            reading_language=ctx.settings.reading_language,
         )
+        if _skip_processing(ctx, paper.id, topic, rubric, input_hash, payload=payload):
+            return
+        fulltext_used = _uses_fulltext(state)
+        chunked = load_chunks(ctx, state.doc_key) if state.doc_key and fulltext_used else None
         result = ctx.llm.call(
             "assess",
             {
                 "topic_profile": topic.profile_text(),
                 "rubric_dimensions": _dimension_prompt(rubric),
+                "output_language": language_name(ctx.settings.reading_language),
             },
             paper_text(ctx, paper, chunked),
             rubric.assessment_schema(),
@@ -153,7 +204,7 @@ class AssessStage(Stage):
                 topic_id=topic.id,
                 topic_hash=topic.topic_hash,
                 semantic_hash=rubric.semantic_hash,
-                input_hash=assessment_input_hash(paper, topic, state, ctx.settings.chunker),
+                input_hash=input_hash,
                 levels=apply_fulltext_constraint(rubric, raw_levels, fulltext_used),
                 evidence=_evidence(dimensions, source),
                 fulltext_used=fulltext_used,

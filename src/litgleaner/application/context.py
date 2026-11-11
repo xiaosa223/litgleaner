@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from litgleaner.application.llm_gateway import LLMGateway
 from litgleaner.domain.chunker import ChunkerConfig
 from litgleaner.domain.glossary import Glossary
+from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.topic import Topic
@@ -36,6 +37,8 @@ class RuntimeSettings:
     assess_token_budget: int
     chunker: ChunkerConfig
     timezone: ZoneInfo
+    ui_language: LanguageCode = "zh-CN"
+    reading_language: LanguageCode = "zh-CN"
 
 
 @dataclass(frozen=True)

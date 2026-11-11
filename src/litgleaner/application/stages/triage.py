@@ -7,6 +7,7 @@ from litgleaner.application.context import AppContext
 from litgleaner.application.documents import paper_header
 from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics, triage_job
+from litgleaner.domain.language import language_name
 from litgleaner.ports.store import JobSpec, TriageResult
 
 TRIAGE_SCHEMA: Mapping[str, Any] = {
@@ -38,7 +39,10 @@ class TriageStage(Stage):
             raise ValueError(f"论文不存在：{payload['paper_id']}")
         result = ctx.llm.call(
             "triage",
-            {"topic_profile": topic.profile_text()},
+            {
+                "topic_profile": topic.profile_text(),
+                "output_language": language_name(ctx.settings.reading_language),
+            },
             paper_header(paper),
             TRIAGE_SCHEMA,
         )

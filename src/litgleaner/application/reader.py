@@ -9,6 +9,7 @@ from litgleaner.application.cards import card_from_dict, tier_label
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_document, pdf_key
 from litgleaner.application.stages.archive import assessment_entries
+from litgleaner.application.stages.extract import extraction_is_stale
 from litgleaner.application.topics import active_topics
 from litgleaner.application.translation import translatable_indices
 from litgleaner.domain.document import body_start
@@ -77,6 +78,7 @@ class PaperView:
     assessments: Mapping[str, Mapping[str, Any]]
     reading: ReadingState | None
     annotations: tuple[Annotation, ...]
+    extraction_stale: bool = False
 
 
 @dataclass(frozen=True)
@@ -239,6 +241,7 @@ def paper_view(ctx: AppContext, paper_id: str) -> PaperView:
         assessments=_labeled(ctx, assessment_entries(ctx, paper_id)),
         reading=ctx.store.reader.get_state(paper_id),
         annotations=ctx.store.reader.annotations(paper_id),
+        extraction_stale=extraction_is_stale(ctx, paper_id),
     )
 
 
@@ -249,7 +252,7 @@ def document_view(ctx: AppContext, paper_id: str) -> DocumentView | None:
     if fulltext is None or fulltext.doc_key is None:
         return None
     document = load_document(ctx, fulltext.doc_key)
-    allowed = translatable_indices(document.blocks)
+    allowed = translatable_indices(document.blocks, ctx.settings.reading_language)
     blocks = tuple(
         BlockView(index, b.kind, b.text, b.page, b.bbox, b.caption, index in allowed)
         for index, b in enumerate(document.blocks)

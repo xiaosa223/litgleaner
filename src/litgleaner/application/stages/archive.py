@@ -5,7 +5,9 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from litgleaner.application.context import AppContext
+from litgleaner.application.stages.assess import assessment_input_hash
 from litgleaner.application.stages.base import Stage
+from litgleaner.application.stages.extract import extraction_is_stale
 from litgleaner.domain.archive import archive_key, build_archive_record
 from litgleaner.domain.paper import Paper
 from litgleaner.ports.store import JobSpec, ScoredAssessment
@@ -32,16 +34,30 @@ def _topic_entries(ctx: AppContext, paper_id: str) -> tuple[dict[str, dict[str, 
     entries: dict[str, dict[str, Any]] = {}
     kept = False
     rows = ctx.store.judgments.scored_for_paper(paper_id)
+    paper = ctx.store.papers.get(paper_id)
+    state = ctx.store.papers.get_fulltext(paper_id)
     for topic_id in sorted({row.assessment.topic_id for row in rows}):
         topic = ctx.topics.get(topic_id)
         rubric = ctx.rubrics.get(topic.rubric) if topic else None
         own = [row for row in rows if row.assessment.topic_id == topic_id]
+        expected_input = (
+            assessment_input_hash(
+                paper,
+                topic,
+                state,
+                ctx.settings.chunker,
+                reading_language=ctx.settings.reading_language,
+            )
+            if paper and topic and state
+            else None
+        )
         current = [
             row
             for row in own
             if rubric
             and row.assessment.semantic_hash == rubric.semantic_hash
             and row.policy_hash == rubric.policy_hash
+            and row.assessment.input_hash == expected_input
         ]
         chosen = current[-1] if current else own[-1]
         entries[topic_id] = _entry(chosen, stale=not current)
@@ -67,6 +83,7 @@ def _record(ctx: AppContext, paper: Paper) -> tuple[dict[str, Any], bool]:
         entries,
         fulltext_used=bool(fulltext and fulltext.status == "parsed"),
     )
+    record["extraction_stale"] = extraction_is_stale(ctx, paper.id)
     return record, kept
 
 

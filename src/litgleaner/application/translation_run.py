@@ -14,6 +14,7 @@ from litgleaner.application.context import AppContext
 from litgleaner.domain.digest import strip_urls
 from litgleaner.domain.errors import InvalidRequest
 from litgleaner.domain.glossary import Glossary, check_translation
+from litgleaner.domain.language import language_name
 from litgleaner.domain.masking import Masked, mask, restore
 from litgleaner.domain.numbered import LineParser, numbered_payload
 from litgleaner.domain.paragraphs import Paragraph, slice_to_blocks
@@ -183,6 +184,7 @@ def run_batch(
     payload = numbered_payload([m.text for job in jobs for m in job.masked])
     variables = {
         "count": str(jobs[-1].last),
+        "target_language": language_name(ctx.settings.reading_language),
         "glossary": glossary.prompt_text(" ".join(p.text for p in paragraphs)),
     }
     stream = ctx.llm.stream(TASK, variables, payload, paper_id=paper_id)

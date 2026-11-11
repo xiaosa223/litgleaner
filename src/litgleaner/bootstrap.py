@@ -52,6 +52,7 @@ from litgleaner.application.context import AppContext, ChannelBinding, RuntimeSe
 from litgleaner.application.llm_gateway import LLMGateway, Prompt, TaskRoute
 from litgleaner.domain.chunker import ChunkerConfig
 from litgleaner.domain.errors import ConfigError
+from litgleaner.domain.hashing import stable_hash
 from litgleaner.infra.config import AdapterConfig, LoadedConfig
 from litgleaner.infra.db.store import SqlStore
 from litgleaner.ports.fulltext import FullTextProvider
@@ -244,7 +245,16 @@ def _build_llm(config: LoadedConfig, store: SqlStore, clock: Callable[[], dateti
         if isinstance(llm, HttpLLM):
             llm.check_model(setting.model)
         routes[task] = TaskRoute(
-            providers[setting.provider], setting.model, prompts[setting.prompt]
+            providers[setting.provider],
+            setting.model,
+            prompts[setting.prompt],
+            provider_version=stable_hash(
+                {
+                    "name": setting.provider,
+                    "adapter": config.llm.providers[setting.provider].adapter,
+                    "options": dict(config.llm.providers[setting.provider].options),
+                }
+            ),
         )
     return LLMGateway(routes, store.runs, config.llm.budget.daily_usd, clock)
 
@@ -352,6 +362,8 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
                 chunker.target_tokens, chunker.max_tokens, chunker.overlap_sentences
             ),
             timezone=config.timezone,
+            ui_language=config.app.language.ui,
+            reading_language=config.app.language.reading,
         ),
         topics=config.topics,
         glossaries=config.glossaries,

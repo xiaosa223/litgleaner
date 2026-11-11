@@ -113,6 +113,7 @@ def _write_config(root: Path) -> None:
             "archive_dir": "archive",
             "prompts_dir": "prompts",
             "timezone": "Asia/Shanghai",
+            "language": {"ui": "zh-CN", "reading": "zh-CN"},
             "jobs": {"max_attempts": 3, "backoff_seconds": 300},
             "assess": {"token_budget": 6000},
             "fulltext": [{"adapter": "fake_fulltext"}],

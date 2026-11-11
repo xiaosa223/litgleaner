@@ -1,6 +1,7 @@
 """配置加载和校验。错误在启动时一次报清楚，并指出是哪个文件。"""
 
 import json
+import locale
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -8,11 +9,12 @@ from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 
 from litgleaner.domain.base import FrozenModel
 from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.glossary import Glossary
+from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.routing import ALL_TOPICS, PUBLIC_TOPICS, Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.topic import Topic
@@ -52,12 +54,38 @@ class BackupSettings(FrozenModel):
     keep: int = Field(default=14, ge=1)
 
 
+def _system_language() -> LanguageCode:
+    try:
+        name = locale.getlocale()[0]
+    except (ValueError, TypeError, locale.Error):
+        return "zh-CN"  # 系统 locale 损坏时按首发语言回退，不阻止启动
+    return "zh-CN" if (name or "").lower().startswith("zh") else "en"
+
+
+class LanguageSettings(FrozenModel):
+    ui: LanguageCode = Field(default_factory=_system_language)
+    reading: LanguageCode = "zh-CN"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _follow_ui(cls, value: object) -> object:
+        if not isinstance(value, Mapping):
+            return value
+        settings = dict(value)
+        if "ui" not in settings:
+            settings["ui"] = _system_language()
+        if "reading" not in settings:
+            settings["reading"] = settings["ui"]
+        return settings
+
+
 class AppSettings(FrozenModel):
     database: str
     blob_root: str
     archive_dir: str
     prompts_dir: str
     timezone: str
+    language: LanguageSettings = Field(default_factory=LanguageSettings)
     jobs: JobSettings = JobSettings()
     chunker: ChunkerSettings = ChunkerSettings()
     assess: AssessSettings = AssessSettings()
