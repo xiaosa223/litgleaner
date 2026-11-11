@@ -37,6 +37,36 @@ export interface Inbox {
   topics: TopicProfile[];
 }
 
+/** 文库来自完整的服务端查询，不受首页最近推荐条数限制。 */
+export interface LibraryItem extends InboxItem {
+  topic_ids: string[];
+}
+
+export interface LibraryFilters {
+  status?: ReadingStatus | "new" | "all";
+  topic_id?: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface LibraryPage {
+  items: LibraryItem[];
+  total: number;
+  counts: Record<ReadingStatus | "new" | "all", number>;
+  topics: TopicProfile[];
+}
+
+export interface SearchHit {
+  kind: "paper" | "fulltext" | "note" | "highlight" | "extraction";
+  id: string;
+  paper_id: string;
+  title: string;
+  text: string;
+  page: number | null; // 零基页码，跳回原文时保留
+  authorship: "author" | "user" | "model";
+}
+
 /** 页面归一化坐标 0–1000，原点在左上：x0, y0, x1, y1 */
 export type BBox = [number, number, number, number];
 /** 页面归一化坐标 0–1000：x, y, 宽, 高 */
@@ -102,6 +132,26 @@ export interface Block {
 }
 
 /** 一段的译文：sources 与 sentences 按句一一对应。 */
+/** 用户添加的一篇论文（第 12.8 节）。对上论文时 paper_id 不为空；error 也可能是“元数据待补”这样的说明。 */
+export interface AddedPaper {
+  id: string;
+  kind: "doi" | "arxiv" | "url" | "pdf";
+  value: string;
+  status: "pending" | "done" | "failed";
+  paper_id: string | null;
+  error: string | null;
+}
+
+/** 整篇翻译的估算和进度（第 12.3 节）。估算不调用模型。 */
+export interface TranslationPlan {
+  paragraphs: number;
+  pending: number;
+  characters: number;
+  estimated_usd: number | null; // 不知道模型价格时为 null
+  state: "idle" | "queued" | "retrying" | "done" | "failed";
+  error: string | null;
+}
+
 export interface BlockTranslation {
   index: number;
   sources: string[];

@@ -5,7 +5,7 @@ import { EmbedPDF, useDocumentState } from "@embedpdf/core/react";
 import { DocumentContent, DocumentManagerPluginPackage } from "@embedpdf/plugin-document-manager/react";
 import { GlobalPointerProvider, InteractionManagerPluginPackage } from "@embedpdf/plugin-interaction-manager/react";
 import { RenderPluginPackage } from "@embedpdf/plugin-render/react";
-import { ScrollPluginPackage, Scroller, useScroll } from "@embedpdf/plugin-scroll/react";
+import { ScrollPluginPackage, Scroller, useScroll, useScrollCapability } from "@embedpdf/plugin-scroll/react";
 import { SelectionPluginPackage, useSelectionCapability } from "@embedpdf/plugin-selection/react";
 import { TilingPluginPackage } from "@embedpdf/plugin-tiling/react";
 import { Viewport, ViewportPluginPackage } from "@embedpdf/plugin-viewport/react";
@@ -37,9 +37,11 @@ function Pages({ blocks, annotations, focus, onAction, translation, onPage, onSe
   // useScroll 每次渲染都返回新的 scope 对象，不能放进 effect 依赖（否则每次重渲染都会重新跳页，
   // 拖选会被打断）。和 Agentero 一样用 ref 持有，effect 只依赖“是否就绪”。
   const { provides: scroll } = useScroll(DOC_ID);
+  const { provides: scrollCapability } = useScrollCapability();
   const scrollRef = useRef(scroll);
   scrollRef.current = scroll;
-  const ready = Boolean(scroll);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const ready = Boolean(scroll) && layoutReady;
   const { provides: selectionCap } = useSelectionCapability();
   const pages = useDocumentState(DOC_ID)?.document?.pages;
   const sizes = useMemo(() => pages?.map((p) => p.size) ?? [], [pages]);
@@ -47,9 +49,18 @@ function Pages({ blocks, annotations, focus, onAction, translation, onPage, onSe
   latest.current = { sizes, blocks, onSelect, onPage };
   const [focused, setFocused] = useState<number | null>(null);
 
+  // 能拿到 capability 时 Scroller 的 DOM 还可能未布局。此时 scrollToPage 会被
+  // 浏览器截为 0；等插件的可回放 layout-ready 事件再恢复位置或执行搜索跳转。
+  useEffect(() => {
+    if (!scrollCapability) return;
+    return scrollCapability.onLayoutReady((event) => {
+      if (event.documentId === DOC_ID) setLayoutReady(true);
+    });
+  }, [scrollCapability]);
+
   useEffect(() => {
     const current = scrollRef.current;
-    if (!current) return;
+    if (!current || !ready) return;
     if (page.current > 0) current.scrollToPage({ pageNumber: page.current + 1, behavior: "instant" });
     return current.onPageChange((event) => {
       page.current = event.pageNumber - 1;
@@ -74,7 +85,7 @@ function Pages({ blocks, annotations, focus, onAction, translation, onPage, onSe
 
   useEffect(() => {
     const current = scrollRef.current;
-    if (!focus || !current) return;
+    if (!focus || !current || !ready) return;
     const { blocks: b, sizes: s } = latest.current;
     const block = b.find((x) => x.index === focus.block);
     const y = block?.bbox ? (block.bbox[1] / 1000) * (s[focus.page]?.height ?? 0) : 0;

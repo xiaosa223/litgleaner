@@ -8,8 +8,9 @@ import type { PaperView } from "./types";
 export type View = "pdf" | "flow";
 export interface Costs { month_usd: number; paper_usd: number | null }
 
-function DisplayMenu({ view, canPdf, canFlow, costs, onView, onPure }: {
+function DisplayMenu({ view, canPdf, canFlow, costs, onView, onPure, onTranslateAll }: {
   view: View; canPdf: boolean; canFlow: boolean; costs: Costs | null; onView: (view: View) => void; onPure: () => void;
+  onTranslateAll: (() => void) | null;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -38,6 +39,9 @@ function DisplayMenu({ view, canPdf, canFlow, costs, onView, onPure }: {
               <button aria-pressed={view === "flow"} disabled={!canFlow} title="重排文字，适合小屏（2）" onClick={() => onView("flow")}>段落</button>
             </div>
           </div>
+          {onTranslateAll && (
+            <button className="menu-item" onClick={() => { onTranslateAll(); setOpen(false); }}>翻译全文…</button>
+          )}
           <button className="menu-item" onClick={() => { onPure(); setOpen(false); }}>
             回到纯原文<kbd>Esc</kbd>
           </button>
@@ -57,8 +61,9 @@ export function ReaderHeader(props: {
   mode: TranslateMode; canTranslate: boolean; onMode: (mode: TranslateMode) => void;
   toc: { available: boolean; open: boolean; toggle: () => void }; panel: { open: boolean; toggle: () => void };
   onView: (view: View) => void; onPure: () => void; onHelp: () => void;
+  onTranslateAll: () => void; progress: string | null; // 后台整篇翻译的进度
 }) {
-  const { paper, view, canPdf, canFlow, costs, mode, canTranslate, onMode, toc, panel, onView, onPure, onHelp } = props;
+  const { paper, view, canPdf, canFlow, costs, mode, canTranslate, onMode, toc, panel, onView, onPure, onHelp, onTranslateAll, progress } = props;
   const small = [paper.venue, paper.published_at?.slice(0, 4), paper.has_pdf ? null : "只有摘要"].filter(Boolean).join(" · ");
   return (
     <header className="bar">
@@ -76,7 +81,9 @@ export function ReaderHeader(props: {
           <button aria-pressed={mode === "column"} title="原文和译文逐段对照（T）；选中句子也可以单独翻译" onClick={() => onMode("column")}>对照</button>
         </div>
       )}
-      <DisplayMenu view={view} canPdf={canPdf} canFlow={canFlow} costs={costs} onView={onView} onPure={onPure} />
+      {progress && <span className="tag" role="status" title="后台整篇翻译">{progress}</span>}
+      <DisplayMenu view={view} canPdf={canPdf} canFlow={canFlow} costs={costs} onView={onView} onPure={onPure}
+        onTranslateAll={canTranslate ? onTranslateAll : null} />
       <button className="ghost iconbtn" aria-pressed={panel.open} onClick={panel.toggle} title="侧栏（]）" aria-label="侧栏"><PanelRight size={16} aria-hidden /></button>
       <button className="ghost iconbtn opt" onClick={onHelp} title="快捷键（?）" aria-label="快捷键"><Keyboard size={16} aria-hidden /></button>
     </header>

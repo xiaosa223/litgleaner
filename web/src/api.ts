@@ -5,9 +5,14 @@ import type {
   BlockTranslation,
   DocumentView,
   Inbox,
+  LibraryFilters,
+  LibraryPage,
   NewAnnotation,
   PaperView,
   ReadingStatus,
+  SearchHit,
+  TranslationPlan,
+  AddedPaper,
 } from "./types";
 
 export class ApiError extends Error {
@@ -44,8 +49,8 @@ async function parse<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function get<T>(path: string): Promise<T> {
-  return parse<T>(await fetch(path, { credentials: "same-origin" }));
+async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return parse<T>(await fetch(path, { credentials: "same-origin", signal }));
 }
 
 async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -68,15 +73,15 @@ export const isNotConnected = (error: unknown): boolean =>
 
 export const NOT_CONNECTED = "这项功能的服务还没有接上，现在只能看界面。";
 
-async function upload<T>(path: string, file: File): Promise<T> {
-  const form = new FormData();
-  form.append("file", file);
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "X-CSRF-Token": await csrfToken() },
-    credentials: "same-origin",
-    body: form,
-  });
+/** 上传 PDF：请求体就是文件本身；文件名和首页找到的标识符放在请求头里。 */
+async function upload<T>(path: string, file: File, identifier: string | null): Promise<T> {
+  const headers: Record<string, string> = {
+    "X-CSRF-Token": await csrfToken(),
+    "Content-Type": "application/pdf",
+    "X-File-Name": encodeURIComponent(file.name),
+  };
+  if (identifier) headers["X-Identifier"] = identifier;
+  const response = await fetch(path, { method: "POST", headers, credentials: "same-origin", body: file });
   return parse<T>(response);
 }
 
@@ -122,11 +127,22 @@ async function streamTranslation(path: string, body: unknown, handlers: Translat
 
 export const api = {
   inbox: () => get<Inbox>("/api/inbox"),
+  library: (filters: LibraryFilters = {}, signal?: AbortSignal) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    }
+    return get<LibraryPage>(`/api/library?${query}`, signal);
+  },
+  search: (query: string, signal?: AbortSignal) =>
+    get<{ hits: SearchHit[] }>(`/api/search?${new URLSearchParams({ q: query, limit: "30" })}`, signal),
   costs: (paperId?: string) =>
     get<{ month_usd: number; paper_usd: number | null }>(
       paperId ? `/api/costs?paper_id=${encodeURIComponent(paperId)}` : "/api/costs",
     ),
   translations: (id: string) => get<BlockTranslation[]>(`${paperPath(id)}/translations`),
+  translationPlan: (id: string) => get<TranslationPlan>(`${paperPath(id)}/translation-plan`),
+  confirmTranslationPlan: (id: string) => send<TranslationPlan>("POST", `${paperPath(id)}/translation-plan`),
   /** 翻译这一块所在的整段；同段的其他块也会收到结果。 */
   translate: (id: string, index: number, handlers: TranslationHandlers) =>
     streamTranslation(`${paperPath(id)}/blocks/${index}/translate`, undefined, handlers),
@@ -144,10 +160,10 @@ export const api = {
     send<void>("PATCH", `/api/annotations/${encodeURIComponent(annotationId)}`, { body }),
   removeAnnotation: (annotationId: string) =>
     send<void>("DELETE", `/api/annotations/${encodeURIComponent(annotationId)}`),
-  // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4、12.8 节），调用方用 isNotConnected 处理 ----
   /** 按 DOI、arXiv 编号或链接添加论文，返回论文编号。 */
-  addPaper: (item: Identified) => send<{ paper_id: string }>("POST", "/api/inbox/papers", item),
-  uploadPaper: (file: File) => upload<{ paper_id: string }>("/api/inbox/files", file),
+  addPaper: (item: Identified) => send<AddedPaper>("POST", "/api/inbox/papers", { text: item.value }),
+  uploadPaper: (file: File, identifier: string | null) => upload<AddedPaper>("/api/inbox/files", file, identifier),
+  // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4 节），调用方用 isNotConnected 处理 ----
   createTopic: (topic: { name: string; background: string; content: string; goals: string[] }) =>
     send<{ id: string }>("POST", "/api/topics", topic),
   startSurvey: (topicId: string) => send<void>("POST", `/api/topics/${encodeURIComponent(topicId)}/survey`),

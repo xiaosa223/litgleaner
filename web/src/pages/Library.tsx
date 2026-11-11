@@ -1,58 +1,85 @@
-// 文库：读过、在读、待读的论文都在这里，按状态、课题和文字筛选（第 12.8 节）。
-import { useMemo, useState } from "react";
-import { countByStatus, filterLibrary, mergeLibrary, type StatusFilter } from "../library";
+// 文库查询由服务端完成，已读、放弃和只有笔记的论文都保留在这里（第 12.8 节）。
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import type { StatusFilter } from "../library";
 import { PaperRow, STATUS_LABEL } from "../PaperCard";
-import type { Inbox } from "../types";
-import type { Async } from "../useAsync";
+import type { LibraryItem, LibraryPage } from "../types";
 
 const FILTERS: StatusFilter[] = ["all", "reading", "queued", "new", "read", "abandoned"];
 const label = (status: StatusFilter) => (status === "all" ? "全部" : STATUS_LABEL[status]);
+const PAGE_SIZE = 50;
 
-export function Library({ inbox, reload, onAdd }: { inbox: Async<Inbox>; reload: () => void; onAdd: () => void }) {
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [topicId, setTopicId] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const all = useMemo(() => (inbox.state === "ready" ? mergeLibrary(inbox.data) : []), [inbox]);
-  const head = <div className="screen-head"><h1>文库</h1><span className="sub">读过、在读和待读的论文</span></div>;
-  if (inbox.state === "loading") return <div className="screen-in">{head}<div className="view-msg">正在加载…</div></div>;
-  if (inbox.state === "error") return <div className="screen-in">{head}<div className="view-msg">{inbox.message}</div></div>;
-  const counts = countByStatus(all);
-  const shown = filterLibrary(all, { status, topicId, query });
-  const topics = inbox.data.topics;
+export function Library({ onAdd }: { onAdd: () => void }) {
+  const [filters, setFilters] = useState({ status: "all" as StatusFilter, topic_id: "", q: "" });
+  const [offset, setOffset] = useState(0);
+  const [version, setVersion] = useState(0);
+  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [page, setPage] = useState<LibraryPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (all.length === 0) {
-    return (
-      <div className="screen-in">
-        {head}
-        <div className="empty">
-          <h2>文库还是空的</h2>
-          <p>添加一篇论文，或者等课题里推荐的论文出现。读过的每一篇都会留在这里。</p>
-          <button className="primary" onClick={onAdd}>添加论文</button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const controller = new AbortController();
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    if (offset === 0) setItems([]);
+    const timer = window.setTimeout(() => {
+      api.library({ ...filters, limit: PAGE_SIZE, offset }, controller.signal).then((result) => {
+        if (!alive) return;
+        setPage(result);
+        setItems((previous) => offset === 0 ? result.items : [...previous, ...result.items.filter((item) => !previous.some((old) => old.paper_id === item.paper_id))]);
+        setLoading(false);
+      }, (reason: unknown) => {
+        if (!alive) return;
+        setError(reason instanceof Error ? reason.message : "文库加载失败");
+        setLoading(false);
+      });
+    }, filters.q ? 180 : 0);
+    return () => { alive = false; controller.abort(); window.clearTimeout(timer); };
+  }, [filters, offset, version]);
+
+  const change = (next: Partial<typeof filters>) => {
+    setFilters((current) => ({ ...current, ...next }));
+    setOffset(0);
+  };
+  const reload = () => { setOffset(0); setVersion((v) => v + 1); };
+  const topics = page?.topics ?? [];
+
   return (
     <div className="screen-in">
-      {head}
+      <div className="screen-head"><h1>文库</h1><span className="sub">读过、在读和待读的论文</span></div>
       <div className="filters" role="group" aria-label="按状态筛选">
-        {FILTERS.filter((f) => f === "all" || counts[f] > 0 || f === status).map((f) => (
-          <button key={f} className="filter" aria-pressed={status === f} onClick={() => setStatus(f)}>
-            {label(f)}<span className="n">{counts[f]}</span>
+        {FILTERS.map((status) => (
+          <button key={status} className="filter" aria-pressed={filters.status === status} onClick={() => change({ status })}>
+            {label(status)}{page && <span className="n">{page.counts[status]}</span>}
           </button>
         ))}
-        {topics.length > 1 && (
-          <select className="pick" aria-label="按课题筛选" value={topicId ?? ""} onChange={(e) => setTopicId(e.target.value || null)}>
+        {topics.length > 0 && (
+          <select className="pick" aria-label="按课题筛选" value={filters.topic_id} onChange={(e) => change({ topic_id: e.target.value })}>
             <option value="">全部课题</option>
-            {topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}
           </select>
         )}
-        <input className="field" type="search" placeholder="筛选标题、作者" aria-label="筛选标题、作者" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input className="field" type="search" placeholder="筛选标题、作者、出处、DOI" aria-label="筛选文库" maxLength={300}
+          value={filters.q} onChange={(e) => change({ q: e.target.value })} />
       </div>
-      {shown.length === 0
-        ? <div className="empty"><p>没有符合条件的论文。</p></div>
-        : shown.map((item) => <PaperRow key={item.paper_id} item={item} onChange={reload} />)}
-      <p className="quiet">现在这里列出的是最近推荐、待读和在读的论文。</p>
+      {error && <div className="view-msg" role="alert">{error} <button onClick={() => setVersion((v) => v + 1)}>重试</button></div>}
+      {loading && items.length === 0 && <div className="view-msg" role="status">正在加载…</div>}
+      {!loading && !error && items.length === 0 && (
+        <div className="empty">
+          <h2>{filters.status === "all" && !filters.topic_id && !filters.q ? "文库还是空的" : "没有符合条件的论文"}</h2>
+          <p>添加的论文、阅读记录、笔记和高亮都会留在文库里。</p>
+          <button className="primary" onClick={onAdd}>添加论文</button>
+        </div>
+      )}
+      {items.map((item) => <PaperRow key={item.paper_id} item={item} onChange={reload} />)}
+      {page && items.length > 0 && <p className="quiet">已显示 {items.length} / {page.total} 篇</p>}
+      {page && items.length < page.total && !error && (
+        <button className="ghost" disabled={loading} onClick={() => setOffset((value) => value + PAGE_SIZE)}>
+          {loading ? "正在加载…" : "加载更多"}
+        </button>
+      )}
     </div>
   );
 }

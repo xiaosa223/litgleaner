@@ -1,9 +1,10 @@
 // 添加论文：贴 DOI、arXiv 编号、链接，或拖入 PDF（第 12.8 节）。任何页面都能打开。
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import { api, isNotConnected, NOT_CONNECTED } from "./api";
-import { identify } from "./identify";
+import { findIdentifier, identify } from "./identify";
+import { usePdfEngine } from "./pdf/EngineProvider";
 import { navigate, paths } from "./router";
-import { Modal } from "./ui";
+import { Modal, useToast } from "./ui";
 
 const MAX_BYTES = 100 * 1024 * 1024;
 const KIND = { doi: "DOI", arxiv: "arXiv 编号", url: "链接" } as const;
@@ -22,6 +23,24 @@ export function AddPaper({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const found = identify(text);
+  const { engine } = usePdfEngine();
+  const toast = useToast();
+
+  /** 在本机读 PDF 首页文字找 DOI 或 arXiv 编号，用来查元数据；读不出来就交给后端用文件名建条目。 */
+  const firstPageIdentifier = async (pdf: File): Promise<string | null> => {
+    if (!engine) return null;
+    try {
+      const doc = await engine.openDocumentBuffer({ id: `add:${pdf.name}:${pdf.size}`, content: await pdf.arrayBuffer() }).toPromise();
+      try {
+        const id = findIdentifier(await engine.extractText(doc, [0]).toPromise());
+        return id ? `${id.kind === "doi" ? "doi:" : "arXiv:"}${id.value}` : null;
+      } finally {
+        engine.closeDocument(doc).wait(() => undefined, () => undefined);
+      }
+    } catch {
+      return null;
+    }
+  };
 
   const take = useCallback((picked: File | undefined) => {
     if (!picked) return;
@@ -51,7 +70,12 @@ export function AddPaper({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const added = file ? await api.uploadPaper(file) : await api.addPaper(found!);
+      const added = file ? await api.uploadPaper(file, await firstPageIdentifier(file)) : await api.addPaper(found!);
+      if (!added.paper_id) {
+        setError(added.error ?? "没有找到这篇论文");
+        return;
+      }
+      if (added.error) toast(added.error);
       onClose();
       navigate(paths.paper(added.paper_id));
     } catch (problem) {

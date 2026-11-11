@@ -10,6 +10,7 @@ export interface Translations {
   errors: Map<number, string>;
   translate: (index: number) => void;
   translateAll: (indices: number[]) => void; // 按段落分批，一次请求
+  reload: () => void; // 重新读缓存（后台整篇翻译的进度）
 }
 
 const without = <T,>(map: Map<number, T>, keys: Iterable<number>) => {
@@ -31,6 +32,9 @@ export function useTranslations(paperId: string, enabled: boolean, onSpent: () =
   const [thinking, setThinking] = useState(false);
   const running = useRef(new Set<number>()); // 已发出请求、还没结束的块，避免重复请求
 
+  const [version, setVersion] = useState(0);
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
+
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
@@ -41,7 +45,7 @@ export function useTranslations(paperId: string, enabled: boolean, onSpent: () =
     return () => {
       alive = false;
     };
-  }, [paperId, enabled]);
+  }, [paperId, enabled, version]);
 
   const run = useCallback(
     (indices: number[], request: (handlers: TranslationHandlers) => Promise<void>) => {
@@ -86,5 +90,5 @@ export function useTranslations(paperId: string, enabled: boolean, onSpent: () =
     [paperId, run],
   );
 
-  return { done, live, thinking, errors, translate, translateAll };
+  return { done, live, thinking, errors, translate, translateAll, reload };
 }

@@ -1,8 +1,7 @@
 // 入口：阅读页全屏显示，其余页面放在带导航的骨架里；添加论文和全局检索在任何页面都能用。
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AddPaper } from "./AddPaper";
 import { api } from "./api";
-import { mergeLibrary } from "./library";
 import { Knowledge } from "./pages/Knowledge";
 import { Library } from "./pages/Library";
 import { Settings, type Theme } from "./pages/Settings";
@@ -25,7 +24,6 @@ export function App() {
   const [adding, setAdding] = useState(false);
   const [searching, setSearching] = useState(false);
   const [theme] = usePref<Theme>("theme", "system");
-  const papers = useMemo(() => (inbox.state === "ready" ? mergeLibrary(inbox.data) : []), [inbox]);
 
   useEffect(() => {
     if (theme === "system") delete document.documentElement.dataset.theme;
@@ -60,13 +58,13 @@ export function App() {
           {route.name === "today" && <Today inbox={inbox} reload={reload} onAdd={add} />}
           {route.name === "topics" && <Topics inbox={inbox} />}
           {route.name === "topic" && <TopicPage key={route.topicId} topicId={route.topicId} inbox={inbox} reload={reload} />}
-          {route.name === "library" && <Library inbox={inbox} reload={reload} onAdd={add} />}
+          {route.name === "library" && <Library onAdd={add} />}
           {route.name === "knowledge" && <Knowledge />}
           {route.name === "settings" && <Settings />}
         </Shell>
       )}
       {adding && <AddPaper onClose={() => setAdding(false)} />}
-      {searching && <SearchPalette papers={papers} onClose={() => setSearching(false)} />}
+      {searching && <SearchPalette onClose={() => setSearching(false)} />}
     </ToastProvider>
     </ErrorBoundary>
   );
