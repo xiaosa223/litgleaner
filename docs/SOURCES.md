@@ -83,7 +83,7 @@ OpenAlex 和 Semantic Scholar 另外支持 `ReferenceList`：查论文引用的�
 
 ## 显式历史检索
 
-`HistoricalSearch` 是课题调研使用的一次性查询协议，目前由 OpenAlex 和 Semantic Scholar 实现；尚未接入 `topic survey` 命令。调用方必须给定 `terms`、`since`、`until`、`category`，可选 `exclude` 和 `limit`（1–1000）。查询不使用日常发现游标或 `lookback_days`，返回 `next_cursor=None`，不加入日常发现计划。
+`HistoricalSearch` 是课题调研使用的一次性查询协议，目前由 OpenAlex 和 Semantic Scholar 实现，已接入 [`topic survey`](SURVEY.md)。调用方必须给定 `terms`、`since`、`until`、`category`，可选 `exclude` 和 `limit`（1–1000）。查询不使用日常发现游标或 `lookback_days`，返回 `next_cursor=None`，不加入日常发现计划。
 
 | 类别 | 检索依据 |
 |---|---|
@@ -96,6 +96,8 @@ OpenAlex 和 Semantic Scholar 另外支持 `ReferenceList`：查论文引用的�
 两个来源也保存实际 `publication_types` 和 `citation_count`。库内这些事实只首次补空，不覆盖旧值；总被引数仅是来源快照，阅读路线使用另外统计的课题内引用数。畸形可选字段会被忽略并提示，不丢弃其余有效元数据。
 
 参数依据：[OpenAlex 筛选](https://help.openalex.org/api/filtering.md)、[排序](https://help.openalex.org/api/sorting.md)、[文献类型](https://help.openalex.org/data/work-types.md)及 [Semantic Scholar Graph API](https://api.semanticscholar.org/api-docs/graph)。本次契约测试全部使用模拟响应，未请求真实来源 API。
+
+`HistoricalCitations` 同样由这两个来源实现，按明确的 `dois`、`since`、`until`、`limit` 读取历史被引论文，返回 `next_cursor=None`。调研对每个种子单独查询，按实际目标保存“引用方论文 → 种子”关系；读取上限按原始条目计算，坏条目和重复也占额度。日常 `CitationWatch` 不变。参考文献扩展继续使用 `ReferenceList`，其网络上限与采集后限额区别见[调研说明](SURVEY.md)。
 
 ## 已知限制
 

@@ -1,6 +1,8 @@
 """命令行入口。这里只做参数处理和输出，业务逻辑都在 application。"""
 
+import json
 import logging
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -12,6 +14,8 @@ from litgleaner.application.delivery_ops import resolve_delivery, unresolved_del
 from litgleaner.application.pipeline import ON_DEMAND_NAMES, STAGE_NAMES, run_pipeline
 from litgleaner.application.rubric_ops import reassess, rescore
 from litgleaner.application.stages.archive import write_archive
+from litgleaner.application.survey import preview as preview_survey
+from litgleaner.application.survey import queue as queue_survey
 from litgleaner.application.topics import (
     WorkPlan,
     activate_topic,
@@ -285,6 +289,37 @@ def jobs_list(
     for job in jobs:
         _echo(f"{job.stage}\t{job.attempts}\t{job.key}\t{job.last_error or ''}")
     _echo(f"共 {len(jobs)} 个")
+
+
+@topic_app.command("survey")
+@_friendly
+def topic_survey(
+    topic_id: str,
+    execute: Annotated[bool, typer.Option("--execute", help="确认最近预览的计划")] = False,
+    plan: Annotated[str | None, typer.Option("--plan", help="指定已保存的预览编号")] = None,
+    config: ConfigOption = _DEFAULT_CONFIG,
+) -> None:
+    """预览课题调研；确认后由常驻服务或 run --stage survey 分轮执行。"""
+    ctx = _context(config)
+    if execute:
+        try:
+            with _run_lock(_config(config)):
+                queued = queue_survey(ctx, topic_id, plan)
+        except LitGleanerError as error:
+            typer.secho(str(error), fg="red", err=True)
+            raise typer.Exit(2) from error
+        _echo(json.dumps(asdict(queued), ensure_ascii=False, default=lambda v: v.model_dump()))
+        return
+    if plan is not None:
+        raise typer.BadParameter("--plan 需与 --execute 一起使用")
+    try:
+        result = preview_survey(ctx, topic_id)
+    except LitGleanerError as error:
+        typer.secho(str(error), fg="red", err=True)
+        raise typer.Exit(2) from error
+    _echo(result.model_dump_json(indent=2))
+    _echo("估算按历史单次费用；后续轮次按候选限额估算。null 表示暂无历史费用。")
+    _echo(f"确认执行：topic survey {topic_id} --execute --plan {result.id}")
 
 
 @jobs_app.command("retry")

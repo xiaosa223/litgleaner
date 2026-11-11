@@ -48,6 +48,10 @@ class Deferred(TransientError):
         self.retry_after_seconds = retry_after_seconds
 
 
+class WaitingForWork(Deferred):
+    """等待本地前置任务或用户恢复，不设外部任务等待期限。"""
+
+
 class RateLimited(Deferred):
     """触发外部频率限制或额度用完。"""
 
