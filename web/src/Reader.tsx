@@ -1,11 +1,13 @@
-// 阅读页：顶栏 + 目录 | 正文（原版或段落视图）| 侧栏。布局和交互沿用设计研究的演示。
+// 阅读页：顶栏 + 目录 | 正文（原版或段落视图）| 侧栏。正文优先：目录和侧栏可以折叠（第 12.8 节）。
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import { FlowView, type FlowTranslation } from "./FlowView";
 import { Panel, type Tab } from "./panel/Panel";
 import { usePdf } from "./pdf";
+import { MOD } from "./platform";
+import { usePreview } from "./preview/usePreview";
 import { PdfView, type BlockAction, type Focus } from "./PdfView";
-import { usePref } from "./prefs";
+import { useMedia, usePref } from "./prefs";
 import { ReaderHeader, type View } from "./ReaderHeader";
 import { SelectionBar, NoteDialog, type NoteTarget } from "./SelectionBar";
 import { readSelection, type TextSelection } from "./selection";
@@ -13,16 +15,21 @@ import { SelectionPopup } from "./SelectionPopup";
 import { useTranslations } from "./translations";
 import { Toc } from "./Toc";
 import type { Annotation, Block } from "./types";
-import { Modal, SOON, useToast } from "./ui";
+import { Modal, useToast } from "./ui";
+import { useColumn } from "./useColumn";
 import { useAsync } from "./useAsync";
 import { currentPage, useReadingPosition } from "./useReadingPosition";
 
-const HELP = `选中文字   翻译 / 高亮 / 记笔记 / 提问
-1 / 2      原版 / 段落视图
-T          原文 ↔ 双语对照
-/          切到问答
-Esc        关闭浮层；再按回到纯原文
-?          快捷键`;
+const KEYS: [string, string][] = [
+  ["选中文字", "翻译、高亮、记笔记"],
+  ["T", "原文 ↔ 双语对照"],
+  ["1 / 2", "原版视图 / 段落视图"],
+  ["[ / ]", "收起或展开目录 / 侧栏"],
+  [`${MOD} K`, "搜索"],
+  ["Esc", "关闭浮层；再按一次回到纯原文"],
+  ["?", "显示这张表"],
+];
+const QUOTE_LIMIT = 300; // 带进提问的原文片段长度
 
 function locate(blocks: Block[], note: Annotation): Block | null {
   const same = (b: Block) => b.page === note.page && note.bbox !== null && b.bbox !== null && b.bbox.every((v, i) => v === note.bbox![i]);
@@ -49,6 +56,8 @@ export function Reader({ paperId }: { paperId: string }) {
   const [activeHeading, setActiveHeading] = useState<number | null>(null);
   const [restored, setRestored] = useState(false);
   const [bilingual, setBilingual] = usePref<boolean>("bilingual", false);
+  const [canAsk] = usePreview(); // 边读边问的服务还没有接上，只在界面预览里出现
+  const [askQuote, setAskQuote] = useState<string | null>(null);
   const [open, setOpen] = useState(new Set<number>());
   const [hoverSentence, setHoverSentence] = useState<string | null>(null);
   const [popup, setPopup] = useState<TextSelection | null>(null);
@@ -73,6 +82,16 @@ export function Reader({ paperId }: { paperId: string }) {
   const canPdf = !!paper?.has_pdf && !pdfError, canFlow = !!doc;
   const view: View = preferred === "flow" && canFlow ? "flow" : canPdf ? "pdf" : canFlow ? "flow" : "pdf";
   const savePosition = useReadingPosition(paper, view, reload);
+  const hasToc = blocks.some((b) => b.kind === "heading");
+  // 目录在 1180 像素以上停靠在左侧，侧栏在 820 像素以上停靠在右侧；更窄时是浮层，默认收起
+  const tocDocked = useMedia("(min-width: 1180px)");
+  const toc = useColumn("toc", { docked: tocDocked, autoOpen: useMedia("(min-width: 1440px)"), yielding: showBilingual });
+  const panel = useColumn("panel", { docked: useMedia("(min-width: 820px)"), autoOpen: useMedia("(min-width: 1024px)"), yielding: showBilingual });
+  const ask = (quote: string | null) => {
+    setAskQuote(quote ? quote.slice(0, QUOTE_LIMIT) : null);
+    setTab("qa");
+    panel.show();
+  };
 
   const jumpTo = useCallback((block: Block | null, page: number, quote: string | null = null) => {
     if (view === "flow" && !block) block = blocks.find((b) => b.page >= page) ?? null;
@@ -103,7 +122,7 @@ export function Reader({ paperId }: { paperId: string }) {
     setSelection(null);
     if (action === "translate") { setPopup(sel); return; }
     const target: NoteTarget = { quote: sel.text, page: sel.page, block: sel.block, rects: sel.rects };
-    if (action === "ask") { setTab("qa"); toast(SOON.ask); return; }
+    if (action === "ask") { sel.clear(); ask(sel.text); return; }
     if (action === "note") { setNoteTarget(target); return; }
     if (action === "auto") { setAutoHl(true); toast("连续高亮已开启：选中即高亮，按 Esc 关闭"); }
     sel.clear();
@@ -111,7 +130,7 @@ export function Reader({ paperId }: { paperId: string }) {
   };
 
   const onBlockAction = (action: BlockAction, block: Block) => {
-    if (action === "ask") { setTab("qa"); toast(SOON.ask); return; }
+    if (action === "ask") { ask(block.text); return; }
     setNoteTarget({ quote: null, page: block.page, block, rects: [] });
   };
 
@@ -140,14 +159,17 @@ export function Reader({ paperId }: { paperId: string }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement).matches("textarea, input")) return;
+      // 输入框里打字、按着修饰键（如搜索的快捷键）、或有弹窗和菜单时，不触发阅读页的快捷键；它们自己处理 Esc
+      if ((event.target as HTMLElement).matches("textarea, input, select")) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || document.querySelector(".modal, .menu")) return;
       if (event.key === "1" && canPdf) setPreferred("pdf");
       if (event.key === "2" && canFlow) setPreferred("flow");
-      if (event.key === "/") { event.preventDefault(); setTab("qa"); }
+      if (event.key === "/" && canAsk) { event.preventDefault(); ask(null); }
       if ((event.key === "t" || event.key === "T") && canTranslate) setBilingual(!bilingual);
+      if (event.key === "[" && hasToc) toc.toggle();
+      if (event.key === "]") panel.toggle();
       if (event.key === "?") setHelp(true);
       if (event.key === "Escape") {
-        if (help || noteTarget) { setHelp(false); setNoteTarget(null); return; }
         if (selection || popup) { setSelection(null); setPopup(null); return; }
         if (autoHl) { setAutoHl(false); toast("已关闭连续高亮"); return; }
         pure();
@@ -155,7 +177,7 @@ export function Reader({ paperId }: { paperId: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canPdf, canFlow, setPreferred, help, noteTarget, selection, popup, autoHl, toast, canTranslate, bilingual, setBilingual]);
+  });
 
   if (paperState.state === "loading") return <div className="view-msg">正在加载…</div>;
   if (paperState.state === "error") return <div className="view-msg">{paperState.message}</div>;
@@ -172,9 +194,13 @@ export function Reader({ paperId }: { paperId: string }) {
       <ReaderHeader paper={data} view={view} canPdf={canPdf} canFlow={canFlow}
         costs={costState.state === "ready" ? costState.data : null}
         bilingual={showBilingual} canTranslate={canTranslate} onBilingual={setBilingual}
+        toc={{ available: hasToc, open: toc.open, toggle: toc.toggle }} panel={panel}
         onView={setPreferred} onPure={pure} onHelp={() => setHelp(true)} />
-      <div className={`layout${blocks.length && !showBilingual ? "" : " wide"}`}>
-        <Toc blocks={blocks} active={activeHeading} onJump={(b) => jumpTo(b, b.page)} />
+      <div className={`layout${hasToc && toc.open ? " has-toc" : ""}${panel.open ? " has-panel" : ""}`}>
+        {hasToc && toc.open && (
+          // 目录是浮层时，跳转后收起，不挡正文
+          <Toc blocks={blocks} active={activeHeading} onJump={(b) => { jumpTo(b, b.page); if (!tocDocked) toc.toggle(); }} />
+        )}
         <main className={`doc${view === "pdf" && pdf ? " pdf-mode" : ""}`} ref={setScroller} onScroll={onScroll} onMouseUp={onMouseUp}>
           {!data.has_pdf && !data.has_document && (
             <article className="flow"><h1>{data.title}</h1><div className="degraded">还没有全文，下面是摘要。</div><p>{data.abstract ?? "（无摘要）"}</p></article>
@@ -182,23 +208,30 @@ export function Reader({ paperId }: { paperId: string }) {
           {view === "pdf" && pdfError && <div className="view-msg">{pdfError}</div>}
           {view === "pdf" && canPdf && !pdf && <div className="view-msg">正在打开 PDF…</div>}
           {view === "pdf" && pdf && <PdfView pdf={pdf} blocks={blocks} annotations={data.annotations} focus={focus} onAction={onBlockAction}
-            translation={translation} onPage={savePosition} onSelect={onSelected} />}
+            translation={translation} onPage={savePosition} onSelect={onSelected} canAsk={canAsk} />}
           {view === "flow" && doc && <FlowView paper={data} document={doc} pdf={pdf} annotations={data.annotations} focus={focus} scroller={scroller}
             onAction={onBlockAction} onToPdf={(b) => { setPreferred("pdf"); window.setTimeout(() => jumpTo(b, b.page), 60); }}
-            translation={translation} />}
+            translation={translation} canAsk={canAsk} />}
         </main>
-        <Panel tab={tab} onTab={setTab} paper={data} blocks={blocks} onChange={reload} onMarkRead={markRead}
-          onJumpBlock={(b) => jumpTo(b, b.page)}
+        <Panel open={panel.open} tab={tab} onTab={setTab} paper={data} canAsk={canAsk} askQuote={askQuote} onAskQuote={setAskQuote}
+          onChange={reload} onMarkRead={markRead}
           onJumpNote={(note) => note.page !== null && jumpTo(locate(blocks, note), note.page, note.quote)} />
       </div>
-      {selection && <SelectionBar selection={selection} autoHl={autoHl} onAction={(a) => onSelectionAction(a, selection)} />}
+      {selection && <SelectionBar selection={selection} autoHl={autoHl} canAsk={canAsk} onAction={(a) => onSelectionAction(a, selection)} />}
       {popup && <SelectionPopup selection={popup} translations={translations} onClose={() => setPopup(null)}
         onOpenBlock={(index) => { setPopup(null); if (!open.has(index)) toggleOpen(index); }}
-        onAsk={() => { setPopup(null); setTab("qa"); toast(SOON.ask); }}
+        onAsk={canAsk ? () => { const p = popup; setPopup(null); ask(p.text); } : null}
         onNote={() => { const p = popup; setPopup(null); setNoteTarget({ quote: p.text, page: p.page, block: p.block, rects: p.rects }); }} />}
       {noteTarget && <NoteDialog target={noteTarget} onCancel={() => setNoteTarget(null)}
         onSave={(body) => { const t = noteTarget; setNoteTarget(null); window.getSelection()?.removeAllRanges(); void create("note", t, body); }} />}
-      {help && <Modal onClose={() => setHelp(false)}><h3 style={{ marginTop: 0 }}>快捷键</h3><pre>{HELP}</pre></Modal>}
+      {help && (
+        <Modal onClose={() => setHelp(false)} width={440}>
+          <h3 className="dialog-title">快捷键</h3>
+          <table className="keys"><tbody>
+            {[...KEYS, ...(canAsk ? [["/", "提问"] as [string, string]] : [])].map(([key, what]) => <tr key={key}><td><kbd>{key}</kbd></td><td>{what}</td></tr>)}
+          </tbody></table>
+        </Modal>
+      )}
     </div>
   );
 }

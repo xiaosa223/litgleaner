@@ -55,9 +55,9 @@ function FigureCrop({ pdf, block }: { pdf: PdfState; block: Block }) {
 
 function BlockView(props: {
   block: Block; pdf: PdfState | null; marks: { quote: string; cls: string }[]; focused: boolean;
-  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void; tr: FlowTranslation;
+  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void; tr: FlowTranslation; canAsk: boolean;
 }) {
-  const { block: b, pdf, marks, focused, onAction, onToPdf, tr } = props;
+  const { block: b, pdf, marks, focused, onAction, onToPdf, tr, canAsk } = props;
   const id = `b-${b.index}`;
   if (b.kind === "heading") {
     const level = headingLevel(b.text);
@@ -97,7 +97,7 @@ function BlockView(props: {
   const side = (
     <div className="side">
       {!tr.bilingual && <button disabled={!b.translatable} title={b.translatable ? "翻译这段" : "这段不需要翻译"} onClick={() => tr.onToggle(b.index)}>译</button>}
-      <button onClick={() => onAction("ask", b)}>问</button>
+      {canAsk && <button onClick={() => onAction("ask", b)}>问</button>}
       <button onClick={() => onAction("note", b)}>记</button>
     </div>
   );
@@ -125,9 +125,9 @@ function BlockView(props: {
 export function FlowView(props: {
   paper: PaperView; document: DocumentView; pdf: PdfState | null; annotations: Annotation[];
   focus: (Focus & { quote: string | null }) | null; scroller: HTMLElement | null;
-  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void; translation: FlowTranslation;
+  onAction: (action: BlockAction, block: Block) => void; onToPdf: (block: Block) => void; translation: FlowTranslation; canAsk: boolean;
 }) {
-  const { paper, document: doc, pdf, annotations, focus, scroller, onAction, onToPdf, translation } = props;
+  const { paper, document: doc, pdf, annotations, focus, scroller, onAction, onToPdf, translation, canAsk } = props;
   const [flash, setFlash] = useState<{ block: number; quote: string | null } | null>(null);
 
   useEffect(() => {
@@ -162,7 +162,7 @@ export function FlowView(props: {
         const marks = highlights.filter((a) => a.page === b.page).map((a) => ({ quote: a.quote!, cls: "hl hl-user" }));
         if (flash?.block === b.index && flash.quote) marks.unshift({ quote: flash.quote, cls: "flash" });
         return <BlockView key={b.index} block={b} pdf={pdf} marks={marks} focused={flash?.block === b.index}
-          onAction={onAction} onToPdf={onToPdf} tr={translation} />;
+          onAction={onAction} onToPdf={onToPdf} tr={translation} canAsk={canAsk} />;
       })}
     </article>
   );

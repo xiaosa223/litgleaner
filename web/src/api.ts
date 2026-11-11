@@ -1,4 +1,5 @@
 // 所有请求同源发出；改变状态的请求带 CSRF 令牌（第 15.5 节）。
+import type { Identified } from "./identify";
 import type {
   Annotation,
   BlockTranslation,
@@ -60,6 +61,24 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
 }
 
 const paperPath = (id: string) => `/api/papers/${encodeURIComponent(id)}`;
+
+/** 界面先于后端做好的功能：接口还不存在时服务返回 404 或 405。 */
+export const isNotConnected = (error: unknown): boolean =>
+  error instanceof ApiError && [404, 405, 501].includes(error.status);
+
+export const NOT_CONNECTED = "这项功能的服务还没有接上，现在只能看界面。";
+
+async function upload<T>(path: string, file: File): Promise<T> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "X-CSRF-Token": await csrfToken() },
+    credentials: "same-origin",
+    body: form,
+  });
+  return parse<T>(response);
+}
 
 export interface TranslationHandlers {
   onDelta: (index: number, text: string) => void; // 一句完整的译文
@@ -125,4 +144,13 @@ export const api = {
     send<void>("PATCH", `/api/annotations/${encodeURIComponent(annotationId)}`, { body }),
   removeAnnotation: (annotationId: string) =>
     send<void>("DELETE", `/api/annotations/${encodeURIComponent(annotationId)}`),
+  // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4、12.8 节），调用方用 isNotConnected 处理 ----
+  /** 按 DOI、arXiv 编号或链接添加论文，返回论文编号。 */
+  addPaper: (item: Identified) => send<{ paper_id: string }>("POST", "/api/inbox/papers", item),
+  uploadPaper: (file: File) => upload<{ paper_id: string }>("/api/inbox/files", file),
+  createTopic: (topic: { name: string; background: string; content: string; goals: string[] }) =>
+    send<{ id: string }>("POST", "/api/topics", topic),
+  startSurvey: (topicId: string) => send<void>("POST", `/api/topics/${encodeURIComponent(topicId)}/survey`),
+  ask: (id: string, question: string, quote: string | null) =>
+    send<{ answer: string }>("POST", `${paperPath(id)}/ask`, { question, quote }),
 };

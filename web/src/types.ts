@@ -126,3 +126,62 @@ export interface NewAnnotation {
   body?: string | null;
   rects?: Rect[];
 }
+
+// ---- 以下是课题调研和知识库的界面数据结构（ARCHITECTURE 第 7.5、12.7 节）。
+// 后端还没有对应接口，目前只有界面预览的示例数据使用；接口实现时以这里为约定的起点。
+
+export interface SurveyRound {
+  round: number;
+  scope: string;
+  candidates: number; // 本轮候选
+  fresh: number; // 其中以前没见过的
+  passed: number; // 以前没见过且通过初筛的
+  cost_usd: number;
+}
+
+export interface Survey {
+  passed: number; // 累计通过初筛
+  read: number;
+  rounds: SurveyRound[];
+  sources: { name: string; found: number }[];
+  gaps: string[]; // 没有覆盖的范围
+}
+
+export interface RoutePaper {
+  title: string;
+  by: string;
+  venue: string;
+  year: number;
+  cited: number; // 在本课题内被引用的次数
+  why: string;
+}
+
+export type ReadingRoute = { key: string; label: string; note: string; papers: RoutePaper[] }[];
+
+export interface TopicMap {
+  ungrouped: number;
+  groups: { name: string; note: string; count: number; titles: string[] }[];
+}
+
+/** 掌握程度：0 没见过，1 见过，2 能解释，3 能应用 */
+export type Mastery = 0 | 1 | 2 | 3;
+
+export interface Concept {
+  id: string;
+  name: string; // 原文术语
+  translation: string;
+  level: Mastery;
+  due: boolean; // 到了复习时间
+  papers: number;
+  definition: { quote: string; paper: string; page: number } | null;
+  answer: string | null; // 用户自己写过的回答
+  related: { kind: "前置" | "相似" | "对比"; name: string }[];
+}
+
+export interface NoteEntry {
+  id: string;
+  paper: string;
+  page: number;
+  quote: string;
+  body: string | null;
+}

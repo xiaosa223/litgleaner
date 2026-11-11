@@ -1,26 +1,24 @@
-// 只有两个页面，用 History API 即可，不引入路由库。
+// 用 History API 切换页面，不引入路由库；地址的解析在 routes.ts。
 import { useEffect, useState } from "react";
+import { parseRoute, paths, type Route } from "./routes";
 
-export type Route = { name: "home" } | { name: "paper"; paperId: string };
-
-function parse(pathname: string): Route {
-  const match = /^\/papers\/([^/]+)\/?$/.exec(pathname);
-  return match ? { name: "paper", paperId: decodeURIComponent(match[1]) } : { name: "home" };
-}
+export { paths, type Route };
 
 export function navigate(path: string): void {
-  window.history.pushState(null, "", path);
+  window.history.pushState({ app: true }, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
-export function paperPath(paperId: string): string {
-  return `/papers/${encodeURIComponent(paperId)}`;
+/** 从应用内的页面进来就返回上一页；直接打开的链接没有上一页，去备用地址。 */
+export function goBack(fallback: string): void {
+  if ((window.history.state as { app?: boolean } | null)?.app) window.history.back();
+  else navigate(fallback);
 }
 
 export function useRoute(): Route {
-  const [route, setRoute] = useState(() => parse(window.location.pathname));
+  const [route, setRoute] = useState(() => parseRoute(window.location.pathname));
   useEffect(() => {
-    const update = () => setRoute(parse(window.location.pathname));
+    const update = () => setRoute(parseRoute(window.location.pathname));
     window.addEventListener("popstate", update);
     return () => window.removeEventListener("popstate", update);
   }, []);

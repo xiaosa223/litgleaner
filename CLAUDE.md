@@ -34,6 +34,7 @@ uv run python scripts/probe_sources.py     # 真实网络联调信号源，不�
 (cd web && pnpm install && pnpm build)     # 构建领读器前端，产物在 src/litgleaner/server/static/
 uv run litgleaner serve                    # 常驻服务：领读器 + 定时运行流程
 (cd web && pnpm typecheck)                 # 前端类型检查
+(cd web && pnpm test)                      # 前端纯逻辑的单元测试（Node 自带测试运行器）
 ```
 
 提交前的四项检查（与 README 一致）：

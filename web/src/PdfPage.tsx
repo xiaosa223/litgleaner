@@ -63,9 +63,9 @@ function TransColumn({ blocks, height, width, left, tr, onHover }: {
 export function PdfPage(props: {
   index: number; width: number; height: number; blocks: Block[]; annotations: Annotation[];
   hovered: number | null; focused: number | null; onAction: (action: BlockAction, block: Block) => void;
-  tr: FlowTranslation; columnWidth: number; onHover: (index: number | null) => void;
+  tr: FlowTranslation; columnWidth: number; onHover: (index: number | null) => void; canAsk: boolean;
 }) {
-  const { index, width, height, blocks, annotations, hovered, focused, onAction, tr, columnWidth, onHover } = props;
+  const { index, width, height, blocks, annotations, hovered, focused, onAction, tr, columnWidth, onHover, canAsk } = props;
   const rects = annotations.filter((a) => a.page === index).flatMap((a) => a.rects.map((r, k) => ({ r, key: `${a.id}-${k}` })));
   return (
     <div className="page" data-p={index} style={{ width, height }}>
@@ -87,7 +87,7 @@ export function PdfPage(props: {
             {isBody(b) && (
               <div className="acts">
                 {!tr.bilingual && <button disabled={!b.translatable} title={b.translatable ? "翻译这段" : "这段不需要翻译"} onClick={() => tr.onToggle(b.index)}>译</button>}
-                <button onClick={() => onAction("ask", b)}>问</button>
+                {canAsk && <button onClick={() => onAction("ask", b)}>问</button>}
                 <button onClick={() => onAction("note", b)}>记</button>
               </div>
             )}

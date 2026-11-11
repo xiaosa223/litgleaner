@@ -1,52 +1,80 @@
-import { navigate } from "./router";
+// 阅读页顶栏：只放返回、目录、标题、原文与译文的切换、“显示”面板、侧栏和帮助（第 12.8 节）。
+import { ArrowLeft, Keyboard, PanelLeft, PanelRight, SlidersHorizontal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { goBack, paths } from "./router";
 import type { PaperView } from "./types";
-import { SOON } from "./ui";
 
 export type View = "pdf" | "flow";
-const FACETS: [string, string][] = [["goal", "目标"], ["novelty", "创新"], ["method", "方法"], ["result", "结果"]];
+export interface Costs { month_usd: number; paper_usd: number | null }
+
+function DisplayMenu({ view, canPdf, canFlow, costs, onView, onPure }: {
+  view: View; canPdf: boolean; canFlow: boolean; costs: Costs | null; onView: (view: View) => void; onPure: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => !root.current?.contains(event.target as Node) && setOpen(false);
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  return (
+    <div className="menu-root" ref={root}>
+      <button className="ghost iconbtn" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)} title="显示设置">
+        <SlidersHorizontal size={15} aria-hidden /><span className="btn-lbl">显示</span>
+      </button>
+      {open && (
+        <div className="menu" role="group" aria-label="显示设置">
+          <div className="menu-row">
+            <span>视图</span>
+            <div className="seg">
+              <button aria-pressed={view === "pdf"} disabled={!canPdf} title="保留 PDF 版式（1）" onClick={() => onView("pdf")}>原版</button>
+              <button aria-pressed={view === "flow"} disabled={!canFlow} title="重排文字，适合小屏（2）" onClick={() => onView("flow")}>段落</button>
+            </div>
+          </div>
+          <button className="menu-item" onClick={() => { onPure(); setOpen(false); }}>
+            回到纯原文<kbd>Esc</kbd>
+          </button>
+          {costs && (
+            <div className="menu-foot" title="模型花费（美元）">
+              模型花费：{costs.paper_usd !== null && `本篇 $${costs.paper_usd.toFixed(3)} · `}本月 ${costs.month_usd.toFixed(2)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ReaderHeader(props: {
-  paper: PaperView; view: View; canPdf: boolean; canFlow: boolean; costs: { month_usd: number; paper_usd: number | null } | null;
+  paper: PaperView; view: View; canPdf: boolean; canFlow: boolean; costs: Costs | null;
   bilingual: boolean; canTranslate: boolean; onBilingual: (on: boolean) => void;
+  toc: { available: boolean; open: boolean; toggle: () => void }; panel: { open: boolean; toggle: () => void };
   onView: (view: View) => void; onPure: () => void; onHelp: () => void;
 }) {
-  const { paper, view, canPdf, canFlow, costs, bilingual, canTranslate, onBilingual, onView, onPure, onHelp } = props;
-  const small = [paper.venue, paper.published_at, paper.has_pdf ? "有全文" : "只有摘要"].filter(Boolean).join(" · ");
+  const { paper, view, canPdf, canFlow, costs, bilingual, canTranslate, onBilingual, toc, panel, onView, onPure, onHelp } = props;
+  const small = [paper.venue, paper.published_at?.slice(0, 4), paper.has_pdf ? null : "只有摘要"].filter(Boolean).join(" · ");
   return (
     <header className="bar">
-      <button className="ghost" onClick={() => navigate("/")}>← 收件箱</button>
-      <div className="title" title={paper.title}>{paper.title}<small>{small}</small></div>
-      <div className="group">
-        <label>视图</label>
-        <div className="seg">
-          <button aria-pressed={view === "pdf"} disabled={!canPdf} onClick={() => onView("pdf")}>原版</button>
-          <button aria-pressed={view === "flow"} disabled={!canFlow} onClick={() => onView("flow")}>段落</button>
-        </div>
-      </div>
-      <div className="group">
-        <label>翻译</label>
-        <div className="seg">
-          <button aria-pressed={!bilingual} onClick={() => onBilingual(false)}>原文</button>
-          <button aria-pressed={bilingual} disabled={!canTranslate} title={canTranslate ? "整篇逐段对照（T）" : "这篇没有可翻译的正文"}
-            onClick={() => onBilingual(true)}>双语对照</button>
-        </div>
-        <span className="hint">选中句子即可翻译</span>
-      </div>
-      <div className="group">
-        {FACETS.map(([key, label]) => (
-          <button key={key} className="chip" aria-pressed="false" disabled title={SOON.facets}>
-            <i style={{ background: `var(--${key}-bar)` }} />{label}
-          </button>
-        ))}
-      </div>
-      <button className="chip" aria-pressed="false" disabled title={SOON.terms}>术语释义</button>
-      <button className="ghost" onClick={onPure} title="关闭所有增强（Esc）">纯原文</button>
-      {costs && (
-        <span className="cost" title="模型花费（美元）">
-          {costs.paper_usd !== null && `本篇 $${costs.paper_usd.toFixed(3)} · `}本月 ${costs.month_usd.toFixed(2)}
-        </span>
+      <button className="ghost iconbtn" onClick={() => goBack(paths.today)} title="返回" aria-label="返回"><ArrowLeft size={16} aria-hidden /></button>
+      {toc.available && (
+        <button className="ghost iconbtn" aria-pressed={toc.open} onClick={toc.toggle} title="目录（[）" aria-label="目录"><PanelLeft size={16} aria-hidden /></button>
       )}
-      <button className="ghost" onClick={onHelp} title="快捷键">?</button>
+      <div className="title" title={paper.title}>{paper.title}{small && <small>{small}</small>}</div>
+      {canTranslate && (
+        <div className="seg" role="group" aria-label="翻译">
+          <button aria-pressed={!bilingual} onClick={() => onBilingual(false)}>原文</button>
+          <button aria-pressed={bilingual} title="整篇逐段对照（T）；选中句子也可以单独翻译" onClick={() => onBilingual(true)}>双语对照</button>
+        </div>
+      )}
+      <DisplayMenu view={view} canPdf={canPdf} canFlow={canFlow} costs={costs} onView={onView} onPure={onPure} />
+      <button className="ghost iconbtn" aria-pressed={panel.open} onClick={panel.toggle} title="侧栏（]）" aria-label="侧栏"><PanelRight size={16} aria-hidden /></button>
+      <button className="ghost iconbtn opt" onClick={onHelp} title="快捷键（?）" aria-label="快捷键"><Keyboard size={16} aria-hidden /></button>
     </header>
   );
 }

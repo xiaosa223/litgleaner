@@ -26,14 +26,14 @@ const ACTS_GUTTER = 70; // 段落右侧“译 / 问 / 记”按钮的位置
 interface ViewProps {
   pdf: PdfState; blocks: Block[]; annotations: Annotation[]; focus: Focus | null;
   onAction: (action: BlockAction, block: Block) => void; translation: FlowTranslation;
-  onPage: (page: number) => void; onSelect: (selection: TextSelection | null) => void;
+  onPage: (page: number) => void; onSelect: (selection: TextSelection | null) => void; canAsk: boolean;
 }
 
 type PagesProps = ViewProps & {
   page: MutableRefObject<number>; gutter: number; hovered: number | null; onHover: (i: number | null) => void;
 };
 
-function Pages({ blocks, annotations, focus, onAction, translation, onPage, onSelect, page, gutter, hovered, onHover }: PagesProps) {
+function Pages({ blocks, annotations, focus, onAction, translation, onPage, onSelect, page, gutter, hovered, onHover, canAsk }: PagesProps) {
   // useScroll 每次渲染都返回新的 scope 对象，不能放进 effect 依赖（否则每次重渲染都会重新跳页，
   // 拖选会被打断）。和 Agentero 一样用 ref 持有，effect 只依赖“是否就绪”。
   const { provides: scroll } = useScroll(DOC_ID);
@@ -92,7 +92,7 @@ function Pages({ blocks, annotations, focus, onAction, translation, onPage, onSe
       <GlobalPointerProvider documentId={DOC_ID} style={{ position: "relative", left: -gutter / 2 }}>
         <Scroller documentId={DOC_ID} renderPage={(layout) => (
           <PdfPage index={layout.pageIndex} width={layout.width} height={layout.height} blocks={blocks} annotations={annotations}
-            hovered={hovered} focused={focused} onAction={onAction} tr={translation} columnWidth={columnWidth} onHover={onHover} />
+            hovered={hovered} focused={focused} onAction={onAction} tr={translation} columnWidth={columnWidth} onHover={onHover} canAsk={canAsk} />
         )} />
       </GlobalPointerProvider>
     </Viewport>

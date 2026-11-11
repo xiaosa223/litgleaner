@@ -1,5 +1,5 @@
 // 通用小部件：作者原话、模型内容、提示、弹窗。
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 export function AuthorQuote({ quote, page, onJump, label = "作者原话" }: {
   quote: string; page: number | null; onJump?: () => void; label?: string | null;
@@ -48,26 +48,44 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function Modal({ children, onClose, width }: { children: ReactNode; onClose: () => void; width?: number }) {
+export function Modal({ children, onClose, width, title, top = false, bare = false }: {
+  children: ReactNode; onClose: () => void; width?: number; title?: string;
+  top?: boolean; // 靠上显示（检索）
+  bare?: boolean; // 不带内边距和底部的关闭按钮，内容自己负责
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   return (
-    <div className="modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="box" style={width ? { maxWidth: width } : undefined} role="dialog">
+    <div className={`modal${top ? " top" : ""}`} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={`box${bare ? " palette" : ""}`} style={width ? { maxWidth: width } : undefined} role="dialog" aria-modal="true" aria-label={title}>
+        {title && !bare && <h3 className="dialog-title">{title}</h3>}
         {children}
-        <div style={{ textAlign: "right", marginTop: 12 }}>
-          <button className="ghost" onClick={onClose}>关闭</button>
-        </div>
+        {!bare && !title && (
+          <div style={{ textAlign: "right", marginTop: 12 }}>
+            <button className="ghost" onClick={onClose}>关闭</button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-/** 还没实现的功能：保留位置，说明原因。 */
-export const SOON = {
-  translate: "段落翻译还在开发中（路线图 5b）",
-  facets: "分面高亮还在开发中（路线图 5d）",
-  terms: "术语释义需要课题术语表，还在开发中",
-  guide: "背景卡、章节要点和前置阅读还在开发中（路线图 5c）",
-  ask: "边读边问还在开发中（路线图 5e）",
-  card: "“先写后看”的读后卡片还在开发中（路线图 5f）",
-  export: "导出组会提纲随读后卡片一起提供（路线图 5f）",
-} as const;
+/** 后端还没接上的页面用示例数据展示界面时，必须带这条说明。 */
+export function PreviewNote({ children }: { children?: ReactNode }) {
+  return <div className="preview-note" role="note">示例数据 · {children ?? "这部分的服务还没有接上，下面的内容只用来看界面。"}</div>;
+}
+
+/** 带出处的作者原话：没有跳转目标时用（知识库、复习）。page 从 1 开始。 */
+export function SourcedQuote({ quote, paper, page }: { quote: string; paper: string; page: number }) {
+  return (
+    <blockquote className="author">
+      <span className="badge b-author">作者原话</span> “{quote}”
+      <div className="tag" style={{ fontStyle: "normal", marginTop: 4 }}>{paper} · 第 {page} 页</div>
+    </blockquote>
+  );
+}

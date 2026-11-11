@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "test": "node --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@embedpdf/core": "2.14.4",

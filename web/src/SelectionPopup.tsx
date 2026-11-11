@@ -22,7 +22,7 @@ export function sentencesFor(sources: string[], text: string): number[] {
 
 export function SelectionPopup({ selection, translations, onClose, onOpenBlock, onNote, onAsk }: {
   selection: TextSelection; translations: Translations; onClose: () => void;
-  onOpenBlock: (index: number) => void; onNote: () => void; onAsk: () => void;
+  onOpenBlock: (index: number) => void; onNote: () => void; onAsk: (() => void) | null;
 }) {
   const block = selection.block;
   const tr = block ? translations.done.get(block.index) : undefined;
@@ -58,7 +58,7 @@ export function SelectionPopup({ selection, translations, onClose, onOpenBlock, 
       {body}
       <div className="row">
         {block && tr && <button className="ghost" onClick={() => onOpenBlock(block.index)}>整段译文</button>}
-        <button className="ghost" onClick={onAsk}>问这句</button>
+        {onAsk && <button className="ghost" onClick={onAsk}>问这句</button>}
         <button className="ghost" onClick={onNote}>记下来</button>
       </div>
       {tr && !tr.verified && <div className="tag" style={{ marginTop: 6, color: "var(--warn)" }}>这段译文未通过核验，仅供参考。</div>}
