@@ -237,7 +237,7 @@ def test_http_search_session_limits_and_empty_query(harness: Harness):
                         base_url="http://127.0.0.1:48127")  # fmt: skip
     assert client.get("/api/search", params={"q": "astronomy"}).status_code == 401
     client.get("/launch", params={"token": "t"}, follow_redirects=False)
-    assert client.get("/api/search").json() == {"hits": []}
+    assert client.get("/api/search").json()["hits"] == []
     response = client.get("/api/search", params={"q": "astronomy", "limit": 2})
     assert response.status_code == 200 and len(response.json()["hits"]) == 2
     for params in ({"q": "x" * 501}, {"limit": 0}, {"limit": 101}, {"limit": "bad"}):

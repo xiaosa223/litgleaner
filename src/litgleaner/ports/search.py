@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from litgleaner.domain.document import Block
+from litgleaner.ports.embedding import EmbeddingSnapshot
 
 SearchKind = Literal["paper", "fulltext", "note", "highlight", "extraction", "qa", "concept"]
 Authorship = Literal["author", "user", "model"]
@@ -18,6 +19,19 @@ class SearchHit:
     text: str
     page: int | None
     authorship: Authorship
+
+
+@dataclass(frozen=True)
+class SearchCandidate(SearchHit):
+    bm25: float
+
+
+@dataclass(frozen=True)
+class SearchSnapshot:
+    candidates: tuple[SearchCandidate, ...]
+    terms: tuple[str, ...]
+    embeddings: EmbeddingSnapshot | None
+    embedding_problem: bool = False
 
 
 @dataclass(frozen=True)
@@ -40,6 +54,7 @@ class SearchDocument:
 
 class SearchRepo(Protocol):
     def find(self, query: str, limit: int) -> tuple[SearchHit, ...]: ...
+    def snapshot(self, query: str, limit: int = 512) -> SearchSnapshot: ...
     def qa_hits(
         self, query: str, paper_ids: tuple[str, ...], limit: int = 64
     ) -> tuple[QASearchHit, ...]: ...

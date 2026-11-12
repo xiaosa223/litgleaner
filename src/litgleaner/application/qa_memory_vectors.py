@@ -5,8 +5,10 @@ from dataclasses import dataclass
 from litgleaner.application.context import AppContext
 from litgleaner.application.embeddings import project_vectors
 from litgleaner.application.qa_memory_candidates import Candidate
+from litgleaner.application.query_vectors import embed as _embed
+from litgleaner.application.query_vectors import identity as _identity
 from litgleaner.application.stale_inputs import StaleInputs
-from litgleaner.domain.embedding import EmbeddingModel, cosine, pack_vector, unpack_vector
+from litgleaner.domain.embedding import EmbeddingModel, cosine
 from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.qa import Question
 from litgleaner.ports.embedding import EmbeddingSnapshot
@@ -20,34 +22,6 @@ class VectorQuery:
     model: EmbeddingModel
     vector: tuple[float, ...]
     paper_ids: tuple[str, ...]
-
-
-def _identity(model: EmbeddingModel) -> tuple[str, int, str, str | None, bool]:
-    return (
-        model.model,
-        model.dimensions,
-        model.configuration_version,
-        model.producer_version,
-        model.available,
-    )
-
-
-def _embed(
-    ctx: AppContext, texts: tuple[str, ...], expected: EmbeddingModel
-) -> tuple[tuple[float, ...], ...]:
-    if ctx.embedder is None or _identity(ctx.embedder.describe()) != _identity(expected):
-        raise ConfigError("问答嵌入模型身份已变化")
-    batch = ctx.embedder.embed(texts, allow_download=False)
-    if (
-        _identity(batch.model) != _identity(expected)
-        or _identity(ctx.embedder.describe()) != _identity(expected)
-        or len(batch.vectors) != len(texts)
-    ):
-        raise ConfigError("问答嵌入批次身份或数量不一致")
-    return tuple(
-        unpack_vector(pack_vector(vector, expected.dimensions), expected.dimensions)
-        for vector in batch.vectors
-    )
 
 
 def prepare(

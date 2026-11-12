@@ -1,19 +1,15 @@
 """全局检索（第 12.8、12.9 节）：元数据、归档全文和个人笔记，共用本地索引。"""
 
 import logging
-from dataclasses import dataclass
 
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_document
+from litgleaner.application.search_hybrid import SearchResults, run
 from litgleaner.domain.errors import InvalidRequest
-from litgleaner.ports.search import SearchHit
+
+__all__ = ["SearchResults", "refresh_documents", "search"]
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class SearchResults:
-    hits: tuple[SearchHit, ...]
 
 
 def refresh_documents(ctx: AppContext) -> None:
@@ -33,4 +29,4 @@ def search(ctx: AppContext, query: str, limit: int = 30) -> SearchResults:
     if not query.strip():
         return SearchResults(())
     refresh_documents(ctx)
-    return SearchResults(ctx.store.search.find(query, limit))
+    return run(ctx, query, limit)

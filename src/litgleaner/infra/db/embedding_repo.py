@@ -65,6 +65,33 @@ def _snapshot(rows: _Rows) -> EmbeddingSnapshot:
     )
 
 
+def snapshot_rows(db: Database) -> _Rows:
+    """调用方持有短事务；只读四组原始行，领域转换由调用方在事务外执行。"""
+    ids = select(paper.c.id).where(library_scope())
+    latest = select(func.max(extraction.c.id)).group_by(extraction.c.paper_id)
+    return _Rows(
+        papers=db.fetch(select(paper).where(library_scope()).order_by(paper.c.id)),
+        fulltexts=db.fetch(
+            select(fulltext).where(fulltext.c.paper_id.in_(ids)).order_by(fulltext.c.paper_id)
+        ),
+        extractions=db.fetch(
+            select(extraction)
+            .where(extraction.c.paper_id.in_(ids), extraction.c.id.in_(latest))
+            .order_by(extraction.c.paper_id)
+        ),
+        embeddings=db.fetch(
+            select(paper_embedding)
+            .where(paper_embedding.c.paper_id.in_(ids))
+            .order_by(
+                paper_embedding.c.paper_id,
+                paper_embedding.c.created_at.desc(),
+                paper_embedding.c.input_hash,
+                paper_embedding.c.embedder_version,
+            )
+        ),
+    )
+
+
 class SqlEmbeddingRepo:
     def __init__(self, db: Database) -> None:
         self._db = db
@@ -94,30 +121,6 @@ class SqlEmbeddingRepo:
         return tuple(_embedding(row) for row in rows)
 
     def snapshot(self) -> EmbeddingSnapshot:
-        ids = select(paper.c.id).where(library_scope())
-        latest = select(func.max(extraction.c.id)).group_by(extraction.c.paper_id)
         with self._db.atomic():
-            rows = _Rows(
-                papers=self._db.fetch(select(paper).where(library_scope()).order_by(paper.c.id)),
-                fulltexts=self._db.fetch(
-                    select(fulltext)
-                    .where(fulltext.c.paper_id.in_(ids))
-                    .order_by(fulltext.c.paper_id)
-                ),
-                extractions=self._db.fetch(
-                    select(extraction)
-                    .where(extraction.c.paper_id.in_(ids), extraction.c.id.in_(latest))
-                    .order_by(extraction.c.paper_id)
-                ),
-                embeddings=self._db.fetch(
-                    select(paper_embedding)
-                    .where(paper_embedding.c.paper_id.in_(ids))
-                    .order_by(
-                        paper_embedding.c.paper_id,
-                        paper_embedding.c.created_at.desc(),
-                        paper_embedding.c.input_hash,
-                        paper_embedding.c.embedder_version,
-                    )
-                ),
-            )
+            rows = snapshot_rows(self._db)
         return _snapshot(rows)

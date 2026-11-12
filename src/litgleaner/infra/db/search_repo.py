@@ -1,19 +1,33 @@
 """FTS5 检索：三元分词支持中文子串；短于三字的词用同一索引表的字面匹配。"""
 
 import re
-from typing import cast
+from typing import Any, cast
 
-from sqlalchemy import text
+from sqlalchemy import Row, text
+from sqlalchemy.sql.elements import TextClause
 
 from litgleaner.domain.document import Block
 from litgleaner.domain.search_text import normalize_search_text, search_excerpt
+from litgleaner.infra.db import embedding_repo
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.qa_search_repo import qa_hits
 from litgleaner.infra.db.search_index import RANK_SQL
-from litgleaner.ports.search import Authorship, QASearchHit, SearchDocument, SearchHit, SearchKind
+from litgleaner.ports.search import (
+    Authorship,
+    QASearchHit,
+    SearchCandidate,
+    SearchDocument,
+    SearchHit,
+    SearchKind,
+    SearchSnapshot,
+)
 
 _WORDS = re.compile(r"\w+", re.UNICODE)
 _KINDS = "('paper', 'fulltext', 'note', 'highlight', 'extraction', 'qa', 'concept')"
+
+
+def _terms(query: str) -> list[str]:
+    return list(dict.fromkeys(_WORDS.findall(normalize_search_text(query))))[:64]
 
 
 def _conditions(terms: list[str]) -> tuple[str, dict[str, str], bool]:
@@ -34,6 +48,33 @@ def _conditions(terms: list[str]) -> tuple[str, dict[str, str], bool]:
     return " AND ".join(conditions), params, bool(long)
 
 
+def _lexical_statement(terms: list[str], limit: int) -> TextClause:
+    conditions, params, ranked = _conditions(terms)
+    rank = RANK_SQL if ranked else "0"
+    return text(
+        "SELECT f.kind, f.id, f.paper_id, p.title, f.text, f.page, f.authorship, "
+        f"{rank} AS rank "
+        "FROM memory_fts AS f JOIN paper AS p ON p.id = f.paper_id "
+        f"WHERE f.kind IN {_KINDS} AND ({conditions or '0'}) "
+        "AND (f.kind != 'fulltext' OR EXISTS "
+        "(SELECT 1 FROM fulltext WHERE paper_id = f.paper_id AND doc_key = f.source_version)) "
+        "ORDER BY rank, f.kind, f.paper_id, f.id LIMIT :limit"
+    ).bindparams(**params, limit=limit)
+
+
+def _candidate(row: Row[Any]) -> SearchCandidate:
+    return SearchCandidate(
+        cast(SearchKind, row.kind),
+        row.id,
+        row.paper_id,
+        row.title,
+        row.text,
+        int(row.page) if row.page is not None else None,
+        cast(Authorship, row.authorship),
+        float(row.rank),
+    )
+
+
 class SqlSearchRepo:
     def __init__(self, db: Database) -> None:
         self._db = db
@@ -44,20 +85,10 @@ class SqlSearchRepo:
         return qa_hits(self._db, query, paper_ids, limit)
 
     def find(self, query: str, limit: int) -> tuple[SearchHit, ...]:
-        terms = list(dict.fromkeys(_WORDS.findall(normalize_search_text(query))))[:64]
+        terms = _terms(query)
         if not terms:
             return ()
-        conditions, params, ranked = _conditions(terms)
-        rank = RANK_SQL if ranked else "0"
-        statement = text(
-            "SELECT f.kind, f.id, f.paper_id, p.title, f.text, f.page, f.authorship, "
-            f"{rank} AS rank "
-            "FROM memory_fts AS f JOIN paper AS p ON p.id = f.paper_id "
-            f"WHERE f.kind IN {_KINDS} AND ({conditions}) "
-            "AND (f.kind != 'fulltext' OR EXISTS "
-            "(SELECT 1 FROM fulltext WHERE paper_id = f.paper_id AND doc_key = f.source_version)) "
-            "ORDER BY rank, f.kind, f.paper_id, f.id LIMIT :limit"
-        ).bindparams(**params, limit=limit)
+        statement = _lexical_statement(terms, limit)
         return tuple(
             SearchHit(
                 cast(SearchKind, row.kind),
@@ -70,6 +101,19 @@ class SqlSearchRepo:
             )
             for row in self._db.fetch(statement)
         )
+
+    def snapshot(self, query: str, limit: int = 512) -> SearchSnapshot:
+        terms = _terms(query)
+        statement = _lexical_statement(terms, max(0, min(limit, 512)))
+        with self._db.atomic():
+            lexical_rows = self._db.fetch(statement)
+            embedding_rows = embedding_repo.snapshot_rows(self._db)
+        candidates = tuple(_candidate(row) for row in lexical_rows)
+        try:
+            embeddings = embedding_repo._snapshot(embedding_rows)
+        except Exception:  # 仅转换降级；数据库查询失败在此之前直接传播。
+            return SearchSnapshot(candidates, tuple(terms), None, embedding_problem=True)
+        return SearchSnapshot(candidates, tuple(terms), embeddings)
 
     def pending_documents(self) -> tuple[SearchDocument, ...]:
         rows = self._db.fetch(
