@@ -16,6 +16,7 @@ from ulid import ULID
 
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import pdf_key
+from litgleaner.application.memory_admission import register
 from litgleaner.application.stages.discover import resolve_record
 from litgleaner.domain.errors import InvalidRequest, LitGleanerError
 from litgleaner.domain.identity import Alias
@@ -80,6 +81,8 @@ def _finish(ctx: AppContext, item: InboxItem, paper_id: str | None, error: str |
         ctx.store.inbox.finish(item.id, status, paper_id, error, now)
         if paper_id and ctx.store.reader.get_state(paper_id) is None:
             ctx.store.reader.set_state(paper_id, "queued", None, now)  # 进入文库：待读
+        if paper_id:
+            register(ctx, paper_id)
     found = ctx.store.inbox.get(item.id)
     if found is None:
         raise RuntimeError(f"收件箱条目写入后读不到：{item.id}")

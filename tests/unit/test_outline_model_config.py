@@ -1,4 +1,4 @@
-"""综述骨架模型独立可选，模型设置可以一次选择全部七个任务。"""
+"""综述骨架模型独立可选，模型设置可以一次选择全部八个任务。"""
 
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -53,14 +53,14 @@ def test_outline_budget_rejects_invalid_or_coerced_values(value):
         _app(outline={"token_budget": value})
 
 
-def test_model_settings_accept_outline_alone_or_all_seven_tasks():
+def test_model_settings_accept_outline_alone_or_all_eight_tasks():
     for tasks in (["outline"], list(TASKS)):
         body = ModelBody(
             provider="personal", protocol="openai_chat", model="chosen", tasks=tasks,
             input_price=0, output_price=0,
         )  # fmt: skip
         assert body.draft().tasks == tuple(tasks)
-    assert len(TASKS) == 7 and TASKS[-1] == "outline"
+    assert len(TASKS) == 8 and TASKS[-2:] == ("outline", "relate")
 
 
 def test_model_settings_still_reject_unknown_tasks_and_overlong_task_lists():
@@ -100,7 +100,7 @@ def test_outline_preparation_sets_only_selected_route_and_settings_show_readines
     assert all(candidate.llm.tasks[name] == task for name, task in old_tasks.items())
     view = settings_view(candidate, NoSecrets(), protocols, {"outline"})
     assert {task.task for task in view.tasks if task.ready} == {"outline"}
-    assert len(view.tasks) == 7
+    assert len(view.tasks) == 8
 
 
 def test_old_llm_configuration_builds_without_outline_or_its_prompt(tmp_path):

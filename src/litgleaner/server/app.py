@@ -30,6 +30,7 @@ from litgleaner.server.memory import install_memory_routes
 from litgleaner.server.model_setup import install_model_routes
 from litgleaner.server.outlines import install_outline_routes
 from litgleaner.server.qa import install_qa_routes
+from litgleaner.server.relations import install_relation_routes
 from litgleaner.server.runtime import Context
 from litgleaner.server.schemas import (
     AddPaperBody,
@@ -253,6 +254,7 @@ def create_app(
     install_qa_routes(app)
     install_knowledge_routes(app)
     install_memory_routes(app)
+    install_relation_routes(app)
     install_citation_routes(app)
     install_topic_routes(app)
     install_export_routes(app)

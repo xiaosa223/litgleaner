@@ -11,7 +11,7 @@ from litgleaner.domain.inbox import InboxItem, InboxStatus
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import Annotation, NewAnnotation, ReadingState, ReadingStatus
 from litgleaner.domain.rubric import ScoreResult
-from litgleaner.ports import memory, outline, reading_route, stale, topic_map
+from litgleaner.ports import feedback, memory, outline, reading_route, stale, topic_map
 from litgleaner.ports.catalog import CatalogRepo
 from litgleaner.ports.citation import CitationRepo
 from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
@@ -24,6 +24,7 @@ from litgleaner.ports.translations import TranslationRepo
 FullTextStatus = Literal["available", "parsed", "unavailable", "failed"]
 DeliveryStatus = Literal["pending", "sending", "sent", "failed"]
 JobStatus = Literal["pending", "done", "dead"]
+FeedbackRecord = feedback.FeedbackRecord
 
 
 @dataclass(frozen=True)
@@ -178,17 +179,6 @@ class DigestItem:
 
 
 @dataclass(frozen=True)
-class FeedbackRecord:
-    id: str
-    paper_id: str
-    channel: str
-    action: str
-    digest_id: str | None = None
-    actor: str | None = None
-    external_id: str | None = None
-
-
-@dataclass(frozen=True)
 class LibraryRecord:
     paper_id: str
     library: str
@@ -302,6 +292,7 @@ class OutputRepo(Protocol):
 
 class FeedbackRepo(Protocol):
     def add(self, record: FeedbackRecord, now: str) -> bool: ...
+    def by_external_id(self, external_id: str) -> FeedbackRecord | None: ...
     def pending_saves(self, library: str) -> tuple[str, ...]: ...
     def latest_action(self, paper_id: str) -> str | None: ...
     def save_entry(self, record: LibraryRecord, now: str) -> None: ...

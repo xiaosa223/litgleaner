@@ -2,14 +2,19 @@
 
 from fastapi import FastAPI, Query
 
-from litgleaner.application import embeddings, memory, memory_candidates
+from litgleaner.application import embeddings, memory, memory_candidates, reader_open
 from litgleaner.domain.embedding_views import SimilarPapers
 from litgleaner.domain.memory import MemoryFacts
 from litgleaner.domain.memory_candidate_views import MemoryCandidates
+from litgleaner.domain.reading import ReadingState
 from litgleaner.server.runtime import Context
 
 
 def install_memory_routes(app: FastAPI) -> None:
+    @app.post("/api/papers/{paper_id}/open")
+    def open_paper(ctx: Context, paper_id: str) -> ReadingState:
+        return reader_open.open_paper(ctx, paper_id)
+
     @app.get("/api/papers/{paper_id}/memory-candidates")
     def candidates(
         ctx: Context,

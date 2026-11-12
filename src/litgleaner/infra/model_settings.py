@@ -23,7 +23,16 @@ from litgleaner.ports.model_settings import (
 )
 from litgleaner.ports.secrets import SecretStore
 
-TASKS: tuple[ModelTask, ...] = ("triage", "extract", "assess", "translate", "ask", "map", "outline")
+TASKS: tuple[ModelTask, ...] = (
+    "triage",
+    "extract",
+    "assess",
+    "translate",
+    "ask",
+    "map",
+    "outline",
+    "relate",
+)
 
 
 class SecretOverlay:
@@ -102,7 +111,9 @@ def _task_settings(config: LoadedConfig, draft: ModelDraft) -> dict[ModelTask, L
                 provider=draft.provider,
                 model=draft.model,
                 prompt=old.prompt if old else name,
-                daily_budget_usd=budgets.get(name, old.daily_budget_usd if old else None),
+                daily_budget_usd=budgets.get(
+                    name, old.daily_budget_usd if old else (0.2 if name == "relate" else None)
+                ),
             )
         except ValidationError:
             raise InvalidRequest("model_task_budget_invalid") from None

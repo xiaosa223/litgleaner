@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 from litgleaner.application.context import AppContext
 from litgleaner.application.job_runner import StageReport, run_stage
+from litgleaner.application.memory_admission import MemoryAdmissionStage
 from litgleaner.application.qa import AskStage
 from litgleaner.application.stages.archive import ArchiveStage
 from litgleaner.application.stages.assess import AssessStage
@@ -15,6 +16,7 @@ from litgleaner.application.stages.fulltext import AcquireStage, ParseStage
 from litgleaner.application.stages.library_save import LibrarySaveStage
 from litgleaner.application.stages.outline import OutlineStage
 from litgleaner.application.stages.publish import PublishStage
+from litgleaner.application.stages.relate import RelateStage
 from litgleaner.application.stages.score import ScoreStage
 from litgleaner.application.stages.select import SelectStage
 from litgleaner.application.stages.survey import SurveyStage
@@ -59,6 +61,8 @@ ON_DEMAND: tuple[Stage, ...] = (
     SurveyStage(),
     TopicMapStage(),
     OutlineStage(),
+    MemoryAdmissionStage(),
+    RelateStage(),
 )
 ON_DEMAND_NAMES: tuple[str, ...] = tuple(stage.name for stage in ON_DEMAND)
 

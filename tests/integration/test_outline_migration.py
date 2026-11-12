@@ -8,6 +8,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
+from tests.integration.relation_migration_helpers import RELATION_TRIGGERS, assert_legacy_preserved
 from tests.integration.test_outline_repo import result
 from tests.integration.test_topic_map_migration import _legacy_survey, _snapshot
 from tests.integration.test_topic_map_repo import result as map_result
@@ -37,19 +38,30 @@ def test_0017_preserves_old_tables_facts_keys_triggers_and_matches_metadata(tmp_
     upgrade_database(url)
     upgrade_database(url)
     after, current_keys, current_definitions, current_triggers = _snapshot(path, before)
-    assert before == after and keys == current_keys and definitions == current_definitions
+    assert_legacy_preserved(
+        before,
+        after,
+        keys,
+        current_keys,
+        definitions=definitions,
+        current_definitions=current_definitions,
+    )
     assert all(current_triggers[name] == value for name, value in triggers.items())
-    assert set(current_triggers) - set(triggers) == {
-        "topic_outline_json",
-        "topic_outline_no_replace",
-        "topic_outline_no_update",
-        "topic_outline_no_delete",
-        "paper_embedding_no_replace",
-        "paper_embedding_no_update",
-        "paper_embedding_no_delete",
-        "paper_embedding_source",
-        "paper_embedding_rowid",
-    }
+    assert (
+        set(current_triggers) - set(triggers)
+        == {
+            "topic_outline_json",
+            "topic_outline_no_replace",
+            "topic_outline_no_update",
+            "topic_outline_no_delete",
+            "paper_embedding_no_replace",
+            "paper_embedding_no_update",
+            "paper_embedding_no_delete",
+            "paper_embedding_source",
+            "paper_embedding_rowid",
+        }
+        | RELATION_TRIGGERS
+    )
     engine = create_engine(url)
     try:
         with engine.connect() as connection:

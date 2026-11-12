@@ -1,4 +1,4 @@
-# 启动、查询和默认预览均不加载或下载模型；memory reembed --execute 才准备资产。
+# 启动、查询和默认预览不加载或下载模型；首次入库只用就绪资产，显式重算才准备资产。
 embedding:
   enabled: true
   adapter: fastembed
@@ -24,3 +24,8 @@ candidates:
     cosine: 3
     datasets: 2
     text: 1
+
+relate:
+  token_budget: 8000
+  max_fragments_per_side: 4
+  fragment_chars: 1600

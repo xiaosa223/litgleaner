@@ -43,6 +43,15 @@ export function Reader({ paperId }: { paperId: string }) {
   const toast = useToast();
   const [paperState, reload] = useAsync(() => api.paper(paperId), [paperId]);
   const paper = paperState.state === "ready" ? paperState.data : null;
+  // 明确登记首次打开，不依赖翻页或滚动；失败保留提示，再次打开时可重试。
+  useEffect(() => {
+    let active = true;
+    void api.openPaper(paperId).then(
+      () => { if (active) reload(); },
+      (error: unknown) => { if (active) toast(error instanceof Error ? error.message : "阅读状态保存失败，请重新打开重试"); },
+    );
+    return () => { active = false; };
+  }, [paperId, reload, toast]);
   const [docState] = useAsync(() => (paper?.has_document ? api.document(paperId) : Promise.resolve(null)), [paperId, paper?.has_document]);
   const doc = docState.state === "ready" ? docState.data : null;
   const { pdf, error: pdfError } = usePdf(paper?.has_pdf ? api.pdfUrl(paperId) : null);

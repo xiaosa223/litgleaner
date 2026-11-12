@@ -20,6 +20,7 @@ from litgleaner.infra.db.schema_citation import define_citation
 from litgleaner.infra.db.schema_embedding import define_embedding
 from litgleaner.infra.db.schema_knowledge import define_knowledge
 from litgleaner.infra.db.schema_outline import define_outline
+from litgleaner.infra.db.schema_relation import define_relations
 from litgleaner.infra.db.schema_survey import define_survey
 from litgleaner.infra.db.schema_topic_map import define_topic_map
 
@@ -28,6 +29,7 @@ paper_embedding = define_embedding(metadata)
 survey_preview, survey_work, survey_round = define_survey(metadata)
 topic_map = define_topic_map(metadata)
 topic_outline = define_outline(metadata)
+memory_admission, relate_batch, paper_relation = define_relations(metadata)
 
 paper = Table(
     "paper",
@@ -276,7 +278,13 @@ feedback = Table(
     Column("action", String, nullable=False),
     Column("actor", String),
     Column("external_id", String, unique=True),
+    Column("relation_id", String, ForeignKey("paper_relation.id", use_alter=True), index=True),
+    Column("payload", Text),
     Column("created_at", String, nullable=False),
+    CheckConstraint(
+        "payload IS NULL OR CASE WHEN json_valid(payload) "
+        "THEN json_type(payload)='object' ELSE 0 END"
+    ),
 )
 
 # 已经写进文献库的论文。有这一行就不再写，Zotero 重启也不会重复。

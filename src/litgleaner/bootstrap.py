@@ -316,10 +316,32 @@ def _survey_sources_version(config: LoadedConfig) -> str:
     return stable_hash((sources, fulltext, config.app.parser.model_dump(mode="json")))
 
 
+def _runtime_settings(config: LoadedConfig) -> RuntimeSettings:
+    chunker = config.app.chunker
+    return RuntimeSettings(
+        max_attempts=config.app.jobs.max_attempts,
+        backoff_seconds=config.app.jobs.backoff_seconds,
+        max_defer_hours=config.app.jobs.max_defer_hours,
+        assess_token_budget=config.app.assess.token_budget,
+        chunker=ChunkerConfig(chunker.target_tokens, chunker.max_tokens, chunker.overlap_sentences),
+        timezone=config.timezone,
+        ui_language=config.app.language.ui,
+        reading_language=config.app.language.reading,
+        survey=config.app.survey,
+        survey_sources_version=_survey_sources_version(config),
+        map=config.app.map,
+        outline=config.app.outline,
+        embedding=EmbeddingSettings.model_validate(
+            config.memory.embedding.model_dump(include={"max_input_chars", "batch_size"})
+        ),
+        memory_policy=config.memory.candidates,
+        relate=config.memory.relate,
+    )
+
+
 def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = None) -> AppContext:
     now = clock or (lambda: datetime.now(UTC))
     store = SqlStore(config.database_url)
-    chunker = config.app.chunker
     return AppContext(
         store=store,
         sources={
@@ -340,26 +362,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         blobs=LocalBlobStore(config.path(config.app.blob_root)),
         archive=LocalBlobStore(config.path(config.app.archive_dir)),
         clock=now,
-        settings=RuntimeSettings(
-            max_attempts=config.app.jobs.max_attempts,
-            backoff_seconds=config.app.jobs.backoff_seconds,
-            max_defer_hours=config.app.jobs.max_defer_hours,
-            assess_token_budget=config.app.assess.token_budget,
-            chunker=ChunkerConfig(
-                chunker.target_tokens, chunker.max_tokens, chunker.overlap_sentences
-            ),
-            timezone=config.timezone,
-            ui_language=config.app.language.ui,
-            reading_language=config.app.language.reading,
-            survey=config.app.survey,
-            survey_sources_version=_survey_sources_version(config),
-            map=config.app.map,
-            outline=config.app.outline,
-            embedding=EmbeddingSettings.model_validate(
-                config.memory.embedding.model_dump(include={"max_input_chars", "batch_size"})
-            ),
-            memory_policy=config.memory.candidates,
-        ),
+        settings=_runtime_settings(config),
         topics=config.topics,
         glossaries=config.glossaries,
         journal_sets=config.journal_sets,

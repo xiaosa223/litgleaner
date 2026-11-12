@@ -181,8 +181,7 @@ def _save(ctx: AppContext, records: tuple[PaperEmbedding, ...]) -> tuple[int, in
     return created, reused, tuple(changed)
 
 
-def reembed(ctx: AppContext) -> ReembedResult:
-    basis = _basis(ctx)
+def _reembed(ctx: AppContext, basis: _Basis, *, allow_download: bool) -> ReembedResult:
     plan = _plan(basis)
     if ctx.embedder is None or basis.model is None:
         raise ConfigError("本地向量已关闭，请先启用记忆配置中的嵌入器")
@@ -195,13 +194,31 @@ def reembed(ctx: AppContext) -> ReembedResult:
     size = ctx.settings.embedding.batch_size
     for offset in range(0, len(plan.pending_paper_ids), size):
         sources = tuple(basis.inputs[key] for key in plan.pending_paper_ids[offset : offset + size])
-        batch = ctx.embedder.embed(tuple(source.input_text for source in sources))
+        texts = tuple(source.input_text for source in sources)
+        batch = (
+            ctx.embedder.embed(texts)
+            if allow_download
+            else ctx.embedder.embed(texts, allow_download=False)
+        )
         records = _records(ctx, sources, batch, basis.model)
         added, existing, skipped = _save(ctx, records)
         created += added
         reused += existing
         changed.extend(skipped)
     return ReembedResult(plan, created, reused, tuple(changed))
+
+
+def reembed(ctx: AppContext) -> ReembedResult:
+    return _reembed(ctx, _basis(ctx), allow_download=True)
+
+
+def reembed_papers(ctx: AppContext, paper_ids: tuple[str, ...]) -> ReembedResult:
+    """仅计算指定文库论文，资产必须已就绪，不准备或下载模型。"""
+    basis = _basis(ctx)
+    selected = {key: value for key, value in basis.inputs.items() if key in paper_ids}
+    if basis.model is None or not basis.model.available:
+        raise ConfigError("本地嵌入模型未就绪；自动入库不会下载资产")
+    return _reembed(ctx, _Basis(basis.snapshot, selected, basis.model), allow_download=False)
 
 
 def similar(ctx: AppContext, paper_id: str, *, limit: int = 5) -> SimilarPapers:

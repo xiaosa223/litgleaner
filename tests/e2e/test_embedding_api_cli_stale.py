@@ -54,7 +54,7 @@ def test_preview_similar_and_stale_are_fixed_batch_reads_with_no_external_action
         monkeypatch.setattr(type(source), "fetch", forbidden)
     assert embeddings.preview(harness.ctx).cached == 2 and len(queries) == 4
     assert embeddings.similar(harness.ctx, a).total == 1 and len(queries) == 8
-    assert len(_rows(harness)) == 2 and len(queries) == 23
+    assert len(_rows(harness)) == 2 and len(queries) == 25
     assert all(query.is_select for query in queries)
 
 

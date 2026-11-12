@@ -4,7 +4,16 @@ from dataclasses import dataclass
 from typing import Literal
 
 StaleKind = Literal[
-    "extraction", "assessment", "score", "translation", "answer", "map", "outline", "embedding"
+    "extraction",
+    "assessment",
+    "score",
+    "translation",
+    "answer",
+    "map",
+    "outline",
+    "embedding",
+    "relation",
+    "relate_batch",
 ]
 StaleStatus = Literal["current", "stale", "unknown"]
 

@@ -13,7 +13,7 @@ from typing import Annotated, cast, get_args
 import typer
 
 from litgleaner.adapters.feishu.listener import answerers_from
-from litgleaner.application import embeddings, outline
+from litgleaner.application import embeddings, outline, relate_backfill
 from litgleaner.application.context import AppContext
 from litgleaner.application.export import mine
 from litgleaner.application.inbound import apply_click
@@ -54,6 +54,26 @@ zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
 export_app = typer.Typer(help="导出课题对比表、引用、综述骨架与个人数据", no_args_is_help=True)
 memory_app = typer.Typer(help="论文间记忆与本地向量", no_args_is_help=True)
+
+
+@memory_app.command("backfill")
+@friendly
+def memory_backfill(
+    execute: Annotated[bool, typer.Option(help="确认当前预览并排队关系核实")] = False,
+    plan_hash: Annotated[str | None, typer.Option(help="预览返回的 plan_hash")] = None,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """默认只预览完整文库的对数、遗漏与估费；确认后由 run --stage relate 执行。"""
+    if execute != (plan_hash is not None):
+        raise typer.BadParameter("排队必须同时提供 --execute 和 --plan-hash")
+    ctx = context_or_exit(config)
+    result: object
+    if execute:
+        with run_lock(load_or_exit(config)):
+            result = [asdict(item) for item in relate_backfill.queue(ctx, plan_hash or "")]
+    else:
+        result = asdict(relate_backfill.preview(ctx))
+    echo(json.dumps(result, ensure_ascii=False, default=lambda value: value.model_dump()))
 
 
 @memory_app.command("reembed")

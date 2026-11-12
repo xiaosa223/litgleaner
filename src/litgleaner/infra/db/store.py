@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
+from litgleaner.infra.db.admission_repo import SqlAdmissionRepo
 from litgleaner.infra.db.candidate_repo import SqlCandidateRepo
 from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
 from litgleaner.infra.db.citation_repo import SqlCitationRepo
@@ -23,6 +24,7 @@ from litgleaner.infra.db.papers_repo import SqlPaperRepo
 from litgleaner.infra.db.qa_repo import SqlQARepo
 from litgleaner.infra.db.reader_repo import SqlReaderRepo
 from litgleaner.infra.db.reading_route_repo import SqlReadingRouteRepo
+from litgleaner.infra.db.relation_repo import SqlRelationRepo
 from litgleaner.infra.db.schema import (
     annotation,
     artifact,
@@ -93,6 +95,8 @@ class SqlStore:
         self._surveys = SqlSurveyRepo(self._db)
         self._topic_maps = SqlTopicMapRepo(self._db)
         self._topic_outlines = SqlOutlineRepo(self._db)
+        self._admissions = SqlAdmissionRepo(self._db)
+        self._relations = SqlRelationRepo(self._db)
 
     @property
     def papers(self) -> SqlPaperRepo:
@@ -189,6 +193,14 @@ class SqlStore:
     @property
     def embeddings(self) -> SqlEmbeddingRepo:
         return self._embeddings
+
+    @property
+    def admissions(self) -> SqlAdmissionRepo:
+        return self._admissions
+
+    @property
+    def relations(self) -> SqlRelationRepo:
+        return self._relations
 
     def stats(self) -> dict[str, int]:
         counts = {

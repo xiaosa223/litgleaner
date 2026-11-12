@@ -187,7 +187,7 @@ litgleaner/
 | 判断 | `topic_outline` | `(topic, topic_hash, input_hash, producer_version)` | 已读综述骨架：短分组、覆盖缺口候选与生成时的对比表、来源引用附件，由 `outline` 显式生成，只追加保存（第 14 节） |
 | 输出 | `digest` / `digest_item` | ULID / `(digest, position)` | 一次推送的不可变内容 |
 | 输出 | `delivery` | `(digest, channel)` | 发送状态，保证不重复推送 |
-| 反馈 | `feedback` | ULID；渠道事件号 `external_id` 唯一 | 只追加：加入文献库、不感兴趣、有用、需要全文 |
+| 反馈 | `feedback` | ULID；渠道事件号 `external_id` 唯一 | 只追加：加入文献库、不感兴趣、有用、需要全文；关系反馈另带 `relation_id` 与动作数据 |
 | 反馈 | `library_entry` | `(paper, library)` | 已写进文献库的条目，有这一行就不再写 |
 | 反馈 | `reading_state` | `paper` | 待读、在读（含读到的位置）、已读、放弃；来自领读器、渠道反馈和 Zotero 标签 |
 | 用户 | `annotation` | ULID | 高亮、批注、读后卡片的用户修改；记录页码、`bbox` 和原文片段，不依赖 `chunk_id` |
@@ -196,6 +196,8 @@ litgleaner/
 | 知识 | `concept_alias` | `(normalized_name)` | 别名和各语言译名（带语言标记）到概念的映射，用于按名称匹配；课题术语表条目也经它关联到概念 |
 | 知识 | `concept_occurrence` | `(concept, paper)` | 概念在哪篇论文出现：作用（核心、前置、提到）、定义原文、页码、`bbox` |
 | 知识 | `concept_merge_candidate` | `(concept_a, concept_b)` | 模型提议的疑似同一概念，等用户确认 |
+| 事实 | `memory_admission` | 自增序号；`paper` 唯一 | 首次入库的冻结配置与旧库基线，退出再入不重开事件（第 12.9 节） |
+| 判断 | `relate_batch` | `(paper, input_hash, producer_version)` | 关系核实的冻结消息、来源、范围、费用 scope、输出与警告；空结果也保存（第 12.9 节） |
 | 判断 | `paper_relation` | `(paper_a, paper_b, kind, input_hash, producer_version)` | 经 `relate` 核实的论文关系，附双方原文引用；状态 `valid / superseded / rejected_by_user`，被推翻时记录 `superseded_by`，不删除（第 12.9 节） |
 | 判断 | `paper_embedding` | `(paper, input_hash, embedder_version)` | 本地向量（float32 二进制），只用于产生候选和检索排序（第 12.9 节） |
 | 用户 | `answer_card` | ULID；修订只追加 | 用户对引导问题的回答：论文、问题、针对的概念、回答原文 |
@@ -1007,6 +1009,22 @@ LLM 输出来自不可信的论文内容：所有输出都限制长度；发给�
 - 只比较新进入文库的论文和已有的文库论文，不反向重算旧论文之间的关系；受 `relate` 预算限制，用完时推迟。历史回填用 `litgleaner memory backfill`，先给出对数和预计费用。
 - 没有配置模型时只显示事实关系。
 
+执行采用耐久的首次入库记录 `memory_admission`、只追加的核实批次 `relate_batch` 和 `paper_relation`。入库记录与添加、首次阅读状态或首条批注同一事务登记，并入按需队列；记录的递增序号确定此前已入库的对端范围，不靠同秒时间猜顺序。迁移为既有文库登记基线，不产生任务；退出后再入不自动重算。打开论文使用明确的写操作，GET 保持只读；渠道“加入外部文献库”和领读器“稍后读”是独立操作。首次入库时缺少 `relate` 路由会冻结这一事实，本次只处理本地事实，之后配模型不补算这些旧事件。
+
+入库处理只为本次新论文准备事实、参考文献及已就绪的本地向量，不重算旧对端、不自动下载嵌入模型。等待本地获取、解析和提取使用 `WaitingForWork`；前置已终止或没有可核实原文则明确结束并保留理由。事件冻结策略、语言、提取和核实生产者及输入预算的配置身份；执行前改变则停止旧工作。候选在前置就绪后从仍在文库且序号更早的论文中排序，随后冻结实际发送内容；新入库论文不扩张已有批次。仅有笔记的论文也可触发首次入库，但用户笔记不发送给 `relate`。
+
+`memory.yaml` 的 `relate.token_budget` 默认 8000（含完整系统提示、清洗后的 JSON 与隔离包装），每对及每侧均有连续原文片段上限；整对放不下就省略，不发送半对。默认 `relate` 路由每日额外限额为 0.2 美元，可沿第 15.2 节修改或显式清除。一次调用核实最多策略规定的 N 对；估费按价目表与实际输入、每对预计输出计算，标明经验估计。无候选、无关、缺失返回或全部引用未通过也保存批次完成凭据，重试复用，不再次收费。
+
+模型只可选择输入中的一对并给一种关系或“无关”。`extends`、`uses_method_of`、`compares_with` 的 `paper_a` 是动作发出方，`paper_b` 是被扩展、被使用或被比较方；`contradicts`、`similar_approach`、`same_problem` 按论文 ID 规范化双端顺序。双方分别验证真实论文身份、零基页码、当前文档原页、实际发送的连续片段及清洗后的完整消息；页标记、元数据、未发送尾部和另一篇的同页文本均不能充当引文。任一侧失败整条丢弃；无关或未核验输出不能推翻已有有效判断。
+
+核实批次按完整输入与生产者精确缓存，保留实际来源指纹、模型、费用 scope、遗漏及校验警告。关系证据和判断内容冻结，只允许状态及替代指针变化；新核验通过的判断取代同一双端的旧模型判断时，旧记录改为 `superseded` 并指向新关系，整个批次与关系变更同事务保存。没有新有效判断则只保存批次。关系两端必须不同且均在文库，身份歧义不连边。只读列表区分当前、过期和无法完整核验，保留历史；变化只提示，不自动核实。
+
+统一 `stale` 同时核验全部关系和批次历史：在已有十五组结果上追加关系、批次两组，同一短事务固定十七次 SELECT，离开事务后复用来源元数据指纹和按文档归档缓存的原文核验，不逐条查询。用户决定的类型不因模型配置变化失效；原文或提取变化仍明确提示。首次入库台账不属于模型派生物，不因配置变化回填。
+
+用户确认、删除和改类型写入带 `relation_id` 及动作数据的追加式 `feedback`，与关系状态在同一事务完成，按请求 ID 幂等；改类型追加用户来源的新判断，保留原模型证据并替代旧记录。用户已决定的双端不会被后续自动模型覆盖，显式回填也说明并跳过；历史删除可由明确确认恢复。原推荐卡片只读取保存/忽略动作，关系反馈不影响待保存或卡片状态。
+
+显式 `litgleaner memory backfill` 默认只预览整个文库的待核实对数、遗漏、精确缓存与预计费用；执行必须携带当前预览指纹并重新核对，按新入库的同一冻结和核验流程排队，不能把旧事件转成自动任务。API 提供等价的预览、确认、状态、历史及反馈操作，沿用会话、Host/Origin 和 CSRF 保护。`memory_admit` 与 `relate` 进入同一按需执行器，由常驻服务或持共享运行锁的 CLI 消费；请求中不调用模型。
+
 **本地向量**：端口 `Embedder`，默认适配器 `fastembed`，默认模型 `paraphrase-multilingual-MiniLM-L12-v2`（多语言，384 维）。
 
 - 输入是标题、摘要和提取结果的 `problem`、`approach`；结果存 `paper_embedding`。文库几千篇以内在内存里逐个计算相似度，不建索引，不引入向量数据库。
@@ -1111,7 +1129,7 @@ tasks:
   ask:         { provider: main, model: STRONG_MODEL, prompt: ask }
   guide:       { provider: main, model: STRONG_MODEL, prompt: guide }       # 个性化导读和 3 个引导问题（第 12.7 节）
   evaluate:    { provider: main, model: STRONG_MODEL, prompt: evaluate }    # 评价用户的回答卡片
-  relate:      { provider: main, model: CHEAP_MODEL,  prompt: relate }      # 核实论文间关系（第 12.9 节）
+  relate:      { provider: main, model: CHEAP_MODEL,  prompt: relate, daily_budget_usd: 0.2 }      # 核实论文间关系（第 12.9 节）
 budget:
   daily_usd: 2.0
 ```

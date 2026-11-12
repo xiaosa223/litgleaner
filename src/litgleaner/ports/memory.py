@@ -12,6 +12,7 @@ from litgleaner.domain.knowledge import Concept, ConceptOccurrence
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import ReadingState
 from litgleaner.ports.embedding import EmbeddingRepo
+from litgleaner.ports.relations import AdmissionRepo, RelationRepo
 
 if TYPE_CHECKING:
     from litgleaner.ports.memory_candidates import CandidateSnapshot
@@ -38,3 +39,7 @@ class MemoryStore(Protocol):
     ) -> CandidateSnapshot: ...
     @property
     def embeddings(self) -> EmbeddingRepo: ...
+    @property
+    def admissions(self) -> AdmissionRepo: ...
+    @property
+    def relations(self) -> RelationRepo: ...

@@ -30,16 +30,38 @@ class SqlFeedbackRepo:
                 action=record.action,
                 actor=record.actor,
                 external_id=record.external_id,
+                relation_id=record.relation_id,
+                payload=json.dumps(dict(record.payload), ensure_ascii=False, allow_nan=False)
+                if record.payload is not None
+                else None,
                 created_at=now,
             )
             .on_conflict_do_nothing(index_elements=["external_id"])
         )
         return self._db.write(statement) == 1
 
+    def by_external_id(self, external_id: str) -> FeedbackRecord | None:
+        rows = self._db.fetch(select(feedback).where(feedback.c.external_id == external_id))
+        if not rows:
+            return None
+        row = rows[0]
+        return FeedbackRecord(
+            row.id,
+            row.paper_id,
+            row.channel,
+            row.action,
+            row.digest_id,
+            row.actor,
+            row.external_id,
+            row.relation_id,
+            json.loads(row.payload) if row.payload else None,
+        )
+
     def _latest(self) -> Any:
         """每篇论文最后一次操作。ULID 按时间递增，同一秒内也有序。"""
         newest = (
             select(feedback.c.paper_id, func.max(feedback.c.id).label("id"))
+            .where(feedback.c.action.in_((SAVE_ACTION, "dismiss")))
             .group_by(feedback.c.paper_id)
             .subquery()
         )
@@ -69,7 +91,7 @@ class SqlFeedbackRepo:
     def latest_action(self, paper_id: str) -> str | None:
         rows = self._db.fetch(
             select(feedback.c.action)
-            .where(feedback.c.paper_id == paper_id)
+            .where(feedback.c.paper_id == paper_id, feedback.c.action.in_((SAVE_ACTION, "dismiss")))
             .order_by(feedback.c.id.desc())
             .limit(1)
         )

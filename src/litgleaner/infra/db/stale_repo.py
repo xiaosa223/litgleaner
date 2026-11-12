@@ -5,10 +5,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import Row, select
+from sqlalchemy import Row, select, text
 
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.outline import TopicOutline
+from litgleaner.domain.paper_relation import RelateBatch
 from litgleaner.domain.topic_map import TopicMap
 from litgleaner.infra.db.catalog_repo import library_scope
 from litgleaner.infra.db.database import Database
@@ -17,16 +18,20 @@ from litgleaner.infra.db.export_repo import _group, _reading
 from litgleaner.infra.db.judgments_repo import _to_assessment
 from litgleaner.infra.db.papers_repo import _to_paper
 from litgleaner.infra.db.qa_repo import _answer, _question
+from litgleaner.infra.db.relation_repo import _relation
 from litgleaner.infra.db.schema import (
     assessment,
     extraction,
+    feedback,
     fulltext,
     job,
     paper,
     paper_alias,
     paper_embedding,
+    paper_relation,
     qa_message,
     reading_state,
+    relate_batch,
     score,
     topic_map,
     topic_outline,
@@ -62,6 +67,8 @@ class _Rows:
     maps: Sequence[Row[Any]]
     outlines: Sequence[Row[Any]]
     embeddings: Sequence[Row[Any]]
+    relations: Sequence[Row[Any]]
+    relate_batches: Sequence[Row[Any]]
 
 
 def _scores(
@@ -111,6 +118,30 @@ def _fulltexts(rows: Sequence[Row[Any]]) -> dict[str, FullTextState]:
     }
 
 
+def _triages(rows: Sequence[Row[Any]]) -> tuple[TriageResult, ...]:
+    return tuple(
+        TriageResult(
+            row.paper_id,
+            row.topic_id,
+            row.topic_hash,
+            bool(row.relevant),
+            row.reason,
+            row.prompt_version,
+            row.model,
+        )
+        for row in rows
+    )
+
+
+def _extractions(rows: Sequence[Row[Any]]) -> tuple[Extraction, ...]:
+    return tuple(
+        Extraction(
+            row.id, row.paper_id, row.input_hash, row.extractor_version, json.loads(row.data)
+        )
+        for row in rows
+    )
+
+
 def _snapshot(rows: _Rows) -> StaleSnapshot:
     aliases = _group(
         rows.aliases, lambda row: row.paper_id, lambda row: Alias(row.scheme, row.value)
@@ -124,12 +155,7 @@ def _snapshot(rows: _Rows) -> StaleSnapshot:
         fulltexts=_fulltexts(rows.fulltexts),
         aliases={row.id: aliases.get(row.id, ()) for row in rows.papers},
         reading={row.paper_id: _reading(row) for row in rows.reading},
-        extractions=tuple(
-            Extraction(
-                row.id, row.paper_id, row.input_hash, row.extractor_version, json.loads(row.data)
-            )
-            for row in rows.extractions
-        ),
+        extractions=_extractions(rows.extractions),
         assessments=assessments,
         scores=_scores(rows.scores, assessments),
         translations=tuple(
@@ -142,22 +168,26 @@ def _snapshot(rows: _Rows) -> StaleSnapshot:
             TopicState(row.topic_id, row.status, row.topic_hash, row.triage_from)
             for row in rows.topic_states
         ),
-        triages=tuple(
-            TriageResult(
-                row.paper_id,
-                row.topic_id,
-                row.topic_hash,
-                bool(row.relevant),
-                row.reason,
-                row.prompt_version,
-                row.model,
-            )
-            for row in rows.triages
-        ),
+        triages=_triages(rows.triages),
         maps=tuple(TopicMap.model_validate_json(row.data) for row in rows.maps),
         outlines=tuple(TopicOutline.model_validate_json(row.data) for row in rows.outlines),
         embeddings=tuple(_embedding(row) for row in rows.embeddings),
         embedding_library_ids=frozenset(row.paper_id for row in rows.embeddings if row.in_library),
+        relations=tuple(_relation(row) for row in rows.relations),
+        relate_batches=tuple(
+            RelateBatch.model_validate_json(row.data) for row in rows.relate_batches
+        ),
+        library_paper_ids=frozenset(row.id for row in rows.papers if row.in_library),
+        user_decided_pairs=frozenset(
+            (row.pair_a, row.pair_b)
+            for row in rows.relations
+            if row.source == "user" or row.user_decided
+        ),
+        user_decided_relation_ids=frozenset(
+            row.id
+            for row in rows.relations
+            if row.user_status_decided and row.status != "superseded"
+        ),
     )
 
 
@@ -181,7 +211,9 @@ class SqlStaleRepo:
     def snapshot(self) -> StaleSnapshot:
         with self._db.atomic():
             rows = _Rows(
-                papers=self._db.fetch(select(paper).order_by(paper.c.id)),
+                papers=self._db.fetch(
+                    select(paper, library_scope().label("in_library")).order_by(paper.c.id)
+                ),
                 fulltexts=self._db.fetch(select(fulltext).order_by(fulltext.c.paper_id)),
                 aliases=self._db.fetch(
                     select(paper_alias).order_by(
@@ -209,14 +241,48 @@ class SqlStaleRepo:
                         triage.c.paper_id, triage.c.topic_id, triage.c.topic_hash
                     )
                 ),
-                maps=self._db.fetch(
-                    select(topic_map.c.data).order_by(topic_map.c.created_at, topic_map.c.id)
-                ),
-                outlines=self._db.fetch(
-                    select(topic_outline.c.data).order_by(
-                        topic_outline.c.created_at, topic_outline.c.id
-                    )
-                ),
-                embeddings=_embedding_rows(self._db),
+                **_frozen_rows(self._db),
             )
         return _snapshot(rows)
+
+
+def _frozen_rows(db: Database) -> dict[str, Sequence[Row[Any]]]:
+    return {
+        "maps": db.fetch(select(topic_map.c.data).order_by(topic_map.c.created_at, topic_map.c.id)),
+        "outlines": db.fetch(
+            select(topic_outline.c.data).order_by(topic_outline.c.created_at, topic_outline.c.id)
+        ),
+        "embeddings": _embedding_rows(db),
+        "relations": _relation_rows(db),
+        "relate_batches": db.fetch(
+            select(relate_batch.c.data).order_by(relate_batch.c.created_at, relate_batch.c.id)
+        ),
+    }
+
+
+def _relation_rows(db: Database) -> Sequence[Row[Any]]:
+    decided = (
+        select(feedback.c.id)
+        .where(
+            feedback.c.relation_id == paper_relation.c.id,
+            text("feedback.action IN ('confirm','reject','change')"),
+        )
+        .correlate(paper_relation)
+        .exists()
+    )
+    status_decided = (
+        select(feedback.c.id)
+        .where(
+            feedback.c.relation_id == paper_relation.c.id,
+            text("feedback.action IN ('confirm','reject')"),
+        )
+        .correlate(paper_relation)
+        .exists()
+    )
+    return db.fetch(
+        select(
+            paper_relation,
+            decided.label("user_decided"),
+            status_decided.label("user_status_decided"),
+        ).order_by(paper_relation.c.created_at, paper_relation.c.id)
+    )

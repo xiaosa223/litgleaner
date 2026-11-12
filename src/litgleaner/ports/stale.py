@@ -10,6 +10,7 @@ from litgleaner.domain.embedding import PaperEmbedding
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.outline import TopicOutline
 from litgleaner.domain.paper import Paper
+from litgleaner.domain.paper_relation import PaperRelation, RelateBatch
 from litgleaner.domain.qa import Answer, Question
 from litgleaner.domain.reading import ReadingState
 from litgleaner.domain.topic_map import TopicMap
@@ -59,3 +60,8 @@ class StaleSnapshot:
     outlines: tuple[TopicOutline, ...]
     embeddings: tuple[PaperEmbedding, ...] = ()
     embedding_library_ids: frozenset[str] = frozenset()
+    relations: tuple[PaperRelation, ...] = ()
+    relate_batches: tuple[RelateBatch, ...] = ()
+    library_paper_ids: frozenset[str] = frozenset()
+    user_decided_pairs: frozenset[tuple[str, str]] = frozenset()
+    user_decided_relation_ids: frozenset[str] = frozenset()

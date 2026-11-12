@@ -8,7 +8,7 @@ from tests.e2e.test_model_settings import model_ui as mock_model_ui
 
 model_ui = mock_model_ui
 
-TASKS = {"triage", "extract", "assess", "translate", "ask", "map", "outline"}
+TASKS = {"triage", "extract", "assess", "translate", "ask", "map", "outline", "relate"}
 
 
 def test_settings_advertise_unconfigured_map_without_disabling_reading(harness):
@@ -56,7 +56,7 @@ def test_save_map_only_creates_reusable_map_route_without_model_calls(model_ui):
     assert ctx.store.runs.llm_cost_since("2026-01-01") == pytest.approx(0.00004)
 
 
-def test_save_all_seven_tasks_in_one_request_and_reject_overlong_selection(model_ui):
+def test_save_all_eight_tasks_in_one_request_and_reject_overlong_selection(model_ui):
     ui = model_ui
     result = ui.client.put(SETTINGS, json=draft(tasks=sorted(TASKS)))
     assert result.status_code == 200, result.text

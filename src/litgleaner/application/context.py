@@ -12,6 +12,7 @@ from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.memory_policy import MemoryPolicy
 from litgleaner.domain.outline import TopicOutlineSettings
+from litgleaner.domain.relate_settings import RelateSettings
 from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.survey import SurveySettings
@@ -51,6 +52,7 @@ class RuntimeSettings:
     outline: TopicOutlineSettings = field(default_factory=TopicOutlineSettings)
     embedding: EmbeddingSettings = field(default_factory=EmbeddingSettings)
     memory_policy: MemoryPolicy = field(default_factory=MemoryPolicy)
+    relate: RelateSettings = field(default_factory=RelateSettings)
 
 
 @dataclass(frozen=True)

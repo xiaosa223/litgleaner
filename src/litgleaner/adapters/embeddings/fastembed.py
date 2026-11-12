@@ -227,8 +227,12 @@ class LocalEmbedder:
         self._engine_version = version
         return self._engine
 
-    def _compute(self, texts: tuple[str, ...], runtime: str) -> EmbeddingBatch:
+    def _compute(
+        self, texts: tuple[str, ...], runtime: str, allow_download: bool
+    ) -> EmbeddingBatch:
         manifest = assets.read(self.root, self.model, self.dimensions, check_stat=False)
+        if manifest is None and not allow_download:
+            raise ConfigError("本地嵌入模型未就绪；自动入库不会下载资产")
         factory = _factory(runtime)
         description = _description(factory, self.model, self.dimensions)
         manifest = self._prepare(factory, description, manifest)
@@ -240,7 +244,7 @@ class LocalEmbedder:
         assets.write(self.root, manifest)
         return EmbeddingBatch(self._info(runtime, manifest, None), vectors)
 
-    def embed(self, texts: tuple[str, ...]) -> EmbeddingBatch:
+    def embed(self, texts: tuple[str, ...], *, allow_download: bool = True) -> EmbeddingBatch:
         if not texts:
             return EmbeddingBatch(self.describe(), ())
         if any(not isinstance(text, str) or not text.strip() for text in texts):
@@ -250,7 +254,7 @@ class LocalEmbedder:
             raise ConfigError("缺少 memory 可选依赖，请安装后执行 memory reembed --execute")
         try:
             with self._lock:
-                return self._compute(texts, runtime)
+                return self._compute(texts, runtime, allow_download)
         except ConfigError:
             raise
         except Exception as error:

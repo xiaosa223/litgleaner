@@ -129,11 +129,13 @@ def _rank(paper_id: str, basis: _Basis, policy: MemoryPolicy) -> tuple[MemoryCan
     return tuple(matches)
 
 
-def candidates(ctx: AppContext, paper_id: str, *, limit: int | None = None) -> MemoryCandidates:
+def project_candidates(
+    ctx: AppContext, paper_id: str, data: CandidateSnapshot, *, limit: int | None = None
+) -> MemoryCandidates:
+    """投影已取出的完整或受限快照，过滤须先于文本和向量归一化。"""
     if limit is not None and (type(limit) is not int or not 1 <= limit <= 200):
         raise InvalidRequest("候选查询数量必须为 1–200")
     policy = ctx.settings.memory_policy
-    data = ctx.store.memory_candidates_snapshot(paper_id, policy.query_terms_limit)
     basis = _basis(ctx, paper_id, data)
     matches = _rank(paper_id, basis, policy)
     count = min(limit if limit is not None else policy.max_pairs, policy.max_pairs)
@@ -147,3 +149,12 @@ def candidates(ctx: AppContext, paper_id: str, *, limit: int | None = None) -> M
         basis.vector.model,
         basis.warnings,
     )
+
+
+def candidates(ctx: AppContext, paper_id: str, *, limit: int | None = None) -> MemoryCandidates:
+    if limit is not None and (type(limit) is not int or not 1 <= limit <= 200):
+        raise InvalidRequest("候选查询数量必须为 1–200")
+    data = ctx.store.memory_candidates_snapshot(
+        paper_id, ctx.settings.memory_policy.query_terms_limit
+    )
+    return project_candidates(ctx, paper_id, data, limit=limit)

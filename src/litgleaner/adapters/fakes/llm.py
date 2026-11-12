@@ -63,6 +63,8 @@ class FakeLLM:
         return LLMResponse(data, request.model, 100, 20, _COST_PER_CALL)
 
     def _answer(self, request: LLMRequest) -> Mapping[str, Any]:
+        if request.task == "relate":
+            return {"relations": []}
         if request.task == "outline":
             return self._outline(request)
         if request.task == "map":

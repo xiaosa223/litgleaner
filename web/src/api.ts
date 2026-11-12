@@ -150,6 +150,7 @@ export const api = {
   translateMany: (id: string, indices: number[], handlers: TranslationHandlers) =>
     streamTranslation(`${paperPath(id)}/translate`, { indices }, handlers),
   paper: (id: string) => get<PaperView>(paperPath(id)),
+  openPaper: (id: string) => send<NonNullable<PaperView["reading"]>>("POST", `${paperPath(id)}/open`),
   document: (id: string) => get<DocumentView>(`${paperPath(id)}/document`),
   pdfUrl: (id: string) => `${paperPath(id)}/pdf`,
   setReading: (id: string, status: ReadingStatus, position?: Record<string, number | string>) =>

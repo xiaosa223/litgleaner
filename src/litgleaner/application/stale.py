@@ -9,6 +9,7 @@ from litgleaner.application.stale_facts import (
 )
 from litgleaner.application.stale_inputs import StaleInputs
 from litgleaner.application.stale_language import check_answers, check_translations
+from litgleaner.application.stale_relations import check_relations
 from litgleaner.application.stale_topics import check_maps, check_outlines
 from litgleaner.domain.stale import StaleReport
 
@@ -26,6 +27,7 @@ def report(ctx: AppContext) -> StaleReport:
                 *check_maps(basis),
                 *check_outlines(basis),
                 *check_embeddings(basis),
+                *check_relations(basis),
             ),
             key=lambda entry: (entry.kind, entry.topic_id or "", entry.paper_id or "", entry.id),
         )

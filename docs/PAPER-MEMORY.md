@@ -49,4 +49,4 @@ GET /api/papers/{paper_id}/memory-facts?limit=50&offset=0
 
 一次请求在短事务内以固定 **8 次 SELECT** 读取完整文库、一致的最新提取与原始引文，以及全库别名。概念别名通过同一次连接查询读取。事务结束后计算投影，不逐论文补查。接口不写数据库、队列或归档，不调用模型、来源服务或下载本地向量模型。
 
-本接口是 [ADR 0010](adr/0010-paper-memory.md) 的事实查询部分。[本地向量](LOCAL-EMBEDDINGS.md) 已有显式重算、相似度只读接口及历史过期核验；事实、向量与已有 FTS 的[候选加权与阈值](MEMORY-CANDIDATES.md) 已有只读接口。重要前作、`paper_mention`、`relate` 核实、自动入库接线、用户关系反馈及阅读页/问答记忆上下文仍按该 ADR 后续实现。
+本接口是 [ADR 0010](adr/0010-paper-memory.md) 的事实查询部分。[本地向量](LOCAL-EMBEDDINGS.md) 已有显式重算、相似度只读接口及历史过期核验；事实、向量与已有 FTS 的[候选加权与阈值](MEMORY-CANDIDATES.md) 已有只读接口。[首次入库、`relate` 核实与用户关系反馈](PAPER-RELATIONS.md) 已接线。重要前作、`paper_mention` 及阅读页/问答记忆上下文仍按该 ADR 后续实现。

@@ -8,6 +8,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
+from tests.integration.relation_migration_helpers import assert_feedback_extension
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, upgrade_database
@@ -59,7 +60,16 @@ def _snapshot(path):
             if row[0] not in FTS_TABLES - {"memory_fts"}
             and row[0] != "alembic_version"
             and not row[0].startswith("survey_")
-            and row[0] not in {"topic_map", "topic_outline", "paper_embedding"}
+            and row[0]
+            not in {
+                "topic_map",
+                "topic_outline",
+                "paper_embedding",
+                "memory_admission",
+                "relate_batch",
+                "paper_relation",
+                "sqlite_sequence",
+            }
         ]
         rows = {}
         for name in tables:
@@ -84,7 +94,14 @@ def test_0015_upgrade_preserves_old_facts_triggers_foreign_keys_and_matches_sche
     upgrade_database(url)
     upgrade_database(url)
     after, current, current_keys = _snapshot(path)
-    assert before == after and foreign_keys == current_keys
+    assert before.keys() == after.keys()
+    for table in before:
+        if table == "feedback":
+            assert_feedback_extension(
+                before[table], after[table], foreign_keys[table], current_keys[table]
+            )
+        else:
+            assert before[table] == after[table] and foreign_keys[table] == current_keys[table]
     assert all(current[name] == sql for name, sql in triggers.items())
     engine = create_engine(url)
     try:

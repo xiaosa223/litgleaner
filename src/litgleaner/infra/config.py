@@ -18,6 +18,7 @@ from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.memory_policy import MemoryPolicy
 from litgleaner.domain.outline import TopicOutlineSettings
+from litgleaner.domain.relate_settings import RelateSettings
 from litgleaner.domain.routing import ALL_TOPICS, PUBLIC_TOPICS, Route
 from litgleaner.domain.rubric import Rubric
 from litgleaner.domain.survey import SurveySettings
@@ -58,6 +59,7 @@ class EmbeddingConfig(EmbeddingSettings):
 class MemoryConfig(FrozenModel):
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
     candidates: MemoryPolicy = Field(default_factory=MemoryPolicy)
+    relate: RelateSettings = Field(default_factory=RelateSettings)
 
 
 class ChannelConfig(AdapterConfig):
@@ -153,7 +155,8 @@ class LLMBudget(FrozenModel):
 class LLMFile(FrozenModel):
     providers: Mapping[str, AdapterConfig] = Field(default_factory=dict)
     tasks: Mapping[
-        Literal["triage", "extract", "assess", "translate", "ask", "map", "outline"], LLMTask
+        Literal["triage", "extract", "assess", "translate", "ask", "map", "outline", "relate"],
+        LLMTask,
     ] = Field(default_factory=dict)
     budget: LLMBudget = LLMBudget(daily_usd=2)
 

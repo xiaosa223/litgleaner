@@ -8,6 +8,7 @@ from typing import Any
 from litgleaner.application.cards import card_from_dict, tier_label
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_document, pdf_key
+from litgleaner.application.memory_admission import register
 from litgleaner.application.stages.archive import assessment_entries
 from litgleaner.application.stages.extract import extraction_is_stale
 from litgleaner.application.topics import active_topics
@@ -272,12 +273,17 @@ def set_reading_state(
     ctx: AppContext, paper_id: str, status: ReadingStatus, position: dict[str, Any] | None
 ) -> None:
     _paper(ctx, paper_id)
-    ctx.store.reader.set_state(paper_id, status, position, ctx.now_iso())
+    with ctx.store.atomic():
+        ctx.store.reader.set_state(paper_id, status, position, ctx.now_iso())
+        register(ctx, paper_id)
 
 
 def add_annotation(ctx: AppContext, item: NewAnnotation) -> Annotation:
     _paper(ctx, item.paper_id)
-    return ctx.store.reader.add_annotation(item, ctx.now_iso())
+    with ctx.store.atomic():
+        result = ctx.store.reader.add_annotation(item, ctx.now_iso())
+        register(ctx, item.paper_id)
+        return result
 
 
 def edit_annotation(ctx: AppContext, annotation_id: str, body: str | None) -> None:

@@ -41,6 +41,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 查看历史结果是否过期 | `stale` 零费用核对；`--format json` 输出全部历史及无法完整核验的原因，见 [docs/STALE.md](docs/STALE.md) |
 | 查询文库论文的事实关系 | 本地只读接口 `/api/papers/{id}/memory-facts`，见 [docs/PAPER-MEMORY.md](docs/PAPER-MEMORY.md) |
 | 计算本地论文向量 | `memory reembed` 预览，`memory reembed --execute` 显式重算，见 [docs/LOCAL-EMBEDDINGS.md](docs/LOCAL-EMBEDDINGS.md) |
+| 核实论文关系与历史回填 | 首次入库按需核实；`memory backfill` 预览、`--execute --plan-hash` 确认；双侧原文及反馈见 [docs/PAPER-RELATIONS.md](docs/PAPER-RELATIONS.md) |
 | 查看文库相关论文候选 | 只读 `/api/papers/{id}/memory-candidates`；权重和阈值在 `memory.yaml` 配置，见 [docs/MEMORY-CANDIDATES.md](docs/MEMORY-CANDIDATES.md) |
 | 增减推送渠道和时间 | 改 `config/channels.yaml` |
 | 限制模型花费 | `config/llm.yaml` 配全局及每任务每日限额；任务用完后推迟，见 [docs/MODEL-SETUP.md](docs/MODEL-SETUP.md) |
