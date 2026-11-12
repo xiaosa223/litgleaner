@@ -85,7 +85,7 @@ def note_excerpts(annotations: tuple[Annotation, ...]) -> dict[str, UserNoteExce
 
 
 def _citation_pairs(index: CitationIndex) -> dict[tuple[str, str], tuple[Citation, ...]]:
-    # 显式事实ID优先；direct内的动态别名命中尚未经过全局歧义剔除。
+    # 显式事实沿原ID保留；动态边与共同目标共用最终接受的分组。
     result = {
         pair: tuple(item for item in evidence if item.cited_paper_id is not None)
         for pair, evidence in index.direct.items()

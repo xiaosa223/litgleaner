@@ -166,8 +166,9 @@ def test_cross_entry_alias_ambiguity_never_becomes_a_dynamic_direct_link():
     index = citation_index(
         (dynamic, bridge, ambiguous, explicit), {"B": (local,), "outside": (outside,)}, {}
     )
-    # 全局目标已排除该链，但旧direct仍含动态命中；投影保留的只能是显式事实。
-    assert dynamic in index.direct["A", "B"] and not index.by_paper
+    # 所有投影共用最终身份；全局歧义链不影响独立的显式事实。
+    assert index.direct["A", "B"] == (explicit,)
+    assert tuple(index.by_paper["A"].values()) == ((explicit,),)
     (link,) = citation_links("A", _papers("A", "B"), index, {})
     assert link.cites == (explicit,) and link.cites[0] is explicit
 
@@ -177,7 +178,7 @@ def test_accepted_transitive_alias_resolution_keeps_original_evidence():
     unresolved = replace(_citation(), cited_paper_id=None, cited_aliases=(shared,))
     bridge = replace(_citation("C"), cited_paper_id=None, cited_aliases=(shared, known))
     index = citation_index((unresolved, bridge), {"B": (known,)}, {})
-    assert ("A", "B") not in index.direct
+    assert index.direct["A", "B"] == (unresolved,)
     (link,) = citation_links("A", _papers("A", "B", "C"), index, {})
     assert link.paper.paper_id == "B" and link.cites == (unresolved,)
     assert link.cites[0] is unresolved
