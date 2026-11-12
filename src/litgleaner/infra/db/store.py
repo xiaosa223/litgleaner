@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
+from litgleaner.infra.db.candidate_repo import SqlCandidateRepo
 from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
 from litgleaner.infra.db.citation_repo import SqlCitationRepo
 from litgleaner.infra.db.database import Database
@@ -49,6 +50,7 @@ from litgleaner.infra.db.translation_repo import SqlTranslationRepo
 if TYPE_CHECKING:
     from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
     from litgleaner.ports.memory import MemorySnapshot
+    from litgleaner.ports.memory_candidates import CandidateSnapshot
     from litgleaner.ports.stale import StaleSnapshot
 
 _COUNTED = (
@@ -178,6 +180,11 @@ class SqlStore:
 
     def memory_snapshot(self) -> "MemorySnapshot":
         return SqlMemoryRepo(self._db).snapshot()
+
+    def memory_candidates_snapshot(
+        self, paper_id: str, terms_limit: int = 32
+    ) -> "CandidateSnapshot":
+        return SqlCandidateRepo(self._db).snapshot(paper_id, terms_limit)
 
     @property
     def embeddings(self) -> SqlEmbeddingRepo:

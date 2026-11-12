@@ -14,6 +14,7 @@ from litgleaner.domain.reading import ReadingState
 from litgleaner.ports.embedding import EmbeddingRepo
 
 if TYPE_CHECKING:
+    from litgleaner.ports.memory_candidates import CandidateSnapshot
     from litgleaner.ports.store import Extraction, FullTextState
 
 
@@ -32,5 +33,8 @@ class MemorySnapshot:
 
 class MemoryStore(Protocol):
     def memory_snapshot(self) -> MemorySnapshot: ...
+    def memory_candidates_snapshot(
+        self, paper_id: str, terms_limit: int = 32
+    ) -> CandidateSnapshot: ...
     @property
     def embeddings(self) -> EmbeddingRepo: ...

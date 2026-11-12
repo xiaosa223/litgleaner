@@ -22,7 +22,17 @@ def add(harness, name, *, library=True):
     return paper_id
 
 
-def citation(harness, citing, *, target=None, aliases=(), source="parsed", position="ref:0"):
+def citation(
+    harness,
+    citing,
+    *,
+    target=None,
+    aliases=(),
+    source="parsed",
+    position="ref:0",
+    contexts=("We use the referenced method.",),
+    intents=("methodology",),
+):
     item = Citation(
         citing,
         position,
@@ -32,8 +42,8 @@ def citation(harness, citing, *, target=None, aliases=(), source="parsed", posit
         target,
         "Reference title",
         tuple(aliases),
-        ("We use the referenced method.",),
-        ("methodology",),
+        contexts,
+        intents,
         True,
         harness.ctx.now_iso(),
         3,

@@ -61,4 +61,4 @@ GET /api/papers/{paper_id}/memory-similar?limit=5
 
 `stale` 的 `embedding` 类型核验全部历史。模型文件缺失或可选依赖不可用时，对无法完整核验的生产者标 `unknown`；已知文本或配置失配仍为 `stale`。实际输入使用了生产者未完整核验的提取时，也会列出 `unchecked`。`selected` 表示当前候选查询实际是否选用，与完整核验状态分开。
 
-当前验收使用离线 SDK 替身、临时数据库和真实 CLI/API 入口；真实模型下载、推理效果及 Windows 真机待实测。首次进入文库的自动计算、候选加权、本地向量与 FTS 混合检索及 `relate` 接线仍按 ADR 后续分段完成。
+当前验收使用离线 SDK 替身、临时数据库和真实 CLI/API 入口；真实模型下载、推理效果及 Windows 真机待实测。事实、向量和已有 FTS 的只读候选加权见 [MEMORY-CANDIDATES.md](MEMORY-CANDIDATES.md)。首次进入文库的自动计算、全局检索及问答的混合召回和 `relate` 接线仍按 ADR 后续分段完成。

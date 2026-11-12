@@ -9,3 +9,18 @@ embedding:
   threads: 1
   batch_size: 16
   max_input_chars: 8000
+candidates:
+  max_pairs: 5
+  common_reference_min: 2
+  cosine_min: 0.5
+  minimum_score: 0.5
+  query_terms_limit: 32
+  weights:
+    direct_citation: 6
+    citation_intent: 5
+    common_references: 4
+    core_concepts: 4
+    methods: 4
+    cosine: 3
+    datasets: 2
+    text: 1

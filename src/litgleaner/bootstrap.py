@@ -357,6 +357,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
             embedding=EmbeddingSettings.model_validate(
                 config.memory.embedding.model_dump(include={"max_input_chars", "batch_size"})
             ),
+            memory_policy=config.memory.candidates,
         ),
         topics=config.topics,
         glossaries=config.glossaries,

@@ -66,7 +66,7 @@ def _fields(raw: list[Any], extraction: Extraction) -> tuple[FieldEvidence, ...]
 
 
 _DETAILS = {
-    "missing_extraction": "尚无提取，只参与引文关系查询",
+    "missing_extraction": "尚无提取，未使用其概念、数据集和方法",
     "missing_document": "提取缺少当前文档指针，未使用其概念、数据集和方法",
     "stale_input": "提取输入与当前文档、切分、语言或预算不符，未使用其事实",
     "stale_producer": "提取生产者与当前配置不符，未使用其事实",
@@ -76,7 +76,7 @@ _DETAILS = {
 }
 
 
-def _signals(
+def fact_signals(
     ctx: AppContext, data: MemorySnapshot
 ) -> tuple[dict[str, FactSignals], tuple[MemoryWarning, ...]]:
     producer = extraction_producer_version(ctx)
@@ -132,7 +132,7 @@ def _usable_signals(
     concept_names: Mapping[str, tuple[str, ...]],
     occurrences: list[ConceptOccurrence],
 ) -> tuple[FactSignals, list[str]]:
-    data = extraction.data
+    data = extraction.data if isinstance(extraction.data, Mapping) else {}
     datasets, method = data.get("datasets"), data.get("method")
     complete = (
         isinstance(data.get("key_concepts"), list)
@@ -165,11 +165,8 @@ def _usable_signals(
     ), codes
 
 
-def facts(ctx: AppContext, paper_id: str, *, limit: int = 50, offset: int = 0) -> MemoryFacts:
-    if not 1 <= limit <= 200 or offset < 0:
-        raise InvalidRequest("论文事实关系查询参数越界")
-    data = ctx.store.memory_snapshot()
-    papers = {
+def paper_views(data: MemorySnapshot) -> dict[str, MemoryPaper]:
+    return {
         paper.id: MemoryPaper(
             paper.id,
             paper.title,
@@ -177,10 +174,17 @@ def facts(ctx: AppContext, paper_id: str, *, limit: int = 50, offset: int = 0) -
         )
         for paper in data.papers
     }
+
+
+def facts(ctx: AppContext, paper_id: str, *, limit: int = 50, offset: int = 0) -> MemoryFacts:
+    if not 1 <= limit <= 200 or offset < 0:
+        raise InvalidRequest("论文事实关系查询参数越界")
+    data = ctx.store.memory_snapshot()
+    papers = paper_views(data)
     if paper_id not in papers:
         raise NotFound(f"论文尚未进入文库或不存在：{paper_id}")
     index = citation_index(data.citations, data.aliases, {p.id: p.title for p in data.papers})
-    signals, warnings = _signals(ctx, data)
+    signals, warnings = fact_signals(ctx, data)
     matches = project_facts(paper_id, papers, index, signals)
     return MemoryFacts(
         papers[paper_id], matches[offset : offset + limit], len(matches), limit, offset, warnings

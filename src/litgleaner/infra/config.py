@@ -16,6 +16,7 @@ from litgleaner.domain.embedding import EmbeddingSettings
 from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
+from litgleaner.domain.memory_policy import MemoryPolicy
 from litgleaner.domain.outline import TopicOutlineSettings
 from litgleaner.domain.routing import ALL_TOPICS, PUBLIC_TOPICS, Route
 from litgleaner.domain.rubric import Rubric
@@ -56,6 +57,7 @@ class EmbeddingConfig(EmbeddingSettings):
 
 class MemoryConfig(FrozenModel):
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    candidates: MemoryPolicy = Field(default_factory=MemoryPolicy)
 
 
 class ChannelConfig(AdapterConfig):

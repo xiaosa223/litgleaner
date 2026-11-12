@@ -32,6 +32,23 @@ class _Basis:
     model: EmbeddingModel | None
 
 
+@dataclass(frozen=True)
+class VectorProjection:
+    model: EmbeddingModel | None
+    inputs: Mapping[str, EmbeddingInput]
+    vectors: Mapping[str, tuple[float, ...]]
+    warnings: tuple[EmbeddingWarning, ...]
+
+
+def project_vectors(ctx: AppContext, data: EmbeddingSnapshot) -> VectorProjection:
+    """使用调用者的一致快照，不额外查询或计算向量。"""
+    source = inputs(ctx, data.papers, data.fulltexts, data.extractions)
+    model = ctx.embedder.describe() if ctx.embedder else None
+    vectors, corrupt = _vectors(_Basis(data, source, model))
+    warnings = tuple(w for item in source.values() for w in item.warnings)
+    return VectorProjection(model, source, vectors, (*warnings, *corrupt))
+
+
 def _basis(ctx: AppContext) -> _Basis:
     data = ctx.store.embeddings.snapshot()
     return _Basis(

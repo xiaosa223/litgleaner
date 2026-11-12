@@ -10,6 +10,7 @@ from litgleaner.domain.chunker import ChunkerConfig
 from litgleaner.domain.embedding import EmbeddingSettings
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
+from litgleaner.domain.memory_policy import MemoryPolicy
 from litgleaner.domain.outline import TopicOutlineSettings
 from litgleaner.domain.routing import Route
 from litgleaner.domain.rubric import Rubric
@@ -49,6 +50,7 @@ class RuntimeSettings:
     map: TopicMapSettings = field(default_factory=TopicMapSettings)
     outline: TopicOutlineSettings = field(default_factory=TopicOutlineSettings)
     embedding: EmbeddingSettings = field(default_factory=EmbeddingSettings)
+    memory_policy: MemoryPolicy = field(default_factory=MemoryPolicy)
 
 
 @dataclass(frozen=True)
