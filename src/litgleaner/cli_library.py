@@ -13,7 +13,7 @@ from typing import Annotated, cast, get_args
 import typer
 
 from litgleaner.adapters.feishu.listener import answerers_from
-from litgleaner.application import outline
+from litgleaner.application import embeddings, outline
 from litgleaner.application.context import AppContext
 from litgleaner.application.export import mine
 from litgleaner.application.inbound import apply_click
@@ -53,6 +53,23 @@ LOCK_RETRY_SECONDS = 10
 zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
 export_app = typer.Typer(help="导出课题对比表、引用、综述骨架与个人数据", no_args_is_help=True)
+memory_app = typer.Typer(help="论文间记忆与本地向量", no_args_is_help=True)
+
+
+@memory_app.command("reembed")
+@friendly
+def memory_reembed(
+    execute: Annotated[bool, typer.Option(help="显式计算本地向量，首次使用可能下载模型")] = False,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """默认预览完整文库的待算数量；加 --execute 才加载本地模型并写入。"""
+    ctx = context_or_exit(config)
+    if execute:
+        with run_lock(load_or_exit(config)):
+            result = asdict(embeddings.reembed(ctx))
+    else:
+        result = asdict(embeddings.preview(ctx))
+    echo(json.dumps(result, ensure_ascii=False))
 
 
 @friendly

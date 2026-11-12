@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from litgleaner.domain.embedding import PaperEmbedding
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.outline import TopicOutline
 from litgleaner.domain.paper import Paper
@@ -56,3 +57,5 @@ class StaleSnapshot:
     triages: tuple[TriageResult, ...]
     maps: tuple[TopicMap, ...]
     outlines: tuple[TopicOutline, ...]
+    embeddings: tuple[PaperEmbedding, ...] = ()
+    embedding_library_ids: frozenset[str] = frozenset()

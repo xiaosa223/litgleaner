@@ -1,0 +1,11 @@
+# 启动、查询和默认预览均不加载或下载模型；memory reembed --execute 才准备资产。
+embedding:
+  enabled: true
+  adapter: fastembed
+  model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+  dimensions: 384
+  # 缺省时放在数据库所在目录的 models/embeddings 下；相对路径以项目根目录为准。
+  # cache_dir: data/models/embeddings
+  threads: 1
+  batch_size: 16
+  max_input_chars: 8000

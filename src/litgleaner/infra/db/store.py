@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
 from litgleaner.infra.db.citation_repo import SqlCitationRepo
 from litgleaner.infra.db.database import Database
+from litgleaner.infra.db.embedding_repo import SqlEmbeddingRepo
 from litgleaner.infra.db.export_repo import SqlExportRepo
 from litgleaner.infra.db.feedback_repo import SqlFeedbackRepo
 from litgleaner.infra.db.inbox_repo import SqlInboxRepo
@@ -71,6 +72,7 @@ _COUNTED = (
 class SqlStore:
     def __init__(self, url: str) -> None:
         self._db = Database(url)
+        self._embeddings = SqlEmbeddingRepo(self._db)
         self._papers = SqlPaperRepo(self._db)
         self._judgments = SqlJudgmentRepo(self._db)
         self._outputs = SqlOutputRepo(self._db)
@@ -176,6 +178,10 @@ class SqlStore:
 
     def memory_snapshot(self) -> "MemorySnapshot":
         return SqlMemoryRepo(self._db).snapshot()
+
+    @property
+    def embeddings(self) -> SqlEmbeddingRepo:
+        return self._embeddings
 
     def stats(self) -> dict[str, int]:
         counts = {

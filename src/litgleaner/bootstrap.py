@@ -2,12 +2,12 @@
 
 import os
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
+from litgleaner import bootstrap_args
 from litgleaner.adapters.blobstore.local import LocalBlobStore
+from litgleaner.adapters.embeddings.fastembed import LocalEmbedder
 from litgleaner.adapters.fakes.fulltext import FakeFullText
 from litgleaner.adapters.fakes.library import FakeLibrary
 from litgleaner.adapters.fakes.llm import FakeLLM
@@ -47,11 +47,14 @@ from litgleaner.adapters.zotero.source import ZoteroSource
 from litgleaner.adapters.zotero.writer_local import ZoteroLocalLibrary
 from litgleaner.application.context import AppContext, ChannelBinding, RuntimeSettings
 from litgleaner.application.llm_gateway import LLMGateway, Prompt, TaskRoute
+from litgleaner.bootstrap_args import BuildArgs, _llm_key
 from litgleaner.domain.chunker import ChunkerConfig
+from litgleaner.domain.embedding import EmbeddingSettings
 from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.hashing import stable_hash
-from litgleaner.infra.config import AdapterConfig, LoadedConfig
+from litgleaner.infra.config import AdapterConfig, EmbeddingConfig, LoadedConfig
 from litgleaner.infra.db.store import SqlStore
+from litgleaner.ports.embedder import Embedder
 from litgleaner.ports.fulltext import FullTextProvider
 from litgleaner.ports.inbound import CardClick
 from litgleaner.ports.library import ReferenceLibrary
@@ -62,54 +65,12 @@ from litgleaner.ports.secrets import SecretStore
 from litgleaner.ports.source import Source
 from litgleaner.ports.store import Store
 
-CONTACT_EMAIL = "LITGLEANER_CONTACT_EMAIL"
+CONTACT_EMAIL = bootstrap_args.CONTACT_EMAIL
 S2_KEY = "SEMANTIC_SCHOLAR_API_KEY"
 CORE_KEY = "CORE_API_KEY"
 ZOTERO_KEY = "ZOTERO_API_KEY"
 OPENALEX_KEY = "OPENALEX_API_KEY"
 NCBI_KEY = "NCBI_API_KEY"
-
-
-@dataclass(frozen=True)
-class BuildArgs:
-    name: str
-    options: Mapping[str, Any]
-    root: Path
-    credentials: Mapping[str, str]
-
-    optional: frozenset[str] = frozenset()
-    secrets: SecretStore | None = None
-
-    def secret(self, env_name: str) -> str:
-        """先读环境变量，再读系统钥匙串；配置文件里只写密钥名。"""
-        if env_name not in self.credentials:
-            raise ConfigError(f"{self.name} 需要在 credentials_env 中声明 {env_name}")
-        return (self.secrets or SystemSecretStore()).get(env_name) or ""
-
-    def optional_secret(self, env_name: str) -> str | None:
-        """可选的 key 或联系邮箱：没有也能运行，只是额度更低。必须先在配置里声明。"""
-        if env_name not in self.credentials and env_name not in self.optional:
-            raise ConfigError(f"{self.name} 需要在 optional_env 中声明 {env_name}")
-        return (self.secrets or SystemSecretStore()).get(env_name) or None
-
-    def options_with_paths(self, *keys: str) -> dict[str, Any]:
-        """把配置里的相对路径换成项目根目录下的绝对路径。"""
-        resolved = dict(self.options)
-        for key in keys:
-            if key in resolved:
-                resolved[key] = str(self.root / str(resolved[key]))
-        return resolved
-
-    @property
-    def contact(self) -> str | None:
-        """礼貌通道用的联系邮箱，所有来源共用，不是密钥，不需要逐个声明。"""
-        return os.environ.get(CONTACT_EMAIL) or None
-
-    def path(self, option: str) -> Path:
-        return self.root / str(self.options[option])
-
-    def optional_path(self, option: str) -> Path | None:
-        return self.path(option) if option in self.options else None
 
 
 SOURCES: Mapping[str, Callable[[BuildArgs], Source]] = {
@@ -160,19 +121,6 @@ PARSERS: Mapping[str, Callable[[BuildArgs], Parser]] = {
 }
 
 
-def _llm_key(args: BuildArgs) -> str | None:
-    """credentials_env 写 0 个（本地服务）或 1 个变量名。声明了就必须有值，启动时报错。"""
-    if len(args.credentials) > 1:
-        raise ConfigError(f"大模型提供方 {args.name} 的 credentials_env 只能写一个变量")
-    env = next(iter(args.credentials), None)
-    if env is None:
-        return None
-    key = args.secret(env)
-    if not key:
-        raise ConfigError(f"大模型提供方 {args.name} 需要环境变量 {env}")
-    return key
-
-
 LLMS: Mapping[str, Callable[[BuildArgs], LLM]] = {
     "fake_llm": lambda _: FakeLLM(),
     "anthropic_messages": lambda a: AnthropicMessagesLLM(a.name, a.options, _llm_key(a)),
@@ -196,6 +144,11 @@ LIBRARIES: Mapping[str, Callable[[BuildArgs], ReferenceLibrary]] = {
 RENDERERS: Mapping[str, Callable[[], Renderer]] = {
     "plain_text": PlainTextRenderer,
     "feishu_card": FeishuCardRenderer,
+}
+EMBEDDERS: Mapping[str, Callable[[EmbeddingConfig, Path], Embedder]] = {
+    "fastembed": lambda item, path: LocalEmbedder(
+        item.model, item.dimensions, path, threads=item.threads, batch_size=item.batch_size
+    ),
 }
 
 
@@ -290,6 +243,13 @@ def build_library(config: LoadedConfig) -> ReferenceLibrary | None:
     return _build(LIBRARIES, "文献库", library.adapter, library, config.root)
 
 
+def build_embedder(config: LoadedConfig) -> Embedder | None:
+    item = config.memory.embedding
+    if not item.enabled:
+        return None
+    return _pick(EMBEDDERS, "本地嵌入", item.adapter)(item, config.embedding_cache_dir)
+
+
 def _zotero_local(config: LoadedConfig) -> ZoteroLocalLibrary:
     library = config.app.library
     if library is None or library.adapter != "zotero_local":
@@ -338,7 +298,9 @@ def build_feishu_listener(
         raise ConfigError("inbound_disabled")
     name, settings = next(iter(channels.items()))
     envs = set.intersection(*(set(item.credentials_env) for item in channels.values()))
-    args = BuildArgs(name, settings.options, config.root, {env: env for env in envs})
+    args = BuildArgs(
+        name, settings.options, config.root, {env: env for env in envs}, secrets=SystemSecretStore()
+    )
     app_id, app_secret = args.secret(APP_ID_ENV), args.secret(APP_SECRET_ENV)
     allowed = {name: answerers_from(item.options) for name, item in channels.items()}
     listener = FeishuListener(
@@ -373,6 +335,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         llm=build_llm(config, store, now),
         channels=_build_channels(config),
         library=build_library(config),
+        embedder=build_embedder(config),
         blobs=LocalBlobStore(config.path(config.app.blob_root)),
         archive=LocalBlobStore(config.path(config.app.archive_dir)),
         clock=now,
@@ -391,6 +354,9 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
             survey_sources_version=_survey_sources_version(config),
             map=config.app.map,
             outline=config.app.outline,
+            embedding=EmbeddingSettings.model_validate(
+                config.memory.embedding.model_dump(include={"max_input_chars", "batch_size"})
+            ),
         ),
         topics=config.topics,
         glossaries=config.glossaries,

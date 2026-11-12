@@ -59,7 +59,7 @@ def _snapshot(path):
             if row[0] not in FTS_TABLES - {"memory_fts"}
             and row[0] != "alembic_version"
             and not row[0].startswith("survey_")
-            and row[0] not in {"topic_map", "topic_outline"}
+            and row[0] not in {"topic_map", "topic_outline", "paper_embedding"}
         ]
         rows = {}
         for name in tables:

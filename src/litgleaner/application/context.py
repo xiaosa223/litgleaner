@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from litgleaner.application.llm_gateway import LLMGateway
 from litgleaner.domain.chunker import ChunkerConfig
+from litgleaner.domain.embedding import EmbeddingSettings
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
 from litgleaner.domain.outline import TopicOutlineSettings
@@ -16,6 +17,7 @@ from litgleaner.domain.survey import SurveySettings
 from litgleaner.domain.topic import Topic
 from litgleaner.domain.topic_map import TopicMapSettings
 from litgleaner.ports.blobstore import BlobStore
+from litgleaner.ports.embedder import Embedder
 from litgleaner.ports.fulltext import FullTextProvider
 from litgleaner.ports.library import ReferenceLibrary
 from litgleaner.ports.parser import Parser
@@ -46,6 +48,7 @@ class RuntimeSettings:
     survey_sources_version: str = ""
     map: TopicMapSettings = field(default_factory=TopicMapSettings)
     outline: TopicOutlineSettings = field(default_factory=TopicOutlineSettings)
+    embedding: EmbeddingSettings = field(default_factory=EmbeddingSettings)
 
 
 @dataclass(frozen=True)
@@ -66,6 +69,7 @@ class AppContext:
     rubrics: Mapping[str, Rubric]
     routes: tuple[Route, ...]
     library: ReferenceLibrary | None = None
+    embedder: Embedder | None = None
 
     def now_iso(self) -> str:
         return self.clock().isoformat()

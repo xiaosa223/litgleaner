@@ -9,9 +9,10 @@ from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
-from pydantic import Field, ValidationError, model_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 
 from litgleaner.domain.base import FrozenModel
+from litgleaner.domain.embedding import EmbeddingSettings
 from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.glossary import Glossary
 from litgleaner.domain.language import LanguageCode
@@ -29,6 +30,32 @@ class AdapterConfig(FrozenModel):
     credentials_env: tuple[str, ...] = ()
     optional_env: tuple[str, ...] = ()
     options: Mapping[str, Any] = Field(default_factory=dict)
+
+
+class EmbeddingConfig(EmbeddingSettings):
+    max_input_chars: int = Field(default=8000, ge=100, le=100000, strict=True)
+    batch_size: int = Field(default=16, ge=1, le=256, strict=True)
+    adapter: str = Field(default="fastembed", min_length=1, max_length=100)
+    enabled: bool = Field(default=True, strict=True)
+    model: str = Field(
+        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        min_length=1,
+        max_length=300,
+    )
+    dimensions: int = Field(default=384, ge=1, le=65536, strict=True)
+    cache_dir: str | None = Field(default=None, min_length=1)
+    threads: int = Field(default=1, ge=1, le=64, strict=True)
+
+    @field_validator("adapter", "model", "cache_dir")
+    @classmethod
+    def _nonblank(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("不能只包含空白")
+        return value.strip() if value is not None else value
+
+
+class MemoryConfig(FrozenModel):
+    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
 
 
 class ChannelConfig(AdapterConfig):
@@ -146,6 +173,7 @@ class LoadedConfig:
     timezone: ZoneInfo
     glossaries: Mapping[str, Glossary] = field(default_factory=dict)
     config_dir: Path | None = None
+    memory: MemoryConfig = field(default_factory=MemoryConfig)
 
     @property
     def settings_dir(self) -> Path:
@@ -167,6 +195,13 @@ class LoadedConfig:
         if self.app.backup.dir:
             return self.path(self.app.backup.dir)
         return self.database_path.parent / "backups"
+
+    @property
+    def embedding_cache_dir(self) -> Path:
+        configured = self.memory.embedding.cache_dir
+        return (
+            self.path(configured) if configured else self.database_path.parent / "models/embeddings"
+        )
 
 
 def _read(path: Path) -> Any:
@@ -288,4 +323,7 @@ def load_config(config_dir: Path) -> LoadedConfig:
         timezone=_zone(app.timezone),
         glossaries=_load_glossaries(directory / "topics", topics),
         config_dir=directory,
+        memory=_load(directory / "memory.yaml", MemoryConfig)
+        if (directory / "memory.yaml").exists()
+        else MemoryConfig(),
     )

@@ -60,7 +60,7 @@ uv run pytest tests/architecture
 
 ```text
 入口：cli → cli_library → service（组合 server、调度、可选渠道监听）→ server → cli_shared；mcp_server（待实现）
-  → bootstrap → adapters | infra → application → ports → domain
+  → bootstrap : bootstrap_args → adapters | infra → application → ports → domain
 ```
 
 依赖只能向内，由 `pyproject.toml` 中的 import-linter 契约强制：适配器之间互相独立，适配器不能导入 `application` 和 `infra`（共享代码放 `adapters/common/`）。`tests/architecture/test_rules.py` 另外强制：

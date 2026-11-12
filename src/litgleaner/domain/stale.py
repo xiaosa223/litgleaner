@@ -3,7 +3,9 @@
 from dataclasses import dataclass
 from typing import Literal
 
-StaleKind = Literal["extraction", "assessment", "score", "translation", "answer", "map", "outline"]
+StaleKind = Literal[
+    "extraction", "assessment", "score", "translation", "answer", "map", "outline", "embedding"
+]
 StaleStatus = Literal["current", "stale", "unknown"]
 
 

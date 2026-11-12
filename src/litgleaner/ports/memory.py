@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from litgleaner.domain.citation import Citation
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.knowledge import Concept, ConceptOccurrence
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import ReadingState
+from litgleaner.ports.embedding import EmbeddingRepo
 
 if TYPE_CHECKING:
     from litgleaner.ports.store import Extraction, FullTextState
@@ -27,3 +28,9 @@ class MemorySnapshot:
     occurrences: tuple[ConceptOccurrence, ...]
     reading: Mapping[str, ReadingState]
     concept_names: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+
+
+class MemoryStore(Protocol):
+    def memory_snapshot(self) -> MemorySnapshot: ...
+    @property
+    def embeddings(self) -> EmbeddingRepo: ...

@@ -83,6 +83,11 @@ def test_0016_preserves_existing_tables_facts_keys_triggers_and_matches_metadata
         "topic_outline_no_replace",
         "topic_outline_no_update",
         "topic_outline_no_delete",
+        "paper_embedding_no_replace",
+        "paper_embedding_no_update",
+        "paper_embedding_no_delete",
+        "paper_embedding_source",
+        "paper_embedding_rowid",
     }
     engine = create_engine(url)
     try:

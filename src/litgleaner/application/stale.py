@@ -1,6 +1,7 @@
 """统一只读报告，不同步课题、不重建归档、不排队任何模型工作。"""
 
 from litgleaner.application.context import AppContext
+from litgleaner.application.stale_embeddings import check_embeddings
 from litgleaner.application.stale_facts import (
     check_assessments,
     check_extractions,
@@ -24,6 +25,7 @@ def report(ctx: AppContext) -> StaleReport:
                 *check_answers(basis),
                 *check_maps(basis),
                 *check_outlines(basis),
+                *check_embeddings(basis),
             ),
             key=lambda entry: (entry.kind, entry.topic_id or "", entry.paper_id or "", entry.id),
         )

@@ -10,7 +10,9 @@ from sqlalchemy import Row, select
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.outline import TopicOutline
 from litgleaner.domain.topic_map import TopicMap
+from litgleaner.infra.db.catalog_repo import library_scope
 from litgleaner.infra.db.database import Database
+from litgleaner.infra.db.embedding_repo import _embedding
 from litgleaner.infra.db.export_repo import _group, _reading
 from litgleaner.infra.db.judgments_repo import _to_assessment
 from litgleaner.infra.db.papers_repo import _to_paper
@@ -22,6 +24,7 @@ from litgleaner.infra.db.schema import (
     job,
     paper,
     paper_alias,
+    paper_embedding,
     qa_message,
     reading_state,
     score,
@@ -58,6 +61,7 @@ class _Rows:
     triages: Sequence[Row[Any]]
     maps: Sequence[Row[Any]]
     outlines: Sequence[Row[Any]]
+    embeddings: Sequence[Row[Any]]
 
 
 def _scores(
@@ -152,6 +156,21 @@ def _snapshot(rows: _Rows) -> StaleSnapshot:
         ),
         maps=tuple(TopicMap.model_validate_json(row.data) for row in rows.maps),
         outlines=tuple(TopicOutline.model_validate_json(row.data) for row in rows.outlines),
+        embeddings=tuple(_embedding(row) for row in rows.embeddings),
+        embedding_library_ids=frozenset(row.paper_id for row in rows.embeddings if row.in_library),
+    )
+
+
+def _embedding_rows(db: Database) -> Sequence[Row[Any]]:
+    return db.fetch(
+        select(paper_embedding, library_scope().label("in_library"))
+        .join(paper, paper.c.id == paper_embedding.c.paper_id)
+        .order_by(
+            paper_embedding.c.paper_id,
+            paper_embedding.c.created_at,
+            paper_embedding.c.input_hash,
+            paper_embedding.c.embedder_version,
+        )
     )
 
 
@@ -198,5 +217,6 @@ class SqlStaleRepo:
                         topic_outline.c.created_at, topic_outline.c.id
                     )
                 ),
+                embeddings=_embedding_rows(self._db),
             )
         return _snapshot(rows)
