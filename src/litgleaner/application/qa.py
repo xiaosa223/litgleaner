@@ -11,9 +11,11 @@ from litgleaner.application.qa_context import (
     QAContext,
     build_inputs,
     qa_token_count,
-    validate_selection,
     verified_statements,
 )
+from litgleaner.application.qa_memory_input import prepare
+from litgleaner.application.qa_memory_run import process as process_memory
+from litgleaner.application.qa_schema import ANSWER_SCHEMA
 from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics
 from litgleaner.domain.document import NormalizedDocument
@@ -24,40 +26,6 @@ from litgleaner.domain.qa import Answer, Question
 from litgleaner.ports.store import JobSpec
 
 TASK = "ask"
-ANSWER_SCHEMA: Mapping[str, Any] = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["statements"],
-    "properties": {
-        "statements": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 12,
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["text", "citations"],
-                "properties": {
-                    "text": {"type": "string", "minLength": 1, "maxLength": 2000},
-                    "citations": {
-                        "type": "array",
-                        "maxItems": 8,
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "required": ["paper_id", "page", "quote"],
-                            "properties": {
-                                "paper_id": {"type": "string"},
-                                "page": {"type": "integer", "minimum": 0},
-                                "quote": {"type": "string", "maxLength": 2000},
-                            },
-                        },
-                    },
-                },
-            },
-        }
-    },
-}
 
 
 def question_job_key(question_id: str) -> str:
@@ -98,9 +66,6 @@ def queue(
         raise InvalidRequest("选区过长，请缩小到需要解释的段落")
     if qa_token_count(text + " " + (selection or "")) > 1600:
         raise InvalidRequest("问题和选区过长，请缩小范围后提问")
-    doc_key, document = _document(ctx, paper_id)
-    validate_selection(document, selection, page)
-    ctx.llm.require_route(TASK)
     question = Question(
         str(ULID()),
         paper_id,
@@ -111,14 +76,16 @@ def queue(
         ctx.settings.reading_language,
         ctx.now_iso(),
     )
+    context = prepare(ctx, question)
     spec = JobSpec(
         question_job_key(question.id),
         TASK,
         {
             "question_id": question.id,
-            "doc_key": doc_key,
-            "document_hash": stable_hash(document.to_dict()),
+            "doc_key": context["doc_key"],
+            "document_hash": context["document_hash"],
             "chunker": ctx.settings.chunker.version,
+            "context": context,
         },
     )
     with ctx.store.atomic():
@@ -168,6 +135,12 @@ class AskStage(Stage):
         question = ctx.store.qa.question(question_id)
         if question is None:
             raise PermanentError("问答任务的问题不存在")
+        if "context" in payload:
+            context_data = payload["context"]
+            if not isinstance(context_data, Mapping):
+                raise PermanentError("问答冻结来源缺失，请重新提问")
+            process_memory(ctx, question, context_data)
+            return
         doc_key, document = _document(ctx, question.paper_id)
         expected = (doc_key, stable_hash(document.to_dict()), ctx.settings.chunker.version)
         planned = (payload.get("doc_key"), payload.get("document_hash"), payload.get("chunker"))

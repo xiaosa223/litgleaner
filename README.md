@@ -44,6 +44,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 计算本地论文向量 | `memory reembed` 预览，`memory reembed --execute` 显式重算，见 [docs/LOCAL-EMBEDDINGS.md](docs/LOCAL-EMBEDDINGS.md) |
 | 核实论文关系与历史回填 | 首次入库按需核实；`memory backfill` 预览、`--execute --plan-hash` 确认；双侧原文及反馈见 [docs/PAPER-RELATIONS.md](docs/PAPER-RELATIONS.md) |
 | 查看文库相关论文候选 | 只读 `/api/papers/{id}/memory-candidates`；权重和阈值在 `memory.yaml` 配置，见 [docs/MEMORY-CANDIDATES.md](docs/MEMORY-CANDIDATES.md) |
+| 结合论文与个人记忆提问 | 问答 API 冻结原文、已核实关系和用户笔记，按 FTS 与就绪本地向量召回，逐条核对跨论文出处，见 [docs/QA.md](docs/QA.md) |
 | 增减推送渠道和时间 | 改 `config/channels.yaml` |
 | 限制模型花费 | `config/llm.yaml` 配全局及每任务每日限额；任务用完后推迟，见 [docs/MODEL-SETUP.md](docs/MODEL-SETUP.md) |
 | 飞书卡片推送、点按钮加入 Zotero | 配置渠道及 `zotero authorize` 后，`serve` 自动监听按钮，见 [docs/CHANNELS.md](docs/CHANNELS.md) |

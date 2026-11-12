@@ -21,6 +21,18 @@ class SearchHit:
 
 
 @dataclass(frozen=True)
+class QASearchHit:
+    kind: SearchKind
+    id: str
+    paper_id: str
+    text: str
+    page: int | None
+    authorship: Authorship
+    source_version: str
+    rank: float
+
+
+@dataclass(frozen=True)
 class SearchDocument:
     paper_id: str
     doc_key: str
@@ -28,5 +40,8 @@ class SearchDocument:
 
 class SearchRepo(Protocol):
     def find(self, query: str, limit: int) -> tuple[SearchHit, ...]: ...
+    def qa_hits(
+        self, query: str, paper_ids: tuple[str, ...], limit: int = 64
+    ) -> tuple[QASearchHit, ...]: ...
     def pending_documents(self) -> tuple[SearchDocument, ...]: ...
     def replace_document(self, paper_id: str, doc_key: str, blocks: tuple[Block, ...]) -> None: ...

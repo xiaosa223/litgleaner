@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 
 from litgleaner.application.qa_context import build_inputs
 from litgleaner.application.stale_inputs import StaleInputs
+from litgleaner.application.stale_qa_memory import answer_item as memory_answer_item
 from litgleaner.application.translation import UNIT, choose_cached, translatable_indices
 from litgleaner.application.translation import translator_version as current_translator
 from litgleaner.domain.document import Block
@@ -200,6 +201,8 @@ def check_answers(basis: StaleInputs) -> tuple[StaleItem, ...]:
     questions = {question.id: question for question in basis.snapshot.questions}
     profile = "\n\n".join(topic.profile_text() for topic in basis.active_topics().values())[:500]
     return tuple(
-        _answer_item(basis, answer, questions.get(answer.question_id), profile)
+        memory_answer_item(basis, answer, questions.get(answer.question_id))
+        if answer.context
+        else _answer_item(basis, answer, questions.get(answer.question_id), profile)
         for answer in basis.snapshot.answers
     )

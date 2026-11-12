@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import Row, select
 from sqlalchemy.dialects.sqlite import insert
 
-from litgleaner.domain.qa import Answer, Citation, Question, Statement
+from litgleaner.domain.qa import Answer, Citation, NoteCitation, Question, Statement
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import qa_message
 
@@ -33,6 +33,8 @@ def _answer(row: Row[Any]) -> Answer:
             item["text"],
             tuple(Citation(**citation) for citation in item["citations"]),
             item["inference"],
+            tuple(NoteCitation(**citation) for citation in item.get("note_citations", ())),
+            tuple(item.get("mentioned_paper_ids", ())),
         )
         for item in data["statements"]
     )
@@ -45,6 +47,8 @@ def _answer(row: Row[Any]) -> Answer:
         data["producer_version"],
         data["input_hash"],
         row.created_at,
+        data.get("context", {}),
+        data.get("request_producer_version"),
     )
 
 
@@ -116,14 +120,23 @@ class SqlQARepo:
         return _answer(rows[0]) if rows else None
 
     def add_answer(self, answer: Answer) -> bool:
-        data = {
+        data: dict[str, Any] = {
             "statements": [asdict(statement) for statement in answer.statements],
             "model": answer.model,
             "producer_version": answer.producer_version,
             "input_hash": answer.input_hash,
         }
+        if answer.context:
+            data["context"] = dict(answer.context)
+        if answer.request_producer_version is not None:
+            data["request_producer_version"] = answer.request_producer_version
         page = next(
-            (citation.page for statement in answer.statements for citation in statement.citations),
+            (
+                citation.page
+                for statement in answer.statements
+                for citation in statement.citations
+                if citation.paper_id == answer.paper_id
+            ),
             None,
         )
         return bool(

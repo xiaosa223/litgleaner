@@ -17,6 +17,7 @@ from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.paper import SourceRecord
 from litgleaner.ports.store import FullTextState
 from tests.e2e.conftest import Harness
+from tests.e2e.stale_language_helpers import legacy_question
 
 
 def _paper(harness: Harness, title: str = "Alpha evidence") -> str:
@@ -63,7 +64,7 @@ def saved(harness: Harness):
     paper_id = _paper(harness)
     key = _cache(harness, paper_id)
     harness.llm.overrides["ask"] = {"statements": [{"text": "An inference.", "citations": []}]}
-    question = qa.queue(harness.ctx, paper_id, "Explain alpha evidence", request_id="first")
+    question = legacy_question(harness, paper_id)
     assert run_on_demand(harness.ctx).ok
     return paper_id, key, question
 

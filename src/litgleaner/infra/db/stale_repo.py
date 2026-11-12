@@ -18,8 +18,10 @@ from litgleaner.infra.db.export_repo import _group, _reading
 from litgleaner.infra.db.judgments_repo import _to_assessment
 from litgleaner.infra.db.papers_repo import _to_paper
 from litgleaner.infra.db.qa_repo import _answer, _question
+from litgleaner.infra.db.reader_repo import _to_annotation
 from litgleaner.infra.db.relation_repo import _relation
 from litgleaner.infra.db.schema import (
+    annotation,
     assessment,
     extraction,
     feedback,
@@ -69,6 +71,7 @@ class _Rows:
     embeddings: Sequence[Row[Any]]
     relations: Sequence[Row[Any]]
     relate_batches: Sequence[Row[Any]]
+    annotations: Sequence[Row[Any]]
 
 
 def _scores(
@@ -188,6 +191,7 @@ def _snapshot(rows: _Rows) -> StaleSnapshot:
             for row in rows.relations
             if row.user_status_decided and row.status != "superseded"
         ),
+        annotations=tuple(_to_annotation(row) for row in rows.annotations),
     )
 
 
@@ -256,6 +260,11 @@ def _frozen_rows(db: Database) -> dict[str, Sequence[Row[Any]]]:
         "relations": _relation_rows(db),
         "relate_batches": db.fetch(
             select(relate_batch.c.data).order_by(relate_batch.c.created_at, relate_batch.c.id)
+        ),
+        "annotations": db.fetch(
+            select(annotation)
+            .where(annotation.c.deleted_at.is_(None))
+            .order_by(annotation.c.paper_id, annotation.c.id)
         ),
     }
 

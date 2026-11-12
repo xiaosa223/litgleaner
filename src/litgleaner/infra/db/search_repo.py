@@ -7,7 +7,8 @@ from sqlalchemy import text
 
 from litgleaner.domain.document import Block
 from litgleaner.infra.db.database import Database
-from litgleaner.ports.search import Authorship, SearchDocument, SearchHit, SearchKind
+from litgleaner.infra.db.qa_search_repo import qa_hits
+from litgleaner.ports.search import Authorship, QASearchHit, SearchDocument, SearchHit, SearchKind
 
 _WORDS = re.compile(r"\w+", re.UNICODE)
 _KINDS = "('paper', 'fulltext', 'note', 'highlight', 'extraction', 'qa', 'concept')"
@@ -39,6 +40,11 @@ def _conditions(terms: list[str]) -> tuple[str, dict[str, str], bool]:
 class SqlSearchRepo:
     def __init__(self, db: Database) -> None:
         self._db = db
+
+    def qa_hits(
+        self, query: str, paper_ids: tuple[str, ...], limit: int = 64
+    ) -> tuple[QASearchHit, ...]:
+        return qa_hits(self._db, query, paper_ids, limit)
 
     def find(self, query: str, limit: int) -> tuple[SearchHit, ...]:
         terms = list(dict.fromkeys(_WORDS.findall(query.lower())))[:64]

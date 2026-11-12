@@ -304,7 +304,7 @@ def test_stale_snapshot_includes_all_batches_and_status_history_outside_transact
         snapshot = store.stale_snapshot()
     finally:
         event.remove(store._db._engine, "after_cursor_execute", capture)
-    assert len([sql for sql in statements if sql.startswith("SELECT")]) == 17
+    assert len([sql for sql in statements if sql.startswith("SELECT")]) == 18
     assert snapshot.relations == tuple(reversed(store.relations.for_paper("A")))
     assert snapshot.relate_batches == tuple(reversed(store.relations.batches_for_paper("A")))
     assert snapshot.library_paper_ids == frozenset({"A", "B", "C"})
@@ -327,7 +327,7 @@ def test_stale_snapshot_tracks_confirmed_model_pairs_without_embeddings_or_extra
         snapshot = store.stale_snapshot()
     finally:
         event.remove(store._db._engine, "after_cursor_execute", capture)
-    assert len([sql for sql in statements if sql.startswith("SELECT")]) == 17
+    assert len([sql for sql in statements if sql.startswith("SELECT")]) == 18
     assert snapshot.user_decided_pairs == frozenset({("A", "B")})
     assert snapshot.user_decided_relation_ids == frozenset({relation.id})
     assert snapshot.library_paper_ids == frozenset({"A", "B", "C"})

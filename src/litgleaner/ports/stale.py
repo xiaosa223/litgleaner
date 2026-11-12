@@ -12,7 +12,7 @@ from litgleaner.domain.outline import TopicOutline
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.paper_relation import PaperRelation, RelateBatch
 from litgleaner.domain.qa import Answer, Question
-from litgleaner.domain.reading import ReadingState
+from litgleaner.domain.reading import Annotation, ReadingState
 from litgleaner.domain.topic_map import TopicMap
 from litgleaner.ports.translations import CachedTranslation
 
@@ -65,3 +65,4 @@ class StaleSnapshot:
     library_paper_ids: frozenset[str] = frozenset()
     user_decided_pairs: frozenset[tuple[str, str]] = frozenset()
     user_decided_relation_ids: frozenset[str] = frozenset()
+    annotations: tuple[Annotation, ...] = ()

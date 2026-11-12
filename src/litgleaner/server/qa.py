@@ -87,7 +87,10 @@ def install_qa_routes(app: FastAPI) -> None:
         if answer is None:
             raise InvalidRequest("请等待回答完成后再保存为批注")
         citations = [
-            citation for statement in answer.statements for citation in statement.citations
+            citation
+            for statement in answer.statements
+            for citation in statement.citations
+            if citation.paper_id == paper_id
         ]
         page = citations[0].page if citations else question.page
         quote = citations[0].quote if citations else None

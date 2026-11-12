@@ -186,7 +186,7 @@ def test_topic_hash_triage_and_result_histories_are_not_scoped_or_truncated(stor
 
 
 @pytest.mark.parametrize("count", [0, 1000])
-def test_seventeen_selects_on_one_transaction_are_parameter_bounded_and_never_write(
+def test_eighteen_selects_on_one_transaction_are_parameter_bounded_and_never_write(
     store, count, monkeypatch
 ):
     with store.atomic():
@@ -221,7 +221,7 @@ def test_seventeen_selects_on_one_transaction_are_parameter_bounded_and_never_wr
     finally:
         event.remove(store._db._engine, "before_cursor_execute", capture)
     selects = [(sql, params) for sql, params in statements if sql.startswith("SELECT")]
-    assert len(selects) == 17 and len(connections) == 1
+    assert len(selects) == 18 and len(connections) == 1
     assert all(len(params) <= 1 and "LIMIT" not in sql for sql, params in selects)
     assert all(sql.startswith(("SELECT", "BEGIN")) for sql, _params in statements)
     assert tuple(item.id for item in loaded.papers) == tuple(f"P{n:04}" for n in range(count))

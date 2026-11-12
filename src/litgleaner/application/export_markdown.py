@@ -4,6 +4,7 @@ from dataclasses import asdict
 
 from litgleaner.application.export_format import label, literal, page_label, stored_quotes
 from litgleaner.domain.export import export_name
+from litgleaner.domain.qa import Statement
 from litgleaner.ports.export import ExportConcept, ExportPaper
 
 
@@ -37,6 +38,31 @@ def _generated(item: ExportPaper) -> list[str]:
     return sections
 
 
+def _paper_link(paper_id: str) -> str:
+    target = "../" + export_name("papers", paper_id)
+    return f"[{label(paper_id)}]({target})"
+
+
+def _statement(statement: Statement) -> list[str]:
+    kind = "模型推断" if statement.inference else "模型回答"
+    sections = [kind, literal(statement.text)]
+    if statement.mentioned_paper_ids:
+        links = "、".join(_paper_link(id_) for id_ in statement.mentioned_paper_ids)
+        sections += [f"陈述涉及论文 · {links}"]
+    for citation in statement.citations:
+        sections += [
+            f"作者原文 · {_paper_link(citation.paper_id)} · {page_label(citation.page)}",
+            literal(citation.quote),
+        ]
+    for note in statement.note_citations:
+        source = "历史用户问题引文" if note.kind == "question" else "用户笔记引文"
+        sections += [
+            f"{source} · {_paper_link(note.paper_id)} · 规范源 ID：{label(note.source_id)}",
+            literal(note.quote),
+        ]
+    return sections
+
+
 def _questions(item: ExportPaper) -> list[str]:
     answers = {answer.question_id: answer for answer in item.answers}
     sections = ["## 用户提问与模型问答"]
@@ -54,15 +80,7 @@ def _questions(item: ExportPaper) -> list[str]:
             sections += ["尚无已保存的模型回答。"]
             continue
         for statement in answer.statements:
-            kind = "模型推断" if statement.inference else "模型回答"
-            sections += [kind, literal(statement.text)]
-            for citation in statement.citations:
-                target = "../" + export_name("papers", citation.paper_id)
-                sections += [
-                    f"作者原文 · [{label(citation.paper_id)}]({target}) · "
-                    f"{page_label(citation.page)}",
-                    literal(citation.quote),
-                ]
+            sections += _statement(statement)
         sections += ["回答原始记录（含模型及输入指纹）", literal(asdict(answer))]
     return sections
 
