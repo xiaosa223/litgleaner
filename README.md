@@ -40,6 +40,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 改评价维度的定义 | 改同一文件，执行 `rubric reassess <id>` 预览，加 `--execute` 执行（花钱） |
 | 查看历史结果是否过期 | `stale` 零费用核对；`--format json` 输出全部历史及无法完整核验的原因，见 [docs/STALE.md](docs/STALE.md) |
 | 查询文库论文的事实关系 | 本地只读接口 `/api/papers/{id}/memory-facts`，见 [docs/PAPER-MEMORY.md](docs/PAPER-MEMORY.md) |
+| 查看文库共同引用的重要前作 | 只读 `/api/memory/important-works`，返回计票门槛和逐篇原始引文，见 [docs/PAPER-MEMORY.md](docs/PAPER-MEMORY.md#文库重要前作) |
 | 计算本地论文向量 | `memory reembed` 预览，`memory reembed --execute` 显式重算，见 [docs/LOCAL-EMBEDDINGS.md](docs/LOCAL-EMBEDDINGS.md) |
 | 核实论文关系与历史回填 | 首次入库按需核实；`memory backfill` 预览、`--execute --plan-hash` 确认；双侧原文及反馈见 [docs/PAPER-RELATIONS.md](docs/PAPER-RELATIONS.md) |
 | 查看文库相关论文候选 | 只读 `/api/papers/{id}/memory-candidates`；权重和阈值在 `memory.yaml` 配置，见 [docs/MEMORY-CANDIDATES.md](docs/MEMORY-CANDIDATES.md) |

@@ -11,6 +11,7 @@ from litgleaner.application.stages.extract import (
 )
 from litgleaner.domain.errors import InvalidRequest, NotFound
 from litgleaner.domain.evidence import MIN_QUOTE_CHARS
+from litgleaner.domain.important_works import ImportantWorks, project_important_works
 from litgleaner.domain.knowledge import Concept, ConceptOccurrence, normalize_concept_name
 from litgleaner.domain.memory import (
     FactSignals,
@@ -188,4 +189,21 @@ def facts(ctx: AppContext, paper_id: str, *, limit: int = 50, offset: int = 0) -
     matches = project_facts(paper_id, papers, index, signals)
     return MemoryFacts(
         papers[paper_id], matches[offset : offset + limit], len(matches), limit, offset, warnings
+    )
+
+
+def important_works(ctx: AppContext, *, limit: int = 50, offset: int = 0) -> ImportantWorks:
+    if not 1 <= limit <= 200 or offset < 0:
+        raise InvalidRequest("重要前作查询参数越界")
+    data = ctx.store.memory_snapshot()
+    papers = paper_views(data)
+    index = citation_index(data.citations, data.aliases, {p.id: p.title for p in data.papers})
+    works = project_important_works(papers, index)
+    return ImportantWorks(
+        len(papers),
+        (len(papers) + 2) // 3,
+        works[offset : offset + limit],
+        len(works),
+        limit,
+        offset,
     )
