@@ -3,10 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { FlowView, type FlowTranslation } from "./FlowView";
 import { Panel, type Tab } from "./panel/Panel";
-import { pageFromSearch } from "./pageLink";
+import { pageFromSearch, paperPageLink } from "./pageLink";
+import { navigate } from "./router";
+import { selectForQa, type QaSelection } from "./qa";
 import { usePdf } from "./pdf";
 import { MOD } from "./platform";
-import { usePreview } from "./preview/usePreview";
 import { PdfView, type BlockAction, type Focus } from "./PdfView";
 import { useMedia, usePref, useTranslateMode, type TranslateMode } from "./prefs";
 import { ReaderHeader, type View } from "./ReaderHeader";
@@ -31,7 +32,6 @@ const KEYS: [string, string][] = [
   ["Esc", "关闭浮层；再按一次回到纯原文"],
   ["?", "显示这张表"],
 ];
-const QUOTE_LIMIT = 300; // 带进提问的原文片段长度
 
 function locate(blocks: Block[], note: Annotation): Block | null {
   const same = (b: Block) => b.page === note.page && note.bbox !== null && b.bbox !== null && b.bbox.every((v, i) => v === note.bbox![i]);
@@ -71,8 +71,8 @@ export function Reader({ paperId }: { paperId: string }) {
   const appliedPage = useRef<typeof requestedPage | null>(null);
   const [mode, setMode] = useTranslateMode();
   const lastMode = useRef<TranslateMode>(mode === "off" ? "column" : mode); // T 键在原文和上次的方式之间切换
-  const [canAsk] = usePreview(); // 边读边问的服务还没有接上，只在界面预览里出现
-  const [askQuote, setAskQuote] = useState<string | null>(null);
+  const canAsk = !!paper?.has_document;
+  const [askQuote, setAskQuote] = useState<QaSelection | null>(null);
   const [open, setOpen] = useState(new Set<number>());
   const [hoverSentence, setHoverSentence] = useState<string | null>(null);
   const [popup, setPopup] = useState<TextSelection | null>(null);
@@ -109,8 +109,9 @@ export function Reader({ paperId }: { paperId: string }) {
   const tocDocked = useMedia("(min-width: 1180px)");
   const toc = useColumn("toc", { docked: tocDocked, autoOpen: useMedia("(min-width: 1440px)"), yielding: showBilingual });
   const panel = useColumn("panel", { docked: useMedia("(min-width: 820px)"), autoOpen: useMedia("(min-width: 1024px)"), yielding: showBilingual });
-  const ask = (quote: string | null) => {
-    setAskQuote(quote ? quote.slice(0, QUOTE_LIMIT) : null);
+  const ask = (quote: string | null, page: number | null = null) => {
+    try { setAskQuote(selectForQa(quote, page)); }
+    catch (cause) { toast(cause instanceof Error ? cause.message : "无法引用这段选区"); return; }
     setTab("qa");
     panel.show();
   };
@@ -159,7 +160,7 @@ export function Reader({ paperId }: { paperId: string }) {
     setSelection(null);
     if (action === "translate") { setPopup(sel); return; }
     const target: NoteTarget = { quote: sel.text, page: sel.page, block: sel.block, rects: sel.rects };
-    if (action === "ask") { sel.clear(); ask(sel.text); return; }
+    if (action === "ask") { sel.clear(); ask(sel.text, sel.page); return; }
     if (action === "note") { setNoteTarget(target); return; }
     if (action === "auto") { setAutoHl(true); toast("连续高亮已开启：选中即高亮，按 Esc 关闭"); }
     sel.clear();
@@ -167,7 +168,7 @@ export function Reader({ paperId }: { paperId: string }) {
   };
 
   const onBlockAction = (action: BlockAction, block: Block) => {
-    if (action === "ask") { ask(block.text); return; }
+    if (action === "ask") { ask(block.text, block.page); return; }
     setNoteTarget({ quote: null, page: block.page, block, rects: [] });
   };
 
@@ -253,13 +254,14 @@ export function Reader({ paperId }: { paperId: string }) {
             translation={translation} canAsk={canAsk} />}
         </main>
         <Panel open={panel.open} tab={tab} onTab={setTab} paper={data} canAsk={canAsk} askQuote={askQuote} onAskQuote={setAskQuote}
-          onChange={reload} onMarkRead={markRead}
+          onChange={reload} onMarkRead={markRead} onAnswered={reloadCosts}
+          onJumpCitation={(citation) => citation.paper_id === paperId ? jumpTo(null, citation.page, citation.quote) : navigate(paperPageLink(citation.paper_id, citation.page))}
           onJumpNote={(note) => note.page !== null && jumpTo(locate(blocks, note), note.page, note.quote)} />
       </div>
       {selection && <SelectionBar selection={selection} autoHl={autoHl} canAsk={canAsk} onAction={(a) => onSelectionAction(a, selection)} />}
       {popup && <SelectionPopup selection={popup} translations={translations} onClose={() => setPopup(null)}
         onOpenBlock={(index) => { setPopup(null); if (!open.has(index)) toggleOpen(index); }}
-        onAsk={canAsk ? () => { const p = popup; setPopup(null); ask(p.text); } : null}
+        onAsk={canAsk ? () => { const p = popup; setPopup(null); ask(p.text, p.page); } : null}
         onNote={() => { const p = popup; setPopup(null); setNoteTarget({ quote: p.text, page: p.page, block: p.block, rects: p.rects }); }} />}
       {noteTarget && <NoteDialog target={noteTarget} onCancel={() => setNoteTarget(null)}
         onSave={(body) => { const t = noteTarget; setNoteTarget(null); window.getSelection()?.removeAllRanges(); void create("note", t, body); }} />}

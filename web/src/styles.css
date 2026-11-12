@@ -278,6 +278,14 @@ blockquote.author { margin: 4px 0; padding: 4px 10px; border-left: 3px solid var
 .anim.big .bars { max-width: 480px; font-size: 13px; }
 .anim.big .headbox { grid-template-columns: repeat(4, 12px); } .anim.big .headbox i { width: 12px; height: 12px; }
 /* 问答 */
+.qa-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.qa-panel[hidden] { display: none; }
+.qa-toolbar { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.qa-turn { display: flex; flex-direction: column; gap: 8px; }
+.qa-answer { overflow-wrap: anywhere; }
+.qa-statement + .qa-statement { margin-top: 14px; }
+.qa-answer .author { margin: 8px 0; }
+.qa-user-source { margin: 8px 0; padding-left: 8px; border-left: 2px solid var(--user); }
 .msgs { display: flex; flex-direction: column; gap: 10px; }
 .msg.user { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-radius: 12px 12px 2px 12px; padding: 6px 12px; max-width: 85%; }
 .msg.bot { background: var(--surface-2); border-radius: 12px 12px 12px 2px; padding: 8px 12px; }

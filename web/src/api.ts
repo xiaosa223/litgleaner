@@ -1,5 +1,6 @@
 // 所有请求同源发出；改变状态的请求带 CSRF 令牌（第 15.5 节）。
 import type { Identified } from "./identify";
+import type { QaSubmission, QaView } from "./qa";
 import type {
   Annotation,
   BlockTranslation,
@@ -16,11 +17,13 @@ import type {
 } from "./types";
 
 export class ApiError extends Error {
+  readonly status: number;
   constructor(
-    readonly status: number,
+    status: number,
     message: string,
   ) {
     super(message);
+    this.status = status;
   }
 }
 
@@ -164,10 +167,14 @@ export const api = {
   /** 按 DOI、arXiv 编号或链接添加论文，返回论文编号。 */
   addPaper: (item: Identified) => send<AddedPaper>("POST", "/api/inbox/papers", { text: item.value }),
   uploadPaper: (file: File, identifier: string | null) => upload<AddedPaper>("/api/inbox/files", file, identifier),
+  qaHistory: (id: string, signal?: AbortSignal) =>
+    get<QaView[]>(`${paperPath(id)}/qa?limit=200`, signal),
+  ask: (id: string, question: QaSubmission) =>
+    send<QaView>("POST", `${paperPath(id)}/qa`, question),
+  saveQa: (id: string, questionId: string) =>
+    send<Annotation>("POST", `${paperPath(id)}/qa/${encodeURIComponent(questionId)}/annotation`),
   // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4 节），调用方用 isNotConnected 处理 ----
   createTopic: (topic: { name: string; background: string; content: string; goals: string[] }) =>
     send<{ id: string }>("POST", "/api/topics", topic),
   startSurvey: (topicId: string) => send<void>("POST", `/api/topics/${encodeURIComponent(topicId)}/survey`),
-  ask: (id: string, question: string, quote: string | null) =>
-    send<{ answer: string }>("POST", `${paperPath(id)}/ask`, { question, quote }),
 };

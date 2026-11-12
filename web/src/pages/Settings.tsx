@@ -53,7 +53,7 @@ export function Settings() {
 
       <h2 className="block-title">开发中</h2>
       <div className="setting">
-        <div><b>界面预览</b><span className="d">用示例数据展示还没有接上服务的页面：课题调研、知识库、边读边问</span></div>
+        <div><b>界面预览</b><span className="d">用示例数据展示还没有接上服务的页面：课题调研、知识库、今日复习</span></div>
         <button className="switch" role="switch" aria-checked={preview} aria-label="界面预览" onClick={() => setPreview(!preview)} />
       </div>
     </div>

@@ -1,77 +1,82 @@
-// 边读边问：针对选中的内容或整篇提问（第 12.4 节）。服务还没有接上时如实告诉读者，不编回答。
+// 持久问答：提问排队、轮询历史，作者原文和模型推断分别展示。
 import { useEffect, useRef, useState } from "react";
-import { api, isNotConnected } from "../api";
+import { api } from "../api";
+import { qaStatus, type QaCitation, type QaSelection } from "../qa";
+import { useQa } from "../useQa";
+import { useToast } from "../ui";
+import { QaAnswer } from "./QaAnswer";
 
-export interface QaMessage { role: "user" | "bot" | "system"; text: string; quote?: string | null }
-
-export function QaTab({ paperId, messages, onMessages, quote, onQuote }: {
-  paperId: string; messages: QaMessage[]; onMessages: (messages: QaMessage[]) => void;
-  quote: string | null; onQuote: (quote: string | null) => void;
+export function QaTab({ paperId, selected, onSelection, onJump, onChange, onAnswered, savedQuestions }: {
+  paperId: string; selected: QaSelection | null; onSelection: (value: QaSelection | null) => void;
+  onJump: (citation: QaCitation) => void; onChange: () => void;
+  onAnswered: () => void; savedQuestions: string[];
 }) {
   const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { views, loading, sending, error, reload, send } = useQa(paperId);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const toast = useToast();
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
-  // 新版浏览器的 scrollIntoView 会返回 Promise，effect 不能把它当清理函数返回
-  useEffect(() => {
-    void end.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
-  useEffect(() => { if (quote) input.current?.focus(); }, [quote]);
+  const currentSelection = useRef(selected);
+  currentSelection.current = selected;
+  useEffect(() => { if (selected) input.current?.focus(); }, [selected]);
+  const answered = views.filter((view) => view.answer).length;
+  useEffect(() => { void end.current?.scrollIntoView({ block: "nearest" }); }, [views.length, answered]);
+  useEffect(() => { if (answered) onAnswered(); }, [answered, onAnswered]);
 
-  const send = async () => {
-    const question = draft.trim();
-    if (!question || busy) return;
-    const asked: QaMessage[] = [...messages, { role: "user", text: question, quote }];
-    onMessages(asked);
-    setDraft("");
-    onQuote(null);
-    setBusy(true);
-    try {
-      const { answer } = await api.ask(paperId, question, quote);
-      onMessages([...asked, { role: "bot", text: answer }]);
-    } catch (error) {
-      const text = isNotConnected(error)
-        ? "边读边问的服务还没有接上，这个问题没有发出去。"
-        : error instanceof Error ? error.message : "提问失败，请重试。";
-      onMessages([...asked, { role: "system", text }]);
-    } finally {
-      setBusy(false);
+  const ask = async () => {
+    if (!draft.trim() || sending) return;
+    if (await send(draft, selected)) {
+      setDraft("");
+      if (currentSelection.current === selected) onSelection(null);
     }
+  };
+  const save = async (id: string) => {
+    setSaving(id);
+    try {
+      await api.saveQa(paperId, id);
+      setSaved((current) => new Set([...current, id]));
+      onChange();
+      toast("已保存关联笔记，保留问题、回答及原文出处");
+    } catch (cause) { toast(cause instanceof Error ? cause.message : "保存失败"); }
+    finally { setSaving(null); }
   };
 
   return (
     <>
       <div className="tabbody">
-        <div className="preview-note" role="note">界面预览 · 边读边问的服务还没有接上，现在只能看交互。</div>
-        {messages.length === 0 && (
-          <div className="tag" style={{ fontSize: 12 }}>
-            选中一段文字点“问”，或直接在下面提问。回答会引用原文并标明页码；没有原文依据的部分会标为“模型推断”。
-          </div>
-        )}
-        <div className="msgs" aria-live="polite">
-          {messages.map((m, i) => (
-            <div key={i} className={`msg ${m.role}`}>
-              {m.quote && <div className="msg-quote">“{m.quote}”</div>}
-              {m.text}
-            </div>
+        <div className="qa-toolbar"><span className="tag">最近 200 个问题 · 回答附原文出处</span><button className="linkbtn" onClick={reload}>刷新状态</button></div>
+        {loading && <div role="status" className="tag">正在读取问答记录…</div>}
+        {!loading && !views.length && <p className="tag">选中文字点“问”，或针对整篇提问。有原文依据的回答附页码；证据不足的判断标为模型推断。</p>}
+        {error && <div className="msg system" role="alert">{error}</div>}
+        <div className="msgs">
+          {views.map((view) => (
+            <section className="qa-turn" key={view.question.id} aria-label="问答记录">
+              <div className="msg user">
+                {view.question.selection && <div className="msg-quote">“{view.question.selection}”{view.question.page !== null && <span> · 第 {view.question.page + 1} 页</span>}</div>}
+                {view.question.text}
+              </div>
+              {view.answer ? <>
+                <QaAnswer answer={view.answer} paperId={paperId} onJump={onJump} />
+                <button className="ghost" disabled={saving !== null || saved.has(view.question.id) || savedQuestions.includes(view.question.id)} onClick={() => void save(view.question.id)}>
+                  {saved.has(view.question.id) || savedQuestions.includes(view.question.id) ? "已保存关联笔记" : saving === view.question.id ? "正在保存…" : "保存关联笔记"}
+                </button>
+              </> : <div className={`msg ${view.state === "failed" ? "system" : "bot"}`} role="status">{qaStatus(view)}</div>}
+            </section>
           ))}
-          {busy && <div className="msg bot">正在回答…</div>}
           <div ref={end} />
         </div>
       </div>
       <div className="ask">
-        {quote && (
-          <div className="quote-chip">
-            <span>“{quote}”</span>
-            <button className="linkbtn" onClick={() => onQuote(null)} aria-label="去掉引用">×</button>
-          </div>
-        )}
+        {selected && <div className="quote-chip"><span>“{selected.text}”{selected.page !== null && ` · 第 ${selected.page + 1} 页`}</span><button className="linkbtn" disabled={sending} onClick={() => onSelection(null)} aria-label="去掉引用">×</button></div>}
         <div className="ask-row">
-          <textarea id="askInput" ref={input} aria-label="提问" value={draft} placeholder={quote ? "针对这段提问" : "针对整篇提问"}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void send(); } }} />
-          <button className="primary" disabled={!draft.trim() || busy} onClick={() => void send()}>问</button>
+          <textarea ref={input} aria-label="提问" value={draft} disabled={sending} maxLength={4000} placeholder={selected ? "针对这段提问" : "针对整篇提问"}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void ask(); } }} />
+          <button className="primary" disabled={!draft.trim() || sending} onClick={() => void ask()}>{sending ? "提交中…" : "问"}</button>
         </div>
+        <div className="tag">提问会使用模型额度；刷新记录和查看引用不调用模型。</div>
       </div>
     </>
   );
