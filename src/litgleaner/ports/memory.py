@@ -16,6 +16,7 @@ from litgleaner.ports.relations import AdmissionRepo, RelationRepo
 
 if TYPE_CHECKING:
     from litgleaner.ports.memory_candidates import CandidateSnapshot
+    from litgleaner.ports.reading_memory import ReadingMemorySnapshot
     from litgleaner.ports.store import Extraction, FullTextState
 
 
@@ -34,6 +35,7 @@ class MemorySnapshot:
 
 class MemoryStore(Protocol):
     def memory_snapshot(self) -> MemorySnapshot: ...
+    def reading_memory_snapshot(self, paper_id: str) -> ReadingMemorySnapshot: ...
     def memory_candidates_snapshot(
         self, paper_id: str, terms_limit: int = 32
     ) -> CandidateSnapshot: ...

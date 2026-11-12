@@ -2,12 +2,19 @@
 
 from fastapi import FastAPI, Query
 
-from litgleaner.application import embeddings, memory, memory_candidates, reader_open
+from litgleaner.application import (
+    embeddings,
+    memory,
+    memory_candidates,
+    reader_open,
+    reading_memory,
+)
 from litgleaner.domain.embedding_views import SimilarPapers
 from litgleaner.domain.important_works import ImportantWorks
 from litgleaner.domain.memory import MemoryFacts
 from litgleaner.domain.memory_candidate_views import MemoryCandidates
 from litgleaner.domain.reading import ReadingState
+from litgleaner.domain.reading_memory import ReadingMemory
 from litgleaner.server.runtime import Context
 
 
@@ -48,3 +55,12 @@ def install_memory_routes(app: FastAPI) -> None:
         offset: int = Query(default=0, ge=0),
     ) -> MemoryFacts:
         return memory.facts(ctx, paper_id, limit=limit, offset=offset)
+
+    @app.get("/api/papers/{paper_id}/reading-memory")
+    def reading_summary(
+        ctx: Context,
+        paper_id: str,
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+    ) -> ReadingMemory:
+        return reading_memory.view(ctx, paper_id, limit=limit, offset=offset)
