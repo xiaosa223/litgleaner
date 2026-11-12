@@ -13,7 +13,7 @@ from typing import Annotated, cast, get_args
 import typer
 
 from litgleaner.adapters.feishu.listener import answerers_from
-from litgleaner.application import embeddings, outline, relate_backfill
+from litgleaner.application import embeddings, outline, reextract, relate_backfill
 from litgleaner.application.context import AppContext
 from litgleaner.application.export import mine
 from litgleaner.application.inbound import apply_click
@@ -54,6 +54,38 @@ zotero_app = typer.Typer(help="Zotero 文献库", no_args_is_help=True)
 feishu_app = typer.Typer(help="飞书渠道", no_args_is_help=True)
 export_app = typer.Typer(help="导出课题对比表、引用、综述骨架与个人数据", no_args_is_help=True)
 memory_app = typer.Typer(help="论文间记忆与本地向量", no_args_is_help=True)
+
+
+@friendly
+def reextract_command(
+    paper: Annotated[
+        list[str] | None, typer.Option("--paper", help="限定历史论文 ID；可重复指定")
+    ] = None,
+    execute: Annotated[bool, typer.Option(help="确认当前预览并排队历史重提取")] = False,
+    plan_hash: Annotated[str | None, typer.Option(help="预览返回的 plan_hash")] = None,
+    job: Annotated[str | None, typer.Option(help="只读查看指定重提取任务")] = None,
+    config: ConfigOption = DEFAULT_CONFIG,
+) -> None:
+    """默认只读预览；确认后由 serve 或 run --stage reextract 消费任务。"""
+    if execute != (plan_hash is not None):
+        raise typer.BadParameter("排队必须同时提供 --execute 和 --plan-hash")
+    if job is not None and (paper or execute):
+        raise typer.BadParameter("--job 不能与 --paper 或 --execute 一起使用")
+    ctx = context_or_exit(config)
+    scope = tuple(paper) if paper else None
+    result: object
+    try:
+        if job is not None:
+            result = asdict(reextract.status(ctx, job))
+        elif execute:
+            with run_lock(load_or_exit(config)):
+                result = [asdict(item) for item in reextract.queue(ctx, plan_hash or "", scope)]
+        else:
+            result = asdict(reextract.preview(ctx, scope))
+    except LitGleanerError as error:
+        typer.secho(str(error), fg="red", err=True)
+        raise typer.Exit(2) from error
+    echo(json.dumps(result, ensure_ascii=False))
 
 
 @memory_app.command("backfill")

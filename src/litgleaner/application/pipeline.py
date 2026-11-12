@@ -16,6 +16,7 @@ from litgleaner.application.stages.fulltext import AcquireStage, ParseStage
 from litgleaner.application.stages.library_save import LibrarySaveStage
 from litgleaner.application.stages.outline import OutlineStage
 from litgleaner.application.stages.publish import PublishStage
+from litgleaner.application.stages.reextract import ReextractStage
 from litgleaner.application.stages.relate import RelateStage
 from litgleaner.application.stages.score import ScoreStage
 from litgleaner.application.stages.select import SelectStage
@@ -63,6 +64,7 @@ ON_DEMAND: tuple[Stage, ...] = (
     OutlineStage(),
     MemoryAdmissionStage(),
     RelateStage(),
+    ReextractStage(),
 )
 ON_DEMAND_NAMES: tuple[str, ...] = tuple(stage.name for stage in ON_DEMAND)
 

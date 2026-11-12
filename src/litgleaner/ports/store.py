@@ -17,6 +17,7 @@ from litgleaner.ports.citation import CitationRepo
 from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
 from litgleaner.ports.knowledge import KnowledgeRepo
 from litgleaner.ports.qa import QARepo
+from litgleaner.ports.reextract import ReextractStore
 from litgleaner.ports.search import SearchRepo
 from litgleaner.ports.survey import SurveyRepo
 from litgleaner.ports.translations import TranslationRepo
@@ -347,7 +348,7 @@ class RunRepo(Protocol):
     def average_llm_cost(self, task: str) -> float | None: ...
 
 
-class Store(memory.MemoryStore, Protocol):
+class Store(memory.MemoryStore, ReextractStore, Protocol):
     @property
     def papers(self) -> PaperRepo: ...
     @property

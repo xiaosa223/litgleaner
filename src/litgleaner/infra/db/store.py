@@ -25,6 +25,7 @@ from litgleaner.infra.db.qa_repo import SqlQARepo
 from litgleaner.infra.db.reader_repo import SqlReaderRepo
 from litgleaner.infra.db.reading_memory_repo import SqlReadingMemoryRepo
 from litgleaner.infra.db.reading_route_repo import SqlReadingRouteRepo
+from litgleaner.infra.db.reextract_repo import SqlReextractRepo
 from litgleaner.infra.db.relation_repo import SqlRelationRepo
 from litgleaner.infra.db.schema import (
     annotation,
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     from litgleaner.ports.memory import MemorySnapshot
     from litgleaner.ports.memory_candidates import CandidateSnapshot
     from litgleaner.ports.reading_memory import ReadingMemorySnapshot
+    from litgleaner.ports.reextract import ReextractSnapshot
     from litgleaner.ports.stale import StaleSnapshot
 
 _COUNTED = (
@@ -183,6 +185,12 @@ class SqlStore:
 
     def stale_snapshot(self) -> "StaleSnapshot":
         return SqlStaleRepo(self._db).snapshot()
+
+    def reextract_snapshot(self, paper_ids: tuple[str, ...] | None = None) -> "ReextractSnapshot":
+        return SqlReextractRepo(self._db).snapshot(paper_ids)
+
+    def reextract_revision(self, paper_ids: tuple[str, ...] | None = None) -> str:
+        return SqlReextractRepo(self._db).revision(paper_ids)
 
     def memory_snapshot(self) -> "MemorySnapshot":
         return SqlMemoryRepo(self._db).snapshot()

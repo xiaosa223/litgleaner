@@ -8,9 +8,14 @@ from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_chunks, load_document
 from litgleaner.application.extraction_facts import verify_extraction
 from litgleaner.application.extraction_schema import EXTRACT_SCHEMA, EXTRACTION_CONTRACT_VERSION
-from litgleaner.application.knowledge_ingest import extraction_source, ingest_concepts
+from litgleaner.application.knowledge_ingest import (
+    ExtractionSource,
+    extraction_source,
+    ingest_concepts,
+)
 from litgleaner.application.stages.base import Stage
 from litgleaner.domain.chunker import ChunkerConfig
+from litgleaner.domain.document import NormalizedDocument
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.language import language_name
 from litgleaner.ports.store import FullTextState, JobSpec
@@ -75,6 +80,32 @@ def extraction_is_stale(ctx: AppContext, paper_id: str) -> bool:
     )
 
 
+def persist_extraction(
+    ctx: AppContext,
+    paper_id: str,
+    input_hash: str,
+    producer: str,
+    *,
+    data: Mapping[str, Any],
+    document: NormalizedDocument,
+    source: ExtractionSource,
+) -> None:
+    """调用方持有短事务；事实核验、概念及提取同进同退，不处理全文状态。"""
+    verified = verify_extraction(data, document, source)
+    now = ctx.now_iso()
+    enriched = ingest_concepts(
+        ctx,
+        paper_id,
+        verified,
+        document,
+        source,
+        input_hash=input_hash,
+        producer_version=producer,
+        now=now,
+    )
+    ctx.store.papers.insert_extraction(paper_id, input_hash, producer, enriched, now)
+
+
 class ExtractStage(Stage):
     name = "extract"
 
@@ -116,26 +147,17 @@ class ExtractStage(Stage):
             EXTRACT_SCHEMA,
             paper_id=paper.id,
         )
-        data = verify_extraction(result.data, document, source)
         assert producer is not None  # call 已确认提取路由可用
         now = ctx.now_iso()
         with ctx.store.atomic():
-            data = ingest_concepts(
+            persist_extraction(
                 ctx,
-                paper_id,
-                data,
-                document,
-                source,
-                input_hash=input_hash,
-                producer_version=producer,
-                now=now,
-            )
-            ctx.store.papers.insert_extraction(
                 paper_id,
                 input_hash,
                 producer,
-                data,
-                now,
+                data=result.data,
+                document=document,
+                source=source,
             )
             # 死信任务重试成功时，论文要从“只读摘要”恢复，之后才能按全文重新评估
             ctx.store.papers.save_fulltext(replace(state, status="parsed"), now)

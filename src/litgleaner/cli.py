@@ -9,6 +9,7 @@ from typing import Annotated
 
 import typer
 
+from litgleaner import cli_library
 from litgleaner.application.context import AppContext
 from litgleaner.application.delivery_ops import resolve_delivery, unresolved_deliveries
 from litgleaner.application.pipeline import ON_DEMAND_NAMES, STAGE_NAMES, run_pipeline
@@ -58,6 +59,7 @@ for name, group in (
 ):
     app.add_typer(group, name=name)
 app.command("stale")(stale_command)
+app.command("reextract")(cli_library.reextract_command)
 
 SinceOption = Annotated[
     datetime | None, typer.Option(formats=["%Y-%m-%d"], help="只处理此日期之后的论文")

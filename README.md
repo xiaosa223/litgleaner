@@ -39,6 +39,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 改权重或等级线 | 改 `config/rubrics/default.json`，执行 `rubric rescore`（不花钱） |
 | 改评价维度的定义 | 改同一文件，执行 `rubric reassess <id>` 预览，加 `--execute` 执行（花钱） |
 | 查看历史结果是否过期 | `stale` 零费用核对；`--format json` 输出全部历史及无法完整核验的原因，见 [docs/STALE.md](docs/STALE.md) |
+| 显式重提取历史论文 | `reextract` 预览，`--execute --plan-hash` 确认排队，`run --stage reextract` 消费；缓存、冻结与费用见 [docs/EXTRACTION.md](docs/EXTRACTION.md#显式历史重提取) |
 | 查询文库论文的事实关系 | 本地只读接口 `/api/papers/{id}/memory-facts`，见 [docs/PAPER-MEMORY.md](docs/PAPER-MEMORY.md) |
 | 打开或回看时查询阅读记忆 | 只读 `/api/papers/{id}/reading-memory`，返回最多三条当前关系、双向引用及用户笔记摘句，见 [docs/READING-MEMORY.md](docs/READING-MEMORY.md) |
 | 查看文库共同引用的重要前作 | 只读 `/api/memory/important-works`，返回计票门槛和逐篇原始引文，见 [docs/PAPER-MEMORY.md](docs/PAPER-MEMORY.md#文库重要前作) |

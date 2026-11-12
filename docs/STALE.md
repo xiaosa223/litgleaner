@@ -60,7 +60,7 @@ JSON 的顶层字段为 `total`、`current`、`stale`、`unknown` 和 `items`。
 - 权重或等级线变化：`litgleaner rubric rescore` 使用现有维度等级零模型费用重算。
 - 研究画像或维度变化：使用 `topic backfill` 或 `rubric reassess` 先预览，确认范围后再执行。
 - 翻译、地图和综述：使用各功能的显式重译或生成入口；已有历史继续保留。
-- 提取：统一历史重提取入口仍待实现，见 [ROADMAP.md](ROADMAP.md)。
+- 提取：`litgleaner reextract` 先预览历史范围，携 `--execute --plan-hash` 确认后按需执行；已有缓存及历史保留，见 [提取说明](EXTRACTION.md#显式历史重提取)。
 - 本地向量：`litgleaner memory reembed` 预览，`--execute` 显式计算；首次执行可能下载模型。
 
 本报告不修改已有归档中的标记，也不替缺失的历史信息补造指纹。
