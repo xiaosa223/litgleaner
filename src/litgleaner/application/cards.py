@@ -5,7 +5,7 @@ from dataclasses import asdict
 from typing import Any
 
 from litgleaner.application.context import AppContext
-from litgleaner.domain.digest import PaperCard, strip_urls
+from litgleaner.domain.digest import MatchedTopic, PaperCard, strip_urls
 from litgleaner.domain.rubric import Rubric
 from litgleaner.ports.store import ScoredAssessment
 
@@ -27,6 +27,15 @@ def tier_label(rubric: Rubric, tier: str) -> str:
 def _dimension_labels(rubric: Rubric, keys: tuple[str, ...]) -> tuple[str, ...]:
     labels = {dim.key: dim.label for dim in rubric.dimensions}
     return tuple(labels.get(key, key) for key in keys)
+
+
+def _matched_topics(ctx: AppContext, paper_id: str) -> tuple[MatchedTopic, ...]:
+    current = {
+        topic_id
+        for topic_id, topic_hash in ctx.store.judgments.relevant_topics(paper_id)
+        if (topic := ctx.topics.get(topic_id)) is not None and topic.topic_hash == topic_hash
+    }
+    return tuple(MatchedTopic(topic_id, ctx.topics[topic_id].name) for topic_id in sorted(current))
 
 
 def build_card(
@@ -66,6 +75,7 @@ def build_card(
         parse_quality=fulltext.quality if fulltext else None,
         undetermined=_dimension_labels(rubric, scored.undetermined),
         upgraded=upgraded,
+        matched_topics=_matched_topics(ctx, paper_id),
     )
     return asdict(card)
 
@@ -78,5 +88,9 @@ def card_from_dict(data: Mapping[str, Any]) -> PaperCard:
             "limitations": tuple(data["limitations"]),
             "quotes": tuple(data["quotes"]),
             "undetermined": tuple(data.get("undetermined", ())),
+            "matched_topics": tuple(
+                item if isinstance(item, MatchedTopic) else MatchedTopic(**item)
+                for item in data.get("matched_topics", ())
+            ),
         }
     )

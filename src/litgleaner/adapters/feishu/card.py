@@ -48,9 +48,12 @@ def _button(label: str, kind: str, behavior: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _lines(card: PaperCard | PublicCard) -> list[dict[str, Any]]:
+def _lines(card: PaperCard | PublicCard, *, private: bool) -> list[dict[str, Any]]:
     label = card.tier_label or card.tier
     blocks = [_text(f"[{card.score}分·{label}] {_clip(card.title, 200)}", "heading")]
+    if private and isinstance(card, PaperCard) and card.matched_topics:
+        names = "、".join(topic.name for topic in card.matched_topics)
+        blocks.append(_text("命中课题：" + (_clip(names) or "")))
     authors = "、".join(card.authors[:3]) if card.authors else None
     meta = " · ".join(part for part in (authors, card.venue, card.published_at) if part)
     if meta:
@@ -102,7 +105,7 @@ def build_card(view: DigestView) -> dict[str, Any]:
     for index, card in enumerate(view.cards):
         if index:
             elements.append({"tag": "hr"})
-        elements.extend(_lines(card))
+        elements.extend(_lines(card, private=view.visibility == "private"))
         # 公开渠道没有按钮：反馈和“加入文献库”只属于本人。
         if isinstance(card, PaperCard) and view.visibility == "private":
             elements.extend(_actions(card, view))

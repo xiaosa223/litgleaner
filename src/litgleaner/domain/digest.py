@@ -15,6 +15,12 @@ def strip_urls(text: str | None) -> str | None:
 
 
 @dataclass(frozen=True)
+class MatchedTopic:
+    topic_id: str
+    name: str
+
+
+@dataclass(frozen=True)
 class PaperCard:
     paper_id: str
     title: str
@@ -36,6 +42,7 @@ class PaperCard:
     tier_label: str = ""
     undetermined: tuple[str, ...] = ()  # 无法判断的维度名称；不在公开白名单里
     upgraded: bool = False  # 之前以临时分推过，读完全文后升级再推一次
+    matched_topics: tuple[MatchedTopic, ...] = ()  # 随推送冻结，仅用于私有渠道
 
 
 @dataclass(frozen=True)

@@ -4,8 +4,10 @@ from litgleaner.domain.digest import DigestView, PaperCard, PublicCard
 from litgleaner.ports.publisher import Rendered
 
 
-def _card_lines(card: PaperCard | PublicCard) -> list[str]:
+def _card_lines(card: PaperCard | PublicCard, *, private: bool) -> list[str]:
     lines = [f"[{card.score}分·{card.tier_label or card.tier}] {card.title}"]
+    if private and isinstance(card, PaperCard) and card.matched_topics:
+        lines.append("命中课题：" + "、".join(topic.name for topic in card.matched_topics))
     if card.authors:
         lines.append("作者：" + "、".join(card.authors))
     if card.venue or card.published_at:
@@ -38,5 +40,8 @@ def _notes(card: PaperCard | PublicCard) -> list[str]:
 class PlainTextRenderer:
     def render(self, view: DigestView) -> Rendered:
         title = f"{view.topic_name} · {view.period}"
-        blocks = ["\n".join([*_card_lines(card), *_notes(card)]) for card in view.cards]
+        blocks = [
+            "\n".join([*_card_lines(card, private=view.visibility == "private"), *_notes(card)])
+            for card in view.cards
+        ]
         return Rendered(title=title, body="\n\n".join([title, *blocks]))
