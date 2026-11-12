@@ -3,12 +3,14 @@
 import os
 import tempfile
 import uuid
+from collections.abc import Mapping
 from contextlib import suppress
 from dataclasses import replace
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
 import yaml
+from pydantic import ValidationError
 
 from litgleaner.domain.errors import ConfigError, InvalidRequest
 from litgleaner.infra.config import AdapterConfig, LLMBudget, LLMTask, LoadedConfig
@@ -78,9 +80,55 @@ def settings_view(
                 task.model if task else None,
                 name in ready and not demonstration,
                 demonstration,
+                task.daily_budget_usd if task else None,
             )
         )
     return ModelSettingsView(providers, tuple(tasks), protocols, config.llm.budget.daily_usd)
+
+
+def _task_settings(config: LoadedConfig, draft: ModelDraft) -> dict[ModelTask, LLMTask]:
+    budgets = draft.task_budgets_usd
+    if (
+        not isinstance(budgets, Mapping)
+        or set(budgets) - set(draft.tasks)
+        or set(draft.tasks) - set(TASKS)
+    ):
+        raise InvalidRequest("model_task_budget_invalid")
+    tasks = dict(config.llm.tasks)
+    for name in draft.tasks:
+        old = config.llm.tasks.get(name)
+        try:
+            tasks[name] = LLMTask(
+                provider=draft.provider,
+                model=draft.model,
+                prompt=old.prompt if old else name,
+                daily_budget_usd=budgets.get(name, old.daily_budget_usd if old else None),
+            )
+        except ValidationError:
+            raise InvalidRequest("model_task_budget_invalid") from None
+    return tasks
+
+
+def _provider_options(old: AdapterConfig | None, draft: ModelDraft) -> dict[str, object]:
+    same_protocol = old is not None and old.adapter == draft.protocol
+    options = dict(old.options) if old and same_protocol else {}
+    prices = dict(options.get("prices", {}))
+    requested_prices = [draft.input_price, draft.output_price]
+    if prices.get(draft.model) != requested_prices:
+        prices[draft.model] = requested_prices
+    options["prices"] = prices
+    for name, default, value in (
+        ("max_output_tokens", 4000, draft.max_output_tokens),
+        ("structured", "native", draft.structured),
+    ):
+        if not same_protocol or options.get(name, default) != value:
+            options[name] = value
+    previous_url = options.get("base_url")
+    if draft.base_url and (
+        not isinstance(previous_url, str) or previous_url.rstrip("/") != draft.base_url.rstrip("/")
+    ):
+        options["base_url"] = draft.base_url
+    return options
 
 
 def prepare(
@@ -88,6 +136,7 @@ def prepare(
 ) -> tuple[LoadedConfig, str | None]:
     if draft.protocol not in protocols or not draft.tasks:
         raise InvalidRequest("model_settings_invalid")
+    tasks = _task_settings(config, draft)
     used_by_others = [
         name
         for name, task in config.llm.tasks.items()
@@ -98,31 +147,12 @@ def prepare(
     old = config.llm.providers.get(draft.provider)
     credential = f"LITGLEANER_MODEL_{uuid.uuid4().hex.upper()}" if draft.api_key else None
     credentials = (credential,) if credential else (old.credentials_env if old else ())
-    options = dict(old.options) if old and old.adapter == draft.protocol else {}
-    prices = dict(options.get("prices", {}))
-    prices[draft.model] = [draft.input_price, draft.output_price]
-    options.update(
-        {
-            "prices": prices,
-            "max_output_tokens": draft.max_output_tokens,
-            "structured": draft.structured,
-        }
+    provider = AdapterConfig(
+        adapter=draft.protocol,
+        credentials_env=credentials,
+        options=_provider_options(old, draft),
     )
-    if draft.base_url:
-        options["base_url"] = draft.base_url
-    provider = AdapterConfig(adapter=draft.protocol, credentials_env=credentials, options=options)
     providers = {**config.llm.providers, draft.provider: provider}
-    tasks = {
-        **config.llm.tasks,
-        **{
-            name: LLMTask(
-                provider=draft.provider,
-                model=draft.model,
-                prompt=config.llm.tasks[name].prompt if name in config.llm.tasks else name,
-            )
-            for name in draft.tasks
-        },
-    }
     settings = config.llm.model_copy(
         update={
             "providers": providers,

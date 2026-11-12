@@ -1,16 +1,18 @@
 """本地模型设置接口；密钥只接收写入，响应不回显输入或第三方错误。"""
 
-from typing import Literal, cast
+from typing import Annotated, Literal, cast
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 
 from litgleaner.application import model_setup
 from litgleaner.domain.errors import InvalidRequest
 from litgleaner.ports.model_settings import ModelDraft, ModelSettings, ModelSettingsView, ModelTask
 from litgleaner.server.runtime import Context
 from litgleaner.server.schemas import _Body
+
+_TaskBudget = Annotated[float, Field(ge=0, strict=True, allow_inf_nan=False)]
 
 
 class ModelBody(_Body):
@@ -25,6 +27,13 @@ class ModelBody(_Body):
     daily_budget_usd: float = Field(default=2, ge=0, le=1_000_000, allow_inf_nan=False)
     max_output_tokens: int = Field(default=4000, ge=128, le=200_000)
     structured: Literal["native", "prompt"] = "native"
+    task_budgets_usd: dict[ModelTask, _TaskBudget | None] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _selected_budgets(self) -> "ModelBody":
+        if set(self.task_budgets_usd) - set(self.tasks):
+            raise ValueError("model_task_budget_invalid")
+        return self
 
     @field_validator("base_url")
     @classmethod

@@ -17,6 +17,7 @@ from litgleaner.domain.errors import (
     InvalidRequest,
     ModelConfigurationRequired,
     NotFound,
+    TaskBudgetExceeded,
 )
 from litgleaner.domain.inbox import InboxItem
 from litgleaner.domain.reading import Annotation, NewAnnotation
@@ -201,8 +202,12 @@ def _configuration_errors(app: FastAPI) -> None:
         )
 
     @app.exception_handler(BudgetExceeded)
-    def budget(_request: Request, error: BudgetExceeded) -> JSONResponse:
-        return JSONResponse({"code": "budget_exceeded", "detail": str(error)}, status_code=402)
+    @app.exception_handler(TaskBudgetExceeded)
+    def budget(_request: Request, error: BudgetExceeded | TaskBudgetExceeded) -> JSONResponse:
+        content = {"code": "budget_exceeded", "detail": str(error)}
+        if isinstance(error, TaskBudgetExceeded):
+            content["task"] = error.task
+        return JSONResponse(content, status_code=402)
 
     @app.exception_handler(ConfigError)
     def configuration(_request: Request, _error: ConfigError) -> JSONResponse:

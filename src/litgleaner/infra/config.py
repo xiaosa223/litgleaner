@@ -143,6 +143,7 @@ class LLMTask(FrozenModel):
     provider: str
     model: str
     prompt: str
+    daily_budget_usd: float | None = Field(default=None, ge=0, strict=True, allow_inf_nan=False)
 
 
 class LLMBudget(FrozenModel):

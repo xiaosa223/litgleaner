@@ -8,7 +8,7 @@ from pydantic import Field
 
 from litgleaner.application import qa, reader
 from litgleaner.application.context import AppContext
-from litgleaner.domain.errors import BudgetExceeded, InvalidRequest, NotFound
+from litgleaner.domain.errors import BudgetExceeded, InvalidRequest, NotFound, TaskBudgetExceeded
 from litgleaner.domain.qa import Answer, Question
 from litgleaner.domain.reading import Annotation, NewAnnotation
 from litgleaner.server.runtime import Context
@@ -49,8 +49,8 @@ def _view(ctx: AppContext, question: Question) -> QAView:
     if "ask" not in ctx.llm.routes:
         return QAView(question, None, "configuration_required", "model_configuration_required")
     try:
-        ctx.llm.check_budget()
-    except BudgetExceeded:
+        ctx.llm.check_budget("ask")
+    except (BudgetExceeded, TaskBudgetExceeded):
         return QAView(question, None, "budget_exceeded", "budget_exceeded")
     return QAView(question, None, "retrying" if job.attempts else "queued")
 

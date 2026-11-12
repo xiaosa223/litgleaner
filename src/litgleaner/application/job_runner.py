@@ -67,7 +67,10 @@ def _fail(ctx: AppContext, stage: Stage, job: Job, error: Exception) -> tuple[bo
                 ctx, stage, job, f"推迟超过 {hours} 小时仍未完成：{message}", now.isoformat()
             )
         later = (now + timedelta(seconds=error.retry_after_seconds)).isoformat()
-        ctx.store.jobs.postpone(job.key, message, later, now.isoformat())
+        with ctx.store.atomic():
+            ctx.store.jobs.postpone(job.key, message, later, now.isoformat())
+            if isinstance(error, WaitingForWork):
+                ctx.store.jobs.clear_external_wait(job.key)
         return False, message
     if isinstance(error, PermanentError) or attempts >= ctx.settings.max_attempts:
         return True, _bury(ctx, stage, job, message, now.isoformat())
@@ -104,6 +107,25 @@ def _available(ctx: AppContext, payload: Mapping[str, Any], held: frozenset[str]
     return paper_id not in held
 
 
+def _clear_external_waits(
+    ctx: AppContext,
+    jobs: tuple[Job, ...],
+    allowed_keys: frozenset[str] | None,
+    held: frozenset[str],
+) -> None:
+    keys = tuple(
+        job.key
+        for job in jobs
+        if job.first_deferred_at is not None
+        and (allowed_keys is None or job.key in allowed_keys)
+        and _available(ctx, job.payload, held)
+    )
+    if keys:
+        with ctx.store.atomic():
+            for key in keys:
+                ctx.store.jobs.clear_external_wait(key)
+
+
 def run_stage(
     ctx: AppContext,
     stage: Stage,
@@ -118,7 +140,8 @@ def run_stage(
     )
     errors = _enqueue(ctx, stage, now, specs, held)
     done = retried = dead = 0
-    for job in ctx.store.jobs.due(stage.name, now):
+    due = ctx.store.jobs.due(stage.name, now)
+    for index, job in enumerate(due):
         if allowed_keys is not None and job.key not in allowed_keys:
             continue
         if not _available(ctx, job.payload, held):
@@ -127,11 +150,13 @@ def run_stage(
             stage.process(ctx, job.payload)
         except ModelConfigurationRequired as error:
             logger.info("%s", error)
+            _clear_external_waits(ctx, due[index:], allowed_keys, held)
             return StageReport(
                 stage.name, done, retried, dead, tuple(errors), configuration_required=True
             )
         except BudgetExceeded as error:
             logger.warning("%s", error)
+            _clear_external_waits(ctx, due[index:], allowed_keys, held)
             return StageReport(stage.name, done, retried, dead, tuple(errors), budget_stopped=True)
         except Exception as error:
             logger.warning("任务失败 %s", job.key, exc_info=not isinstance(error, PermanentError))

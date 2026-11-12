@@ -56,6 +56,8 @@ providers:
       # structured: prompt          # 接口不支持或不强制执行 json_schema 时打开
       # max_tokens_field: max_tokens
 tasks:
+  # 每个任务可加 daily_budget_usd: 0.5；省略/null 仅受全局限额，0 暂停该任务的新调用。
+  # 任务和全局费用均按 UTC 自然日统计；换模型不重置已用额度。
   triage: { provider: main, model: demo-cheap, prompt: triage }
   extract: { provider: main, model: demo-strong, prompt: extract }
   assess: { provider: main, model: demo-strong, prompt: assess }

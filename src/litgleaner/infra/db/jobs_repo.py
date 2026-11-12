@@ -3,8 +3,9 @@
 import json
 from typing import Any
 
-from sqlalchemy import Row, func, select, text, update
+from sqlalchemy import BigInteger, Integer, Row, case, cast, func, literal, select, text, update
 from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.sql import ColumnElement
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import job, llm_call
@@ -147,6 +148,9 @@ class SqlJobRepo:
             .values(status="dead", attempts=job.c.attempts + 1, last_error=error, updated_at=now)
         )
 
+    def clear_external_wait(self, key: str) -> None:
+        self._db.write(update(job).where(job.c.key == key).values(first_deferred_at=None))
+
     def list_by_status(self, status: JobStatus) -> tuple[Job, ...]:
         rows = self._db.fetch(select(job).where(job.c.status == status).order_by(job.c.key))
         return tuple(_to_job(row) for row in rows)
@@ -154,6 +158,44 @@ class SqlJobRepo:
     def retry_dead(self, now: str) -> int:
         # 固定更新前的 eligible，父任务本次复活不能反过来使终态 child 变为可重试。
         return len(self._db.fetch(text(_RETRY_DEAD).bindparams(now=now)))
+
+
+def _iso_offset(value: ColumnElement[str]) -> ColumnElement[str]:
+    tail = func.substr(value, 20)
+    start = case(
+        (func.instr(tail, "+") > 0, func.instr(tail, "+")),
+        (func.instr(tail, "-") > 0, func.instr(tail, "-")),
+        else_=0,
+    )
+    return case((start > 0, func.substr(tail, start)), else_="")
+
+
+def _micros(value: ColumnElement[str]) -> ColumnElement[int]:
+    return cast(func.substr(value.concat("000000"), 1, 6), Integer)
+
+
+def _utc_stamp(value: ColumnElement[str]) -> ColumnElement[int]:
+    """用整数微秒统一历史 ISO 时区，不依赖 SQLite 的时区范围或舍入。"""
+    offset = _iso_offset(value)
+    body = case(
+        (offset != "", func.substr(value, 1, func.length(value) - func.length(offset))),
+        (func.substr(value, -1) == "Z", func.substr(value, 1, func.length(value) - 1)),
+        else_=value,
+    )
+    seconds = cast(func.strftime("%s", func.substr(value, 1, 19)), BigInteger)
+    fraction = case((func.substr(body, 20, 1) == ".", func.substr(body, 21)), else_="")
+    offset_seconds = (
+        cast(func.substr(offset, 2, 2), Integer) * 3600
+        + cast(func.substr(offset, 5, 2), Integer) * 60
+        + cast(func.substr(offset, 8, 2), Integer)
+    )
+    offset_fraction = case((func.substr(offset, 10, 1) == ".", func.substr(offset, 11)), else_="")
+    sign = case((func.substr(offset, 1, 1) == "-", -1), else_=1)
+    return (
+        seconds * 1_000_000
+        + _micros(fraction)
+        - sign * (offset_seconds * 1_000_000 + _micros(offset_fraction))
+    )
 
 
 class SqlRunRepo:
@@ -176,13 +218,14 @@ class SqlRunRepo:
             )
         )
 
-    def llm_cost_since(self, since: str) -> float:
-        rows = self._db.fetch(
-            select(func.coalesce(func.sum(llm_call.c.cost_usd), 0.0).label("total")).where(
-                llm_call.c.created_at >= since
-            )
+    def llm_cost_since(self, since: str, *, task: str | None = None) -> float:
+        statement = select(func.coalesce(func.sum(llm_call.c.cost_usd), 0.0).label("total")).where(
+            llm_call.c.created_at >= func.date(func.substr(literal(since), 1, 10), "-2 days"),
+            _utc_stamp(llm_call.c.created_at) >= _utc_stamp(literal(since)),
         )
-        return float(rows[0].total)
+        if task is not None:
+            statement = statement.where(llm_call.c.task == task)
+        return float(self._db.fetch(statement)[0].total)
 
     def llm_cost_for_paper(self, paper_id: str) -> float:
         rows = self._db.fetch(

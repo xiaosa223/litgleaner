@@ -2,7 +2,8 @@
 
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from math import ceil
 from typing import Any
 
 from jsonschema import Draft202012Validator
@@ -11,6 +12,7 @@ from litgleaner.domain.errors import (
     BudgetExceeded,
     LitGleanerError,
     ModelConfigurationRequired,
+    TaskBudgetExceeded,
     TransientError,
 )
 from litgleaner.domain.evidence import wrap_untrusted
@@ -49,6 +51,7 @@ class TaskRoute:
     model: str
     prompt: Prompt
     provider_version: str = ""
+    daily_budget_usd: float | None = None
 
 
 @dataclass(frozen=True)
@@ -82,6 +85,7 @@ class TextStream:
 
     def __iter__(self) -> Iterator[str | Thinking]:
         route = self._gateway.require_route(self._task)
+        self._gateway.check_budget(self._task)
         parts: list[str] = []
         for event in route.llm.stream(self._request):
             if isinstance(event, Thinking):
@@ -126,7 +130,7 @@ class LLMGateway:
         paper_id: str | None = None,
     ) -> LLMResult:
         route = self.require_route(task)
-        self.check_budget()
+        self.check_budget(task)
         try:
             response = route.llm.complete(
                 LLMRequest(
@@ -165,7 +169,7 @@ class LLMGateway:
     ) -> TextStream:
         """纯文本流式调用（ADR 0004）。预算在开始前检查；内容由调用方在结束后校验。"""
         route = self.require_route(task)
-        self.check_budget()
+        self.check_budget(task)
         request = TextRequest(
             task=task,
             model=route.model,
@@ -183,13 +187,19 @@ class LLMGateway:
             paper_id=paper_id,
         )
 
-    def check_budget(self) -> None:
-        """调用前或连接测试前检查同一每日预算；不产生费用。"""
+    def check_budget(self, task: str | None = None) -> None:
+        """先查全局、再查任务 UTC 日预算；连接测试不占业务任务限额。"""
+        route = self.require_route(task) if task is not None else None
         now = self.clock().astimezone(UTC)
         day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         spent = self.runs.llm_cost_since(day_start.isoformat())
         if spent >= self.daily_budget_usd:
             raise BudgetExceeded(f"今日 LLM 费用 {spent:.4f} 已达预算 {self.daily_budget_usd}")
+        if task is not None and route is not None and route.daily_budget_usd is not None:
+            spent = self.runs.llm_cost_since(day_start.isoformat(), task=task)
+            if spent >= route.daily_budget_usd:
+                retry = ceil((day_start + timedelta(days=1) - now).total_seconds())
+                raise TaskBudgetExceeded(task, spent, route.daily_budget_usd, retry)
 
     def _record(
         self,
@@ -212,5 +222,5 @@ class LLMGateway:
                 paper_id=paper_id,
                 scope_id=self.scope_id,
             ),
-            self.clock().isoformat(),
+            self.clock().astimezone(UTC).isoformat(),
         )

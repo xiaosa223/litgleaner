@@ -1,5 +1,6 @@
 """模型原地配置：状态、临时客户端和持久化运行时替换。"""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Literal, Protocol
 
@@ -21,6 +22,7 @@ class ModelDraft:
     daily_budget_usd: float = 2.0
     max_output_tokens: int = 4000
     structured: Literal["native", "prompt"] = "native"
+    task_budgets_usd: Mapping[ModelTask, float | None] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -41,6 +43,7 @@ class ModelTaskView:
     model: str | None
     ready: bool
     demonstration: bool = False
+    daily_budget_usd: float | None = None
 
 
 @dataclass(frozen=True)

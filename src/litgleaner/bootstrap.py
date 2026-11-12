@@ -219,6 +219,7 @@ def build_llm(
                     "options": dict(config.llm.providers[setting.provider].options),
                 }
             ),
+            daily_budget_usd=setting.daily_budget_usd,
         )
     return LLMGateway(routes, store.runs, config.llm.budget.daily_usd, clock)
 

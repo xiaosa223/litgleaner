@@ -64,6 +64,14 @@ class BudgetExceeded(LitGleanerError):
     """超出 LLM 每日预算。任务保持待处理，第二天继续，不计失败次数。"""
 
 
+class TaskBudgetExceeded(WaitingForWork):
+    """任务预算用完，等待次日或用户调整限额，不受外部等待期限限制。"""
+
+    def __init__(self, task: str, spent: float, budget: float, retry_after_seconds: int) -> None:
+        self.task = task
+        super().__init__(f"今日 {task} 费用 {spent:.4f} 已达任务预算 {budget}", retry_after_seconds)
+
+
 class ModelConfigurationRequired(LitGleanerError):
     """任务还没有模型路由，等待用户完成配置后继续，不计失败次数。"""
 
