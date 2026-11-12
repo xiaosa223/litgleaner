@@ -8,6 +8,10 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, insert, text
 from sqlalchemy.exc import IntegrityError
+from tests.integration.relation_migration_helpers import (
+    FTS_RAW_COLUMNS,
+    assert_search_upgrade_triggers,
+)
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, upgrade_database
@@ -61,6 +65,8 @@ def _snapshot(path):
             columns = (
                 "id,title,title_key,abstract,authors,venue,issn,published_at,first_seen_at"
                 if name == "paper"
+                else FTS_RAW_COLUMNS
+                if name == "memory_fts"
                 else "*"
             )
             rows[name] = conn.execute(f"SELECT {columns} FROM {name} ORDER BY rowid").fetchall()
@@ -106,7 +112,8 @@ def test_0012_upgrade_preserves_old_facts_triggers_and_matches_metadata(tmp_path
     upgrade_database(url)
     upgrade_database(url)
     after, current = _snapshot(path)
-    assert before == after and all(current[name] == sql for name, sql in triggers.items())
+    assert before == after
+    assert_search_upgrade_triggers(triggers, current)
     assert sum(name.startswith("search_") for name in current) == 12
     engine = create_engine(url)
     try:

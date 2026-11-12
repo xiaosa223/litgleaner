@@ -7,7 +7,9 @@ from typing import Any, cast
 from sqlalchemy import TextClause, text
 from sqlalchemy.exc import OperationalError
 
+from litgleaner.domain.search_text import normalize_search_text
 from litgleaner.infra.db.database import Database
+from litgleaner.infra.db.search_index import RANK_SQL
 from litgleaner.ports.search import Authorship, QASearchHit, SearchKind
 
 _WORDS = re.compile(r"\w+", re.UNICODE)
@@ -28,7 +30,7 @@ _WHERE = "f.paper_id IN (SELECT value FROM json_each(:paper_ids)) AND " + _CANON
 
 
 def _statement(query: str, paper_ids: tuple[str, ...], limit: int) -> TextClause | None:
-    terms = tuple(dict.fromkeys(_WORDS.findall(query[:8192].lower())))[:64]
+    terms = tuple(dict.fromkeys(_WORDS.findall(normalize_search_text(query[:8192]))))[:64]
     if not terms or not paper_ids or type(limit) is not int or limit <= 0:
         return None
     long, short = [term for term in terms if len(term) >= 3], [t for t in terms if len(t) < 3]
@@ -39,9 +41,11 @@ def _statement(query: str, paper_ids: tuple[str, ...], limit: int) -> TextClause
     }
     selects: list[str] = []
     if long:
-        params["match"] = " OR ".join(f'"{term}"' for term in long)
+        params["match"] = (
+            "{search_title search_text} : (" + " OR ".join(f'"{term}"' for term in long) + ")"
+        )
         selects.append(
-            f"SELECT {_COLUMNS},bm25(memory_fts,0,0,0,0,0,0,4,1) AS rank "
+            f"SELECT {_COLUMNS},{RANK_SQL} AS rank "
             f"FROM memory_fts AS f WHERE {_WHERE} AND memory_fts MATCH :match"
         )
     if short:
@@ -49,7 +53,10 @@ def _statement(query: str, paper_ids: tuple[str, ...], limit: int) -> TextClause
         for index, term in enumerate(short):
             name = f"short_{index}"
             params[name] = "%" + term.replace("_", "\\_") + "%"
-            clauses.append(f"f.text LIKE :{name} ESCAPE '\\'")
+            clauses.append(
+                f"(f.search_title LIKE :{name} ESCAPE '\\' "
+                f"OR f.search_text LIKE :{name} ESCAPE '\\')"
+            )
         exclude = (
             " AND f.rowid NOT IN (SELECT rowid FROM memory_fts WHERE memory_fts MATCH :match)"
             if long

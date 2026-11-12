@@ -1,7 +1,8 @@
 """从有限标题摘要生成候选检索词，不生成 FTS 运算符。"""
 
 import re
-import unicodedata
+
+from litgleaner.domain.search_text import normalize_search_text
 
 TERMS_VERSION = "memory-candidate-terms-v1"
 _INPUT_CHARS = 8192
@@ -64,7 +65,7 @@ def candidate_terms(title: str, abstract: str | None, limit: int = 32) -> tuple[
     if not isinstance(title, str) or (abstract is not None and not isinstance(abstract, str)):
         raise ValueError("候选检索只接受字符串标题与可选摘要")
     bounded = (title + "\n" + (abstract or ""))[:_INPUT_CHARS]
-    normalized = " ".join(unicodedata.normalize("NFKC", bounded).casefold().split())
+    normalized = normalize_search_text(bounded)
     found: dict[str, None] = {}
     for word in _WORDS.findall(normalized):
         for term in _parts(word):

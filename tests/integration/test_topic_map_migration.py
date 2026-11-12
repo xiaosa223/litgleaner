@@ -8,7 +8,12 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
-from tests.integration.relation_migration_helpers import RELATION_TRIGGERS, assert_legacy_preserved
+from tests.integration.relation_migration_helpers import (
+    FTS_RAW_COLUMNS,
+    RELATION_TRIGGERS,
+    assert_legacy_preserved,
+    assert_search_upgrade_triggers,
+)
 from tests.integration.test_survey_migration import _legacy
 from tests.integration.test_survey_repo import preview, round_item, work
 from tests.integration.test_topic_map_repo import result
@@ -48,7 +53,10 @@ def _snapshot(path, names=None):
                 if row[0] not in FTS_TABLES - {"memory_fts"} and row[0] != "alembic_version"
             }
         rows = {
-            name: connection.execute(f'SELECT * FROM "{name}" ORDER BY rowid').fetchall()
+            name: connection.execute(
+                f"SELECT {FTS_RAW_COLUMNS if name == 'memory_fts' else '*'} "
+                f'FROM "{name}" ORDER BY rowid'
+            ).fetchall()
             for name in names
         }
         keys = {
@@ -82,7 +90,7 @@ def test_0016_preserves_existing_tables_facts_keys_triggers_and_matches_metadata
         definitions=definitions,
         current_definitions=current_definitions,
     )
-    assert all(current_triggers[name] == value for name, value in triggers.items())
+    assert_search_upgrade_triggers(triggers, current_triggers)
     assert (
         set(current_triggers) - set(triggers)
         == {

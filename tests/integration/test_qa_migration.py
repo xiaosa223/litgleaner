@@ -7,15 +7,17 @@ import pytest
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine, insert, select, update
+from sqlalchemy import create_engine, insert, select, text, update
 from sqlalchemy.exc import IntegrityError
 from ulid import ULID
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, upgrade_database
-from litgleaner.infra.db.schema import annotation, metadata, qa_message
+from litgleaner.infra.db.schema import annotation, metadata, paper, qa_message
 from litgleaner.infra.db.schema_rules import include_schema_object
 from litgleaner.infra.db.search_repo import SqlSearchRepo
+
+_FTS_COLUMNS = "rowid,kind,id,paper_id,page,authorship,source_version,title,text"
 
 
 def _legacy(path: Path) -> str:
@@ -67,7 +69,7 @@ def test_upgrade_preserves_existing_fts_rows_tokenizer_and_trigger_definitions(t
     path = tmp_path / "upgrade.db"
     url = _legacy(path)
     with sqlite3.connect(path) as conn:
-        before = conn.execute("SELECT * FROM memory_fts ORDER BY rowid").fetchall()
+        before = conn.execute(f"SELECT {_FTS_COLUMNS} FROM memory_fts ORDER BY rowid").fetchall()
         old_annotations = conn.execute("SELECT * FROM annotation ORDER BY id").fetchall()
         original = conn.execute(
             "SELECT name,sql FROM sqlite_master WHERE name='memory_fts' OR type='trigger' "
@@ -76,7 +78,10 @@ def test_upgrade_preserves_existing_fts_rows_tokenizer_and_trigger_definitions(t
     upgrade_database(url)
     upgrade_database(url)
     with sqlite3.connect(path) as conn:
-        assert conn.execute("SELECT * FROM memory_fts ORDER BY rowid").fetchall() == before
+        assert (
+            conn.execute(f"SELECT {_FTS_COLUMNS} FROM memory_fts ORDER BY rowid").fetchall()
+            == before
+        )
         upgraded = conn.execute("SELECT * FROM annotation ORDER BY id").fetchall()
         assert [row[:-1] for row in upgraded] == old_annotations
         assert all(row[-1] is None for row in upgraded)
@@ -87,7 +92,16 @@ def test_upgrade_preserves_existing_fts_rows_tokenizer_and_trigger_definitions(t
                 "SELECT name,sql FROM sqlite_master WHERE name='memory_fts' OR type='trigger'"
             ).fetchall()
         )
-        assert all(current[name] == sql for name, sql in original)
+        assert all(
+            current[name] == sql
+            for name, sql in original
+            if name != "memory_fts" and not name.startswith("search_")
+        )
+        assert all(
+            "litgleaner_search_normalize_v1" in current[name]
+            for name, sql in original
+            if name.startswith("search_") and "INSERT INTO memory_fts" in sql
+        )
         assert "trigram" in current["memory_fts"]
         assert sum(name.startswith("search_") for name in current) == 12
         assert conn.execute("SELECT count(*) FROM qa_message").fetchone()[0] == 0
@@ -96,8 +110,22 @@ def test_upgrade_preserves_existing_fts_rows_tokenizer_and_trigger_definitions(t
     try:
         for query in ("Astronomy", "旧笔记", "笔记"):
             assert SqlSearchRepo(database).find(query, 20)
+        _assert_normalized_canonical_updates(database)
     finally:
         database.dispose()
+
+
+def _assert_normalized_canonical_updates(database):
+    database.write(update(paper).where(paper.c.id == "P1").values(title="Ｓｔｒａße"))
+    database.write(update(annotation).where(annotation.c.id == "N1").values(body="Ｃａｆé"))
+    rows = database.fetch(
+        text(
+            "SELECT title,text,search_title,search_text FROM memory_fts "
+            "WHERE (kind='paper' AND id='P1') OR id='N1:body' ORDER BY kind"
+        )
+    )
+    assert rows[0].text == "Ｃａｆé" and rows[0].search_text == "café"
+    assert rows[1].title == "Ｓｔｒａße" and rows[1].search_title == "strasse"
 
 
 def test_qa_migration_matches_schema_with_named_constraints_and_order_index(tmp_path):
@@ -281,11 +309,14 @@ def test_downgrade_removes_only_qa_and_reupgrade_keeps_prior_memory(tmp_path):
     with sqlite3.connect(path) as conn:
         old_annotations = [row[:-1] for row in conn.execute("SELECT * FROM annotation ORDER BY id")]
         old_rows = conn.execute(
-            "SELECT * FROM memory_fts WHERE kind!='qa' ORDER BY rowid"
+            f"SELECT {_FTS_COLUMNS} FROM memory_fts WHERE kind!='qa' ORDER BY rowid"
         ).fetchall()
     command.downgrade(alembic_config(url), "0009")
     with sqlite3.connect(path) as conn:
-        assert conn.execute("SELECT * FROM memory_fts ORDER BY rowid").fetchall() == old_rows
+        assert (
+            conn.execute(f"SELECT {_FTS_COLUMNS} FROM memory_fts ORDER BY rowid").fetchall()
+            == old_rows
+        )
         assert conn.execute("SELECT * FROM annotation ORDER BY id").fetchall() == old_annotations
         assert all(
             row[2] != "qa_message" for row in conn.execute("PRAGMA foreign_key_list(annotation)")
@@ -299,7 +330,10 @@ def test_downgrade_removes_only_qa_and_reupgrade_keeps_prior_memory(tmp_path):
         assert conn.execute("SELECT count(*) FROM paper").fetchone()[0] == 2
     upgrade_database(url)
     with sqlite3.connect(path) as conn:
-        assert conn.execute("SELECT * FROM memory_fts ORDER BY rowid").fetchall() == old_rows
+        assert (
+            conn.execute(f"SELECT {_FTS_COLUMNS} FROM memory_fts ORDER BY rowid").fetchall()
+            == old_rows
+        )
         assert conn.execute("SELECT count(*) FROM qa_message").fetchone()[0] == 0
         assert all(row[0] is None for row in conn.execute("SELECT qa_question_id FROM annotation"))
         conn.execute("INSERT INTO memory_fts(memory_fts) VALUES ('integrity-check')")

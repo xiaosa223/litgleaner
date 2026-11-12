@@ -8,7 +8,11 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
-from tests.integration.relation_migration_helpers import assert_feedback_extension
+from tests.integration.relation_migration_helpers import (
+    FTS_RAW_COLUMNS,
+    assert_feedback_extension,
+    assert_search_upgrade_triggers,
+)
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, upgrade_database
@@ -74,7 +78,9 @@ def _snapshot(path):
         rows = {}
         for name in tables:
             columns = (
-                "*"
+                FTS_RAW_COLUMNS
+                if name == "memory_fts"
+                else "*"
                 if name != "llm_call"
                 else "id,task,model,prompt_version,input_tokens,output_tokens,"
                 "cost_usd,ok,created_at,paper_id"
@@ -102,7 +108,7 @@ def test_0015_upgrade_preserves_old_facts_triggers_foreign_keys_and_matches_sche
             )
         else:
             assert before[table] == after[table] and foreign_keys[table] == current_keys[table]
-    assert all(current[name] == sql for name, sql in triggers.items())
+    assert_search_upgrade_triggers(triggers, current)
     engine = create_engine(url)
     try:
         with engine.connect() as conn:

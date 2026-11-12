@@ -55,6 +55,8 @@ def _snapshot(path: Path):
             columns = (
                 "id,title,title_key,abstract,authors,venue,issn,published_at,first_seen_at"
                 if name == "paper"
+                else "rowid,kind,id,paper_id,page,authorship,source_version,title,text"
+                if name == "memory_fts"
                 else "*"
             )
             rows[name] = conn.execute(f"SELECT {columns} FROM {name} ORDER BY rowid").fetchall()
@@ -81,7 +83,13 @@ def test_upgrade_preserves_all_old_rows_triggers_and_matches_schema(tmp_path):
     upgrade_database(url)
     upgrade_database(url)
     after, current = _snapshot(path)
-    assert before == after and all(current[name] == sql for name, sql in triggers.items())
+    assert before == after
+    for name, sql in triggers.items():
+        if name.startswith(("search_", "qa_search_")):
+            if "INSERT INTO memory_fts" in sql:
+                assert "litgleaner_search_normalize_v1" in current[name]
+        else:
+            assert current[name] == sql
     assert sum(name.startswith("search_") for name in current) == 12
     engine = create_engine(url)
     try:

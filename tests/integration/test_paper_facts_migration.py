@@ -8,11 +8,16 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
+from tests.integration.relation_migration_helpers import (
+    FTS_RAW_COLUMNS,
+    assert_search_upgrade_triggers,
+)
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, upgrade_database
 from litgleaner.infra.db.schema import metadata
 from litgleaner.infra.db.schema_rules import include_schema_object
+from litgleaner.infra.db.search_index import register_search_functions
 from litgleaner.infra.db.store import SqlStore
 
 _OLD_PAPER_COLUMNS = "id,title,title_key,abstract,authors,venue,issn,published_at,first_seen_at"
@@ -66,7 +71,13 @@ def _snapshot(path):
     with sqlite3.connect(path) as conn:
         rows = {}
         for table in tables:
-            columns = _OLD_PAPER_COLUMNS if table == "paper" else "*"
+            columns = (
+                _OLD_PAPER_COLUMNS
+                if table == "paper"
+                else FTS_RAW_COLUMNS
+                if table == "memory_fts"
+                else "*"
+            )
             order = "kind,id,paper_id" if table == "memory_fts" else "rowid"
             rows[table] = conn.execute(f"SELECT {columns} FROM {table} ORDER BY {order}").fetchall()
         triggers = dict(conn.execute("SELECT name,sql FROM sqlite_master WHERE type='trigger'"))
@@ -81,7 +92,7 @@ def test_0013_upgrades_existing_paper_defaults_and_preserves_all_prior_facts(tmp
     upgrade_database(url)
     after, current = _snapshot(path)
     assert before == after
-    assert all(current[name] == sql for name, sql in triggers.items())
+    assert_search_upgrade_triggers(triggers, current)
     store = SqlStore(url)
     try:
         old = store.papers.get("P")
@@ -145,15 +156,21 @@ def test_0013_downgrade_removes_only_new_columns_and_validators_then_can_reupgra
     before, triggers = _snapshot(path)
     upgrade_database(url)
     with sqlite3.connect(path) as conn:
+        register_search_functions(conn)
         conn.execute("UPDATE paper SET publication_types='[\"Review\"]',citation_count=0")
+    updated_fts = _snapshot(path)[0]["memory_fts"]
+    assert [row[1:] for row in updated_fts] == [row[1:] for row in before["memory_fts"]]
     command.downgrade(alembic_config(url), "0012")
     after, current = _snapshot(path)
-    assert after == before and current == triggers
+    assert after == {**before, "memory_fts": updated_fts} and current == triggers
     with sqlite3.connect(path) as conn:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(paper)")}
         assert not columns & {"publication_types", "citation_count"}
         conn.execute("INSERT INTO memory_fts(memory_fts) VALUES ('integrity-check')")
     upgrade_database(url)
+    reupgraded, current = _snapshot(path)
+    assert reupgraded == after
+    assert_search_upgrade_triggers(triggers, current)
     store = SqlStore(url)
     try:
         assert store.papers.get("P").publication_types == ()

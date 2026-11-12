@@ -6,21 +6,14 @@ from typing import cast
 from sqlalchemy import text
 
 from litgleaner.domain.document import Block
+from litgleaner.domain.search_text import normalize_search_text, search_excerpt
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.qa_search_repo import qa_hits
+from litgleaner.infra.db.search_index import RANK_SQL
 from litgleaner.ports.search import Authorship, QASearchHit, SearchDocument, SearchHit, SearchKind
 
 _WORDS = re.compile(r"\w+", re.UNICODE)
 _KINDS = "('paper', 'fulltext', 'note', 'highlight', 'extraction', 'qa', 'concept')"
-_SNIPPET_CHARS = 320
-
-
-def _excerpt(content: str, terms: list[str]) -> str:
-    lowered = content.lower()
-    positions = [at for term in terms if (at := lowered.find(term)) >= 0]
-    start = max(0, min(positions, default=0) - 60)
-    end = start + _SNIPPET_CHARS
-    return ("…" if start else "") + content[start:end] + ("…" if end < len(content) else "")
 
 
 def _conditions(terms: list[str]) -> tuple[str, dict[str, str], bool]:
@@ -29,10 +22,14 @@ def _conditions(terms: list[str]) -> tuple[str, dict[str, str], bool]:
     if long:
         conditions.append("memory_fts MATCH :match")
         # 用户的 OR、引号、括号都按词检索，不能成为 FTS 操作符。
-        params["match"] = " AND ".join(f'"{term}"' for term in long)
+        params["match"] = (
+            "{search_title search_text} : (" + " AND ".join(f'"{term}"' for term in long) + ")"
+        )
     for index, term in enumerate(term for term in terms if len(term) < 3):
         name = f"short_{index}"
-        conditions.append(f"(f.title LIKE :{name} ESCAPE '\\' OR f.text LIKE :{name} ESCAPE '\\')")
+        conditions.append(
+            f"(f.search_title LIKE :{name} ESCAPE '\\' OR f.search_text LIKE :{name} ESCAPE '\\')"
+        )
         params[name] = "%" + term.replace("_", "\\_") + "%"
     return " AND ".join(conditions), params, bool(long)
 
@@ -47,11 +44,11 @@ class SqlSearchRepo:
         return qa_hits(self._db, query, paper_ids, limit)
 
     def find(self, query: str, limit: int) -> tuple[SearchHit, ...]:
-        terms = list(dict.fromkeys(_WORDS.findall(query.lower())))[:64]
+        terms = list(dict.fromkeys(_WORDS.findall(normalize_search_text(query))))[:64]
         if not terms:
             return ()
         conditions, params, ranked = _conditions(terms)
-        rank = "bm25(memory_fts, 0, 0, 0, 0, 0, 0, 4, 1)" if ranked else "0"
+        rank = RANK_SQL if ranked else "0"
         statement = text(
             "SELECT f.kind, f.id, f.paper_id, p.title, f.text, f.page, f.authorship, "
             f"{rank} AS rank "
@@ -67,7 +64,7 @@ class SqlSearchRepo:
                 row.id,
                 row.paper_id,
                 row.title,
-                _excerpt(row.text, terms),
+                search_excerpt(row.text, terms),
                 int(row.page) if row.page is not None else None,
                 cast(Authorship, row.authorship),
             )
@@ -106,9 +103,16 @@ class SqlSearchRepo:
         self._db.write(
             text(
                 "INSERT INTO memory_fts"
-                "(kind,id,paper_id,page,authorship,source_version,title,text) "
-                "VALUES (:kind,:id,:paper,:page,'author',:version,'',:content)"
+                "(kind,id,paper_id,page,authorship,source_version,title,text,"
+                "search_title,search_text) "
+                "VALUES (:kind,:id,:paper,:page,'author',:version,'',:content,'',:normalized)"
             ).bindparams(
-                kind=kind, id=id_, paper=paper_id, page=page, version=version, content=content
+                kind=kind,
+                id=id_,
+                paper=paper_id,
+                page=page,
+                version=version,
+                content=content,
+                normalized=normalize_search_text(content),
             )
         )

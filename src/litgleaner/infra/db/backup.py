@@ -30,6 +30,7 @@ from litgleaner.infra.db.migrate import (
     known_revisions,
     upgrade_database,
 )
+from litgleaner.infra.db.schema_rules import FTS_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -218,12 +219,23 @@ def _quote(identifier: str) -> str:
     return '"' + identifier.replace('"', '""') + '"'
 
 
+def _fts_problems(connection: sqlite3.Connection, counts: Mapping[str, int]) -> list[str]:
+    if "memory_fts" not in counts:
+        return []
+    try:
+        connection.execute("INSERT INTO memory_fts(memory_fts) VALUES ('integrity-check')")
+    except sqlite3.DatabaseError as error:
+        return [f"全文索引完整性检查未通过：{error}"]
+    return []
+
+
 def _inspect(path: Path) -> tuple[str | None, dict[str, int], list[str]]:
     connection = sqlite3.connect(path)
     try:
         integrity = [row[0] for row in connection.execute("PRAGMA integrity_check")]
         problems = [] if integrity == ["ok"] else [f"完整性检查未通过：{'; '.join(integrity)}"]
         counts = _row_counts(connection)
+        problems.extend(_fts_problems(connection, counts))
     finally:
         connection.close()
     return current_revision(_sqlite_url(path)), counts, problems
@@ -235,7 +247,10 @@ def _upgrade_problems(path: Path, before: Mapping[str, int]) -> list[str]:
     except Exception as error:  # 演练要报告任何迁移失败，而不是中断
         return [f"升级到最新版本失败：{error}"]
     _, after, problems = _inspect(path)
-    shrunk = sorted(name for name, count in before.items() if after.get(name, 0) < count)
+    shadows = FTS_TABLES - {"memory_fts"}
+    shrunk = sorted(
+        name for name, count in before.items() if name not in shadows and after.get(name, 0) < count
+    )
     if shrunk:
         problems.append(f"升级后行数减少：{', '.join(shrunk)}")
     return problems

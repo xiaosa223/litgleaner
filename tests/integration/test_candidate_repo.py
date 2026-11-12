@@ -11,8 +11,10 @@ from tests.integration.test_embedding_repo import record
 from tests.integration.test_export_repo import paper
 
 from litgleaner.domain.identity import Alias
+from litgleaner.domain.search_text import normalize_search_text
 from litgleaner.infra.db import candidate_repo
 from litgleaner.infra.db.migrate import upgrade_database
+from litgleaner.infra.db.search_index import RANK_SQL
 from litgleaner.infra.db.store import SqlStore
 from litgleaner.ports.store import FullTextState
 
@@ -37,9 +39,18 @@ def add(store, id_, title="neural", *, abstract=None, library=True):
 def index(store, paper_id, kind="paper", id_="custom", *, version="", page=None, body="neural"):
     store._db.write(
         text(
-            "INSERT INTO memory_fts(kind,id,paper_id,page,authorship,source_version,title,text) "
-            "VALUES (:kind,:id,:paper,:page,'author',:version,'',:body)"
-        ).bindparams(kind=kind, id=id_, paper=paper_id, page=page, version=version, body=body)
+            "INSERT INTO memory_fts"
+            "(kind,id,paper_id,page,authorship,source_version,title,text,search_title,search_text) "
+            "VALUES (:kind,:id,:paper,:page,'author',:version,'',:body,'',:normalized)"
+        ).bindparams(
+            kind=kind,
+            id=id_,
+            paper=paper_id,
+            page=page,
+            version=version,
+            body=body,
+            normalized=normalize_search_text(body),
+        )
     )
 
 
@@ -175,7 +186,7 @@ def test_wrong_metadata_id_cannot_supply_or_hide_a_legitimate_paper_hit(store, v
     index(store, "B", "paper", "wrong-id", body="neural " * 10)
     ranked = store._db.fetch(
         text(
-            "SELECT id, bm25(memory_fts,0,0,0,0,0,0,4,1) AS rank FROM memory_fts "
+            f"SELECT id, {RANK_SQL} AS rank FROM memory_fts "
             "WHERE memory_fts MATCH :query AND kind='paper' AND paper_id='B' ORDER BY rank"
         ).bindparams(query='"neural"')
     )

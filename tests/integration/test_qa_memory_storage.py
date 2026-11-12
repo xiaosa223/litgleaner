@@ -12,6 +12,7 @@ from tests.integration.test_qa_repo import answer, question
 from litgleaner.domain.document import Block
 from litgleaner.domain.qa import Citation, NoteCitation, Statement
 from litgleaner.domain.reading import NewAnnotation
+from litgleaner.domain.search_text import normalize_search_text
 from litgleaner.infra.db import stale_repo
 from litgleaner.infra.db.migrate import upgrade_database
 from litgleaner.infra.db.schema import qa_message
@@ -53,10 +54,16 @@ def fts(store, **changes):
         "content": "quasar quasar quasar quasar",
     }
     values.update(changes)
+    values.update(
+        search_title=normalize_search_text(values["title"]),
+        search_text=normalize_search_text(values["content"]),
+    )
     store._db.write(
         text(
-            "INSERT INTO memory_fts(kind,id,paper_id,page,authorship,source_version,title,text) "
-            "VALUES(:kind,:id,:paper_id,:page,:authorship,:source_version,:title,:content)"
+            "INSERT INTO memory_fts"
+            "(kind,id,paper_id,page,authorship,source_version,title,text,search_title,search_text) "
+            "VALUES(:kind,:id,:paper_id,:page,:authorship,:source_version,:title,:content,"
+            ":search_title,:search_text)"
         ).bindparams(**values)
     )
 

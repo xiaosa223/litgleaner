@@ -9,6 +9,10 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
+from tests.integration.relation_migration_helpers import (
+    FTS_RAW_COLUMNS,
+    assert_search_upgrade_triggers,
+)
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.migrate import alembic_config, upgrade_database
@@ -54,7 +58,13 @@ def _snapshot(path):
         tables = ("paper", "assessment", "score", "annotation", "memory_fts")
         rows = {}
         for table in tables:
-            columns = _ASSESSMENT_COLUMNS if table == "assessment" else "*"
+            columns = (
+                _ASSESSMENT_COLUMNS
+                if table == "assessment"
+                else FTS_RAW_COLUMNS
+                if table == "memory_fts"
+                else "*"
+            )
             rows[table] = conn.execute(f"SELECT {columns} FROM {table} ORDER BY rowid").fetchall()
         triggers = dict(conn.execute("SELECT name,sql FROM sqlite_master WHERE type='trigger'"))
     return rows, triggers
@@ -67,7 +77,8 @@ def test_0014_upgrade_preserves_old_assessment_scores_metadata_and_triggers(tmp_
     upgrade_database(url)
     upgrade_database(url)
     after, current = _snapshot(path)
-    assert before == after and all(current[name] == sql for name, sql in triggers.items())
+    assert before == after
+    assert_search_upgrade_triggers(triggers, current)
     store = SqlStore(url)
     try:
         assert store.judgments.get_assessment(1).goal_links == ()

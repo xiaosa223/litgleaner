@@ -12,6 +12,8 @@ from typing import Any
 from sqlalchemy import Connection, Executable, Row, create_engine, event
 from sqlalchemy.engine import Engine, make_url
 
+from litgleaner.infra.db.search_index import register_search_functions
+
 
 def ensure_parent_dir(url: str) -> None:
     database = make_url(url).database
@@ -20,6 +22,7 @@ def ensure_parent_dir(url: str) -> None:
 
 
 def _set_pragmas(connection: Any, _record: Any) -> None:
+    register_search_functions(connection)
     cursor = connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA foreign_keys=ON")

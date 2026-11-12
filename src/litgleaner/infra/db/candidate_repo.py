@@ -26,6 +26,7 @@ from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.embedding_repo import _embedding
 from litgleaner.infra.db.memory_repo import _queries, _Rows, _snapshot
 from litgleaner.infra.db.schema import extraction, fulltext, paper, paper_embedding
+from litgleaner.infra.db.search_index import BM25_WEIGHTS
 from litgleaner.ports.memory_candidates import (
     CandidateSnapshot,
     CandidateTextHit,
@@ -62,8 +63,12 @@ def _current_text() -> tuple[Any, ...]:
 def _text_query(paper_id: str, terms: tuple[str, ...]) -> Select[Any]:
     if not terms:
         return select(literal(None)).where(false())
-    rank = func.bm25(literal_column("memory_fts"), 0, 0, 0, 0, 0, 0, 4, 1).label("rank")
-    match = " OR ".join('"' + term.replace('"', '""') + '"' for term in terms)
+    rank = func.bm25(literal_column("memory_fts"), *BM25_WEIGHTS).label("rank")
+    match = (
+        "{search_title search_text} : ("
+        + " OR ".join('"' + term.replace('"', '""') + '"' for term in terms)
+        + ")"
+    )
     return (
         select(_TEXT, rank)
         .select_from(_TEXT.join(paper, _TEXT.c.paper_id == paper.c.id))

@@ -12,7 +12,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.exc import IntegrityError
-from tests.integration.relation_migration_helpers import RELATION_TRIGGERS, assert_legacy_preserved
+from tests.integration import relation_migration_helpers as migrations
 from tests.integration.test_export_repo import paper
 from tests.integration.test_memory_repo import add_inbox, add_note, add_paper
 from tests.integration.test_outline_migration import _legacy_map
@@ -351,7 +351,7 @@ def test_0018_preserves_prior_facts_schema_fts_keys_triggers_and_roundtrips(tmp_
     upgrade_database(url)
     upgrade_database(url)
     after, current_keys, current_definitions, current_triggers = db_snapshot(path, before)
-    assert_legacy_preserved(
+    migrations.assert_legacy_preserved(
         before,
         after,
         keys,
@@ -359,7 +359,7 @@ def test_0018_preserves_prior_facts_schema_fts_keys_triggers_and_roundtrips(tmp_
         definitions=definitions,
         current_definitions=current_definitions,
     )
-    assert all(current_triggers[name] == value for name, value in triggers.items())
+    migrations.assert_search_upgrade_triggers(triggers, current_triggers)
     assert (
         set(current_triggers) - set(triggers)
         == {
@@ -369,7 +369,7 @@ def test_0018_preserves_prior_facts_schema_fts_keys_triggers_and_roundtrips(tmp_
             "paper_embedding_source",
             "paper_embedding_rowid",
         }
-        | RELATION_TRIGGERS
+        | migrations.RELATION_TRIGGERS
     )
     engine = create_engine(url)
     try:

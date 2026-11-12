@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from tests.integration.relation_migration_helpers import (
     RELATION_TRIGGERS,
     assert_legacy_preserved,
+    assert_search_upgrade_triggers,
 )
 from tests.integration.test_memory_repo import add_inbox, add_note, add_paper
 from tests.integration.test_relation_repo import batch, proposal
@@ -92,7 +93,7 @@ def test_0019_preserves_all_old_data_constraints_and_fts_and_matches_complete_me
         definitions=definitions,
         current_definitions=current_definitions,
     )
-    assert all(current_triggers[name] == value for name, value in triggers.items())
+    assert_search_upgrade_triggers(triggers, current_triggers)
     assert set(current_triggers) - set(triggers) == RELATION_TRIGGERS
     engine = create_engine(url)
     try:
