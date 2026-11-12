@@ -14,6 +14,7 @@ from litgleaner.infra.db.inbox_repo import SqlInboxRepo
 from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
 from litgleaner.infra.db.judgments_repo import SqlJudgmentRepo
 from litgleaner.infra.db.knowledge_repo import SqlKnowledgeRepo
+from litgleaner.infra.db.memory_repo import SqlMemoryRepo
 from litgleaner.infra.db.outline_repo import SqlOutlineRepo
 from litgleaner.infra.db.outputs_repo import SqlOutputRepo
 from litgleaner.infra.db.papers_repo import SqlPaperRepo
@@ -46,6 +47,7 @@ from litgleaner.infra.db.translation_repo import SqlTranslationRepo
 
 if TYPE_CHECKING:
     from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
+    from litgleaner.ports.memory import MemorySnapshot
     from litgleaner.ports.stale import StaleSnapshot
 
 _COUNTED = (
@@ -171,6 +173,9 @@ class SqlStore:
 
     def stale_snapshot(self) -> "StaleSnapshot":
         return SqlStaleRepo(self._db).snapshot()
+
+    def memory_snapshot(self) -> "MemorySnapshot":
+        return SqlMemoryRepo(self._db).snapshot()
 
     def stats(self) -> dict[str, int]:
         counts = {

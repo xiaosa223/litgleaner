@@ -3,7 +3,7 @@
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from litgleaner.domain.goal_links import GoalLink
 from litgleaner.domain.identity import Alias
@@ -11,17 +11,16 @@ from litgleaner.domain.inbox import InboxItem, InboxStatus
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.reading import Annotation, NewAnnotation, ReadingState, ReadingStatus
 from litgleaner.domain.rubric import ScoreResult
+from litgleaner.ports import memory, outline, reading_route, stale, topic_map
 from litgleaner.ports.catalog import CatalogRepo
 from litgleaner.ports.citation import CitationRepo
+from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
 from litgleaner.ports.knowledge import KnowledgeRepo
 from litgleaner.ports.qa import QARepo
 from litgleaner.ports.search import SearchRepo
 from litgleaner.ports.survey import SurveyRepo
 from litgleaner.ports.translations import TranslationRepo
 
-if TYPE_CHECKING:
-    from litgleaner.ports import outline, reading_route, stale, topic_map
-    from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
 FullTextStatus = Literal["available", "parsed", "unavailable", "failed"]
 DeliveryStatus = Literal["pending", "sending", "sent", "failed"]
 JobStatus = Literal["pending", "done", "dead"]
@@ -398,3 +397,4 @@ class Store(Protocol):
     def export_snapshot(self) -> "ExportSnapshot": ...
     def topic_export_snapshot(self, query: "TopicExportQuery") -> "TopicExportSnapshot": ...
     def stale_snapshot(self) -> "stale.StaleSnapshot": ...
+    def memory_snapshot(self) -> "memory.MemorySnapshot": ...

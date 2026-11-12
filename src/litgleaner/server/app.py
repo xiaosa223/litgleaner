@@ -25,6 +25,7 @@ from litgleaner.ports.model_settings import ModelSettings
 from litgleaner.server.citations import install_citation_routes
 from litgleaner.server.exports import install_export_routes
 from litgleaner.server.knowledge import install_knowledge_routes
+from litgleaner.server.memory import install_memory_routes
 from litgleaner.server.model_setup import install_model_routes
 from litgleaner.server.outlines import install_outline_routes
 from litgleaner.server.qa import install_qa_routes
@@ -246,6 +247,7 @@ def create_app(
     install_model_routes(app)
     install_qa_routes(app)
     install_knowledge_routes(app)
+    install_memory_routes(app)
     install_citation_routes(app)
     install_topic_routes(app)
     install_export_routes(app)

@@ -39,6 +39,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 | 改权重或等级线 | 改 `config/rubrics/default.json`，执行 `rubric rescore`（不花钱） |
 | 改评价维度的定义 | 改同一文件，执行 `rubric reassess <id>` 预览，加 `--execute` 执行（花钱） |
 | 查看历史结果是否过期 | `stale` 零费用核对；`--format json` 输出全部历史及无法完整核验的原因，见 [docs/STALE.md](docs/STALE.md) |
+| 查询文库论文的事实关系 | 本地只读接口 `/api/papers/{id}/memory-facts`，见 [docs/PAPER-MEMORY.md](docs/PAPER-MEMORY.md) |
 | 增减推送渠道和时间 | 改 `config/channels.yaml` |
 | 飞书卡片推送、点按钮加入 Zotero | 配置渠道及 `zotero authorize` 后，`serve` 自动监听按钮，见 [docs/CHANNELS.md](docs/CHANNELS.md) |
 | 手动把一篇论文加入 Zotero | `zotero add <DOI 或论文编号>` |
