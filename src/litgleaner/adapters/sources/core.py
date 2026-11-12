@@ -24,6 +24,7 @@ from typing import Any
 import httpx
 from pydantic import Field
 
+from litgleaner.adapters.common.capture import captured_today
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import SourceOptions, Today, parse_options, utc_today
 from litgleaner.adapters.common.query import boolean_query, matches_terms
@@ -61,7 +62,7 @@ class CoreSource:
     ) -> None:
         self.name = name
         self._options = parse_options(CoreOptions, options, name)
-        self._today = today
+        self._today = captured_today(today)
         self._has_key = bool(api_key)
         self._http = HttpClient(
             "CORE",

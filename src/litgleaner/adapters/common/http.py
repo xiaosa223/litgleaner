@@ -10,10 +10,17 @@ from collections.abc import Callable, Iterable, Iterator, Mapping
 from email.utils import parsedate_to_datetime
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any
-from urllib.parse import quote, quote_plus
 
 import httpx
 
+from litgleaner.adapters.common.capture import (
+    capture_format,
+    capture_http,
+    capture_inputs,
+    scrub_response_text,
+    scrub_text,
+    secret_variants,
+)
 from litgleaner.domain.errors import (
     AuthFailed,
     RateLimited,
@@ -74,9 +81,7 @@ class HttpClient:
         self._keep_raw = keep_raw
         plain = tuple(s for s in secrets if s)
         # URL 里的密钥是编码后的形式，也要一起脱敏。
-        self._secrets = tuple(
-            dict.fromkeys(v for s in plain for v in (s, quote(s, safe=""), quote_plus(s)))
-        )
+        self._secrets = secret_variants(plain)
         self._origin = httpx.URL(base_url).host if base_url else None
         self._secret_headers = frozenset(
             name.lower()
@@ -89,7 +94,10 @@ class HttpClient:
             timeout=timeout,
             follow_redirects=True,
             transport=transport,
-            event_hooks={"request": [self._drop_secrets_off_origin]},
+            event_hooks={
+                "request": [self._drop_secrets_off_origin],
+                "response": [self._capture_response],
+            },
         )
         self._min_interval = min_interval
         self._monotonic = monotonic
@@ -114,9 +122,15 @@ class HttpClient:
             request.headers.pop(name, None)
 
     def scrub(self, text: str) -> str:
-        for secret in self._secrets:
-            text = text.replace(secret, "[secret]")
-        return text
+        return scrub_text(text, self._secrets)
+
+    @property
+    def min_interval(self) -> float:
+        return self._min_interval
+
+    def _capture_response(self, response: httpx.Response) -> None:
+        if self._keep_raw:
+            capture_http(response, self.scrub, self._secrets)
 
     def _wait_turn(self) -> None:
         if self._last is not None and self._min_interval > 0:
@@ -153,29 +167,31 @@ class HttpClient:
         headers: Mapping[str, str] | None = None,
         allow_missing: bool = False,
     ) -> Any:
-        response = self.get(path, params, headers=headers, allow_missing=allow_missing)
-        if response is None:
-            return None
-        try:
-            return response.json()
-        except ValueError as error:
-            raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
+        with capture_format("json"):
+            response = self.get(path, params, headers=headers, allow_missing=allow_missing)
+            if response is None:
+                return None
+            try:
+                return response.json()
+            except ValueError as error:
+                raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
 
     def post_json(
         self, path: str, body: Mapping[str, Any], *, headers: Mapping[str, str] | None = None
     ) -> Any:
         """POST JSON 并解析 JSON 响应。错误分类与 get 相同。"""
-        self._wait_turn()
-        try:
-            response = self._client.post(path, json=body, headers=headers)
-        except httpx.HTTPError as error:
-            raise TransientError(f"连接 {self.service} 失败：{type(error).__name__}") from error
-        self._remember(response)
-        self._raise_for_status(response)
-        try:
-            return response.json()
-        except ValueError as error:
-            raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
+        with capture_format("json"):
+            self._wait_turn()
+            try:
+                response = self._client.post(path, json=body, headers=headers)
+            except httpx.HTTPError as error:
+                raise TransientError(f"连接 {self.service} 失败：{type(error).__name__}") from error
+            self._remember(response)
+            self._raise_for_status(response)
+            try:
+                return response.json()
+            except ValueError as error:
+                raise SchemaChanged(f"{self.service} 返回的不是 JSON") from error
 
     def post_lines(
         self,
@@ -190,7 +206,10 @@ class HttpClient:
         """
         self._wait_turn()
         try:
-            with self._client.stream("POST", path, json=body, params=params) as response:
+            with (
+                capture_inputs(None),
+                self._client.stream("POST", path, json=body, params=params) as response,
+            ):
                 if response.status_code >= _ERROR_STATUS:
                     response.read()
                     self._raise_for_status(response)
@@ -201,8 +220,9 @@ class HttpClient:
     def get_text(
         self, path: str, params: Mapping[str, Any] | None = None, *, allow_missing: bool = False
     ) -> str | None:
-        response = self.get(path, params, allow_missing=allow_missing)
-        return None if response is None else response.text
+        with capture_format("text"):
+            response = self.get(path, params, allow_missing=allow_missing)
+            return None if response is None else response.text
 
     def raw_log(self) -> bytes:
         """当前线程本次调用收到的所有页面，每行一个 JSON，供发现阶段留档重放。"""
@@ -220,7 +240,7 @@ class HttpClient:
         entry = {
             "url": self.scrub(str(response.request.url)),
             "status": response.status_code,
-            "body": self.scrub(response.text),
+            "body": scrub_response_text(response, self._secrets),
         }
         self._pages.append(json.dumps(entry, ensure_ascii=False).encode("utf-8"))
 
@@ -228,7 +248,9 @@ class HttpClient:
         status = response.status_code
         if status < 400:
             return
-        detail = self.scrub(response.text.strip().replace("\n", " "))[:_MESSAGE_LIMIT]
+        detail = (
+            scrub_response_text(response, self._secrets).strip().replace("\n", " ")[:_MESSAGE_LIMIT]
+        )
         text = f"{self.service} 返回 HTTP {status}：{detail}"
         if status in {401, 403}:
             raise AuthFailed(f"{text}。请检查 API key 或访问权限")

@@ -7,11 +7,13 @@ from dataclasses import dataclass
 from litgleaner.application.citations import store_reference
 from litgleaner.application.codec import compress
 from litgleaner.application.context import AppContext
+from litgleaner.application.source_fetch import fetch, scopes
 from litgleaner.domain.errors import InvalidRequest, LitGleanerError, NotFound, SchemaChanged
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.identity import normalize_doi
 from litgleaner.domain.query import ReferenceList
 from litgleaner.ports.source import Source
+from litgleaner.ports.source_capture import CaptureScope
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +36,9 @@ class ReferenceRefresh:
 
 
 def _fetch(
-    ctx: AppContext, paper_id: str, source: Source, dois: tuple[str, ...]
+    ctx: AppContext, paper_id: str, source: Source, dois: tuple[str, ...], scope: CaptureScope
 ) -> ReferenceSourceReport:
-    result = source.fetch(ReferenceList(dois=dois), None)
+    result = fetch(ctx, source, ReferenceList(dois=dois), None, scope)
     if any(normalize_doi(item.citing_doi) not in dois for item in result.references):
         raise SchemaChanged("参考文献响应的主论文标识符不匹配")
     if any(not item.raw_text.strip() for item in result.references):
@@ -80,10 +82,15 @@ def refresh(
     names = tuple(dict.fromkeys(source_names)) if source_names is not None else tuple(available)
     if not names or any(name not in available for name in names):
         raise InvalidRequest("没有启用指定的参考文献来源")
+    planned = scopes(
+        "references",
+        {"paper_id": paper_id, "dois": list(dois)},
+        [(name, ReferenceList(dois=dois), None) for name in names],
+    )
     reports = []
-    for name in names:
+    for name, scope in zip(names, planned, strict=True):
         try:
-            reports.append(_fetch(ctx, paper_id, available[name], dois))
+            reports.append(_fetch(ctx, paper_id, available[name], dois, scope))
         except LitGleanerError as error:
             logger.warning("参考文献来源 %s 查询失败：%s", name, type(error).__name__)
             reports.append(ReferenceSourceReport(name, 0, 0, 0, False, (), type(error).__name__))

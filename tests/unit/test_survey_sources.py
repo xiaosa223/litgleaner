@@ -63,6 +63,7 @@ def context(**sources):
         blobs=Mock(),
         clock=lambda: datetime(2026, 11, 11, tzinfo=UTC),
         settings=SimpleNamespace(timezone=ZoneInfo("Asia/Tokyo")),
+        source_capture=None,
     )
 
 

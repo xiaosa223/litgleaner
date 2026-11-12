@@ -17,6 +17,7 @@ from ulid import ULID
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import pdf_key
 from litgleaner.application.memory_admission import register
+from litgleaner.application.source_fetch import fetch, scopes
 from litgleaner.application.stages.discover import resolve_record
 from litgleaner.domain.errors import InvalidRequest, LitGleanerError
 from litgleaner.domain.identity import Alias
@@ -40,18 +41,20 @@ _PDF_MAGIC = b"%PDF-"
 _NO_METADATA = f"元数据待补：PDF 首页没有找到 {ACCEPTED}，暂用文件名作标题"
 
 
-def _lookup(ctx: AppContext, found: Identified) -> tuple[str | None, str | None]:
+def _lookup(ctx: AppContext, found: Identified, item: InboxItem) -> tuple[str | None, str | None]:
     """按标识符向信号源查元数据，返回（论文 ID，失败原因）。"""
     query = lookup_query(found)
     local = ctx.store.papers.find_ids_by_aliases((Alias(found.kind, found.value),))
     if len(local) == 1:
         return next(iter(local)), None
+    available = tuple(s for s in ctx.sources.values() if type(query) in s.capabilities)
+    planned = scopes(
+        "inbox", _lookup_owner(found, item), [(s.name, query, None) for s in available]
+    )
     errors: list[str] = []
-    for source in ctx.sources.values():
-        if type(query) not in source.capabilities:
-            continue
+    for source, scope in zip(available, planned, strict=True):
         try:
-            result = source.fetch(query, None)
+            result = fetch(ctx, source, query, None, scope)
         except LitGleanerError as error:
             logger.warning("信号源 %s 按标识符查询失败：%s", source.name, error)
             errors.append(f"{source.name}：{error}")
@@ -65,6 +68,18 @@ def _lookup(ctx: AppContext, found: Identified) -> tuple[str | None, str | None]
     if errors:
         return None, "查询数据源出错，稍后再试：" + "；".join(errors)
     return None, f"已启用的数据源里查不到 {found.value}"  # 调用方据此提示
+
+
+def _lookup_owner(found: Identified, item: InboxItem) -> dict[str, str | None]:
+    return {
+        "inbox_id": item.id,
+        "inbox_kind": item.kind,
+        "identifier_kind": found.kind,
+        "identifier_value": found.value,
+        "pdf_sha256": item.pdf_sha256,
+        "fallback_title": _title_from_file(item.value) if item.kind == "pdf" else None,
+        "selection": "first_nonempty_first_record",
+    }
 
 
 def _record(ctx: AppContext, kind: InboxKind, value: str, sha256: str | None) -> InboxItem:
@@ -96,7 +111,7 @@ def add_identifier(ctx: AppContext, text: str) -> InboxItem:
     if found.kind == "url":
         raise InvalidRequest(f"暂时只认得出含 {ACCEPTED} 的链接；其他链接请下载 PDF 后拖入")
     item = _record(ctx, found.kind, found.value, None)
-    paper_id, error = _lookup(ctx, found)
+    paper_id, error = _lookup(ctx, found, item)
     return _finish(ctx, item, paper_id, error)
 
 
@@ -113,12 +128,12 @@ def _title_from_file(file_name: str) -> str:
 
 
 def _paper_for_pdf(
-    ctx: AppContext, file_name: str, identifier: str | None
+    ctx: AppContext, file_name: str, identifier: str | None, item: InboxItem
 ) -> tuple[str | None, str | None]:
     found = identify(identifier) if identifier else None
     note = _NO_METADATA
     if found is not None and found.kind != "url":
-        paper_id, error = _lookup(ctx, found)
+        paper_id, error = _lookup(ctx, found, item)
         if paper_id:
             return paper_id, None
         note = f"元数据待补：首页找到 {found.value}，但{error}；暂用文件名作标题"
@@ -135,7 +150,7 @@ def add_pdf(ctx: AppContext, file_name: str, content: bytes, identifier: str | N
     if (existing := ctx.store.papers.paper_with_pdf(sha256)) is not None:
         return _finish(ctx, item, existing, None)
     # 有标识符的网络查询在事务外完成；无标识符时的建条目与 PDF 判重在同一事务里。
-    paper_id, note = _paper_for_pdf(ctx, file_name, identifier)
+    paper_id, note = _paper_for_pdf(ctx, file_name, identifier, item)
     now = ctx.now_iso()
     with ctx.store.atomic():
         same_file = ctx.store.papers.paper_with_pdf(sha256)

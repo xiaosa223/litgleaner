@@ -23,6 +23,7 @@ from litgleaner.infra.db.schema_outline import define_outline
 from litgleaner.infra.db.schema_relation import define_relations
 from litgleaner.infra.db.schema_survey import define_survey
 from litgleaner.infra.db.schema_topic_map import define_topic_map
+from litgleaner.infra.db.source_capture_schema import define_capture
 
 metadata = MetaData()
 paper_embedding = define_embedding(metadata)
@@ -30,6 +31,7 @@ survey_preview, survey_work, survey_round = define_survey(metadata)
 topic_map = define_topic_map(metadata)
 topic_outline = define_outline(metadata)
 memory_admission, relate_batch, paper_relation = define_relations(metadata)
+source_capture_attempt, source_capture_input = define_capture(metadata)
 
 paper = Table(
     "paper",

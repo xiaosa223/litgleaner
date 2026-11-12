@@ -17,6 +17,7 @@ from typing import Any
 import httpx
 from pydantic import Field
 
+from litgleaner.adapters.common.capture import captured_today
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import SourceOptions, Today, parse_options, utc_today
 from litgleaner.adapters.common.query import boolean_query
@@ -70,7 +71,7 @@ class EuropePmcSource:
         self.name = name
         self._options = parse_options(EuropePmcOptions, options, name)
         self._contact = contact_email
-        self._today = today
+        self._today = captured_today(today)
         self._http = HttpClient(
             "Europe PMC",
             base_url=self._options.base_url,

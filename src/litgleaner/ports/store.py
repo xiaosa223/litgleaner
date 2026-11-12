@@ -19,6 +19,7 @@ from litgleaner.ports.knowledge import KnowledgeRepo
 from litgleaner.ports.qa import QARepo
 from litgleaner.ports.reextract import ReextractStore
 from litgleaner.ports.search import SearchRepo
+from litgleaner.ports.source_capture import CaptureRepo
 from litgleaner.ports.survey import SurveyRepo
 from litgleaner.ports.translations import TranslationRepo
 
@@ -371,6 +372,8 @@ class Store(memory.MemoryStore, ReextractStore, Protocol):
     def catalog(self) -> CatalogRepo: ...
     @property
     def search(self) -> SearchRepo: ...
+    @property
+    def source_captures(self) -> CaptureRepo: ...
     @property
     def qa(self) -> QARepo: ...
     @property

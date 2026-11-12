@@ -9,6 +9,7 @@ from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
 from tests.integration.relation_migration_helpers import (
+    CAPTURE_TRIGGERS,
     RELATION_TRIGGERS,
     assert_legacy_preserved,
     assert_search_upgrade_triggers,
@@ -65,6 +66,7 @@ def test_0017_preserves_old_tables_facts_keys_triggers_and_matches_metadata(tmp_
             "paper_embedding_rowid",
         }
         | RELATION_TRIGGERS
+        | CAPTURE_TRIGGERS
     )
     engine = create_engine(url)
     try:

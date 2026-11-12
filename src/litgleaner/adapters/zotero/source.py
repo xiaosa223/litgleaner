@@ -16,6 +16,7 @@ from typing import Any
 
 import httpx
 
+from litgleaner.adapters.common.capture import captured_today
 from litgleaner.adapters.common.options import Today, parse_options, utc_today
 from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.zotero.discovery import discover_data_dir
@@ -53,7 +54,7 @@ class ZoteroSource:
     ) -> None:
         self.name = name
         self._options = parse_options(ZoteroSourceOptions, options, name)
-        self._today = today
+        self._today = captured_today(today)
         self._web: ZoteroWebApi | None = None
         self._local: LocalLibrary | None = None
         key = require_api_key(self._options, api_key, name)

@@ -32,6 +32,7 @@ uv run litgleaner serve        # 只监听本机，打印启动链接并打开�
 |---|---|
 | 检查配置和密钥 | `litgleaner doctor` |
 | 增减信号源 | 改 `config/sources.yaml`，各来源的能力和限制见 [docs/SOURCES.md](docs/SOURCES.md) |
+| 查询来源留档 | 四个生产入口在解析前保存原始输入及用途，内部读取接口见 [docs/SOURCE-CAPTURE.md](docs/SOURCE-CAPTURE.md)；离线 `replay` 尚待接通 |
 | 调整全文来源和顺序 | 改 `config/app.yaml` 的 `fulltext` |
 | 真实网络联调 | `uv run python scripts/probe_sources.py`（不写数据库） |
 | 切换研究主题 | 新建 `config/topics/<id>.yaml`，执行 `topic activate`、`topic pause` |

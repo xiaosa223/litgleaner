@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from litgleaner.adapters.common.capture import read_source_bytes
 from litgleaner.domain.errors import SchemaChanged
 from litgleaner.domain.paper import SourceRecord
 from litgleaner.domain.query import IdentifierLookup, JournalWatch, KeywordSearch, Query
@@ -26,7 +27,7 @@ class FakeSource:
             raise ValueError(f"不支持的查询：{type(query).__name__}")
         if self.fail_next:
             raise self.fail_next.pop(0)
-        raw = self._file.read_bytes()
+        raw = read_source_bytes(self._file.read_bytes)
         items: list[Mapping[str, Any]] = json.loads(raw)
         start = int(cursor) if cursor else 0
         try:

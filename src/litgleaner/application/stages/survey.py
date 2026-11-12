@@ -104,4 +104,6 @@ class SurveyStage(Stage):
             historical=False,
             plan_id=f"survey-plan:{run_id}:{iteration}",
             internal=True,
+            run_id=run_id,
+            iteration=iteration,
         )

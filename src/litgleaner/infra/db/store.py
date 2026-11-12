@@ -45,6 +45,7 @@ from litgleaner.infra.db.schema import (
     triage,
 )
 from litgleaner.infra.db.search_repo import SqlSearchRepo
+from litgleaner.infra.db.source_capture_repo import SqlCaptureRepo
 from litgleaner.infra.db.stale_repo import SqlStaleRepo
 from litgleaner.infra.db.survey_repo import SqlSurveyRepo
 from litgleaner.infra.db.topic_export_repo import SqlTopicExportRepo
@@ -92,6 +93,7 @@ class SqlStore:
         self._inbox = SqlInboxRepo(self._db)
         self._catalog = SqlCatalogRepo(self._db)
         self._search = SqlSearchRepo(self._db)
+        self._source_captures = SqlCaptureRepo(self._db)
         self._qa = SqlQARepo(self._db)
         self._knowledge = SqlKnowledgeRepo(self._db)
         self._citations = SqlCitationRepo(self._db)
@@ -145,6 +147,10 @@ class SqlStore:
     @property
     def search(self) -> SqlSearchRepo:
         return self._search
+
+    @property
+    def source_captures(self) -> SqlCaptureRepo:
+        return self._source_captures
 
     @property
     def qa(self) -> SqlQARepo:

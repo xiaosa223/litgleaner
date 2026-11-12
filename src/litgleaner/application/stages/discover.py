@@ -12,6 +12,7 @@ from ulid import ULID
 from litgleaner.application.citations import ingest_source_citations
 from litgleaner.application.codec import compress
 from litgleaner.application.context import AppContext
+from litgleaner.application.source_fetch import fetch, scopes
 from litgleaner.application.stages.base import Stage
 from litgleaner.application.topics import active_topics
 from litgleaner.domain.identity import (
@@ -106,7 +107,11 @@ class DiscoverStage(Stage):
                     yield JobSpec(
                         key=f"discover:{source.name}:{query.hash}:{day}",
                         stage=self.name,
-                        payload={"source": source.name, "query": query.model_dump(mode="json")},
+                        payload={
+                            "source": source.name,
+                            "query": query.model_dump(mode="json"),
+                            "job_key": f"discover:{source.name}:{query.hash}:{day}",
+                        },
                     )
 
     def process(self, ctx: AppContext, payload: Mapping[str, Any]) -> None:
@@ -116,7 +121,10 @@ class DiscoverStage(Stage):
             return
         query = query_from_payload(payload["query"])
         cursor = ctx.store.papers.get_cursor(source.name, query.hash)
-        result = source.fetch(query, cursor)
+        scope = scopes(
+            "discover", {"job_key": payload.get("job_key")}, ((source.name, query, cursor),)
+        )[0]
+        result = fetch(ctx, source, query, cursor, scope)
         for warning in result.warnings:
             logger.warning("信号源 %s：%s", source.name, warning)
         moment = ctx.clock()

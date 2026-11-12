@@ -17,6 +17,7 @@ from typing import Any
 import httpx
 from pydantic import Field
 
+from litgleaner.adapters.common.capture import captured_today
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import SourceOptions, Today, parse_options, utc_today
 from litgleaner.adapters.common.query import matches_terms
@@ -51,7 +52,7 @@ class OpenReviewSource:
     ) -> None:
         self.name = name
         self._options = parse_options(OpenReviewOptions, options, name)
-        self._today = today
+        self._today = captured_today(today)
         self._http = HttpClient(
             "OpenReview",
             base_url=self._options.base_url,

@@ -25,6 +25,7 @@ from litgleaner.ports.library import ReferenceLibrary
 from litgleaner.ports.parser import Parser
 from litgleaner.ports.publisher import Publisher, Renderer
 from litgleaner.ports.source import Source
+from litgleaner.ports.source_capture import SourceCapture
 from litgleaner.ports.store import Store
 
 
@@ -74,6 +75,7 @@ class AppContext:
     routes: tuple[Route, ...]
     library: ReferenceLibrary | None = None
     embedder: Embedder | None = None
+    source_capture: SourceCapture | None = None
 
     def now_iso(self) -> str:
         return self.clock().isoformat()

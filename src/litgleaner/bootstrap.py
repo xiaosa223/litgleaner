@@ -7,6 +7,7 @@ from pathlib import Path
 
 from litgleaner import bootstrap_args
 from litgleaner.adapters.blobstore.local import LocalBlobStore
+from litgleaner.adapters.common.source_capture import DurableSourceCapture
 from litgleaner.adapters.embeddings.fastembed import LocalEmbedder
 from litgleaner.adapters.fakes.fulltext import FakeFullText
 from litgleaner.adapters.fakes.library import FakeLibrary
@@ -63,6 +64,7 @@ from litgleaner.ports.parser import Parser
 from litgleaner.ports.publisher import Publisher, Renderer
 from litgleaner.ports.secrets import SecretStore
 from litgleaner.ports.source import Source
+from litgleaner.ports.source_capture import SourceRecipe
 from litgleaner.ports.store import Store
 
 CONTACT_EMAIL = bootstrap_args.CONTACT_EMAIL
@@ -166,11 +168,16 @@ def _build[T](
     root: Path,
     *,
     secrets: SecretStore | None = None,
+    recipes: dict[str, SourceRecipe] | None = None,
 ) -> T:
     factory = _pick(registry, kind, config.adapter)
     credentials = {env: env for env in config.credentials_env}
     optional = frozenset(config.optional_env)
-    return factory(BuildArgs(name, config.options, root, credentials, optional, secrets))
+    args = BuildArgs(name, config.options, root, credentials, optional, secrets)
+    result = factory(args)
+    if recipes is not None:
+        recipes[name] = bootstrap_args.source_recipe(result, config.adapter, args)
+    return result
 
 
 def _load_prompts(config: LoadedConfig) -> dict[str, Prompt]:
@@ -342,13 +349,16 @@ def _runtime_settings(config: LoadedConfig) -> RuntimeSettings:
 def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = None) -> AppContext:
     now = clock or (lambda: datetime.now(UTC))
     store = SqlStore(config.database_url)
+    recipes: dict[str, SourceRecipe] = {}
+    blobs = LocalBlobStore(config.path(config.app.blob_root))
+    sources = {
+        name: _build(SOURCES, "信号源", name, source, config.root, recipes=recipes)
+        for name, source in config.sources.items()
+        if source.enabled
+    }
     return AppContext(
         store=store,
-        sources={
-            name: _build(SOURCES, "信号源", name, source, config.root)
-            for name, source in config.sources.items()
-            if source.enabled
-        },
+        sources=sources,
         fulltext=tuple(
             _build(FULLTEXT, "全文", item.adapter, item, config.root)
             for item in config.app.fulltext
@@ -359,7 +369,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         channels=_build_channels(config),
         library=build_library(config),
         embedder=build_embedder(config),
-        blobs=LocalBlobStore(config.path(config.app.blob_root)),
+        blobs=blobs,
         archive=LocalBlobStore(config.path(config.app.archive_dir)),
         clock=now,
         settings=_runtime_settings(config),
@@ -368,4 +378,5 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         journal_sets=config.journal_sets,
         rubrics=config.rubrics,
         routes=config.routes,
+        source_capture=DurableSourceCapture(store.source_captures, blobs, now, recipes, sources),
     )

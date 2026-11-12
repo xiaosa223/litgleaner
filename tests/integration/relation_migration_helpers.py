@@ -1,10 +1,19 @@
-"""旧迁移的head验收仅允许0019反馈扩展及0020确定性搜索副本。"""
+"""旧迁移升级到最新版本时，逐项核对明确允许的变化。"""
 
 import re
 
 FTS_RAW_COLUMNS = "rowid,kind,id,paper_id,page,authorship,source_version,title,text"
 _SEARCH_TRIGGERS = ("search_", "qa_search_", "knowledge_search_")
 _NORMALIZE = "litgleaner_search_normalize_v1"
+
+CAPTURE_TABLES = {"source_capture_attempt", "source_capture_input"}
+CAPTURE_TRIGGERS = {
+    "source_capture_attempt_transition",
+    "source_capture_attempt_no_replace",
+    "source_capture_input_append",
+    "source_capture_input_no_update",
+    "source_capture_input_no_delete",
+}
 
 RELATION_TRIGGERS = {
     "memory_admission_no_update",

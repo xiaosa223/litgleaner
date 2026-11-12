@@ -34,17 +34,21 @@ def preview(
     historical: bool = True,
     plan_id: str | None = None,
     internal: bool = False,
+    run_id: str | None = None,
+    iteration: int | None = None,
 ) -> SurveyPreview:
     if plan_id is not None and (saved := ctx.store.surveys.preview(plan_id)) is not None:
         return saved
     topic = require_topic(ctx, topic_id)
     settings = ctx.settings.survey
     seeds = topic.seeds.dois if dois is None else dois
-    result = collect(ctx, topic, settings, dois=seeds, historical=historical)
+    plan_id = plan_id or str(ULID())
+    owner = {"plan_id": plan_id, "internal": internal, "run_id": run_id, "iteration": iteration}
+    result = collect(ctx, topic, settings, dois=seeds, historical=historical, capture_owner=owner)
     planned = counts(ctx, topic, tuple(item.record for item in result.candidates))
     initial, pipeline = estimates(ctx, settings, planned)
     plan = SurveyPreview(
-        id=plan_id or str(ULID()),
+        id=plan_id,
         topic_id=topic.id,
         topic_hash=topic.topic_hash,
         fingerprint=fingerprint(ctx, topic, settings),

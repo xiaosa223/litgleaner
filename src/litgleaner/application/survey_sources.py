@@ -1,12 +1,15 @@
 """显式调研的来源采集：只归档原始响应，不写论文、任务或来源游标。"""
 
 import hashlib
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
 
 from litgleaner.application.codec import compress
 from litgleaner.application.context import AppContext
+from litgleaner.application.source_fetch import fetch, scopes
+from litgleaner.application.survey_plan import fingerprint
 from litgleaner.domain.errors import InvalidRequest, SchemaChanged
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.identity import Alias, normalize_doi, record_aliases, title_key
@@ -23,6 +26,7 @@ from litgleaner.domain.survey import (
 from litgleaner.domain.survey_candidates import CandidatePool
 from litgleaner.domain.topic import Topic
 from litgleaner.ports.source import FetchResult, Source
+from litgleaner.ports.source_capture import CaptureScope
 
 
 @dataclass(frozen=True)
@@ -131,10 +135,11 @@ def _capture(
     settings: SurveySettings,
     *,
     pool: CandidatePool,
+    scope: CaptureScope | None,
 ) -> tuple[SurveySource, tuple[SurveyEdge, ...]]:
     mode, query = task
     try:
-        result = source.fetch(query, None)
+        result = fetch(ctx, source, query, None, scope)
         report = _report(ctx, name, task, settings, result)
     except Exception as error:
         return SurveySource(
@@ -221,6 +226,40 @@ def _tasks(
         )
 
 
+def _available(ctx: AppContext, query: Query) -> list[tuple[str, Source]]:
+    return [(n, s) for n, s in sorted(ctx.sources.items()) if type(query) in s.capabilities]
+
+
+def _capture_scopes(
+    ctx: AppContext,
+    topic: Topic,
+    settings: SurveySettings,
+    tasks: tuple[tuple[SurveyMode, Query], ...],
+    owner: Mapping[str, Any],
+) -> dict[tuple[SurveyMode, str, str], CaptureScope]:
+    if ctx.source_capture is None:
+        return {}
+    calls = [(mode, name, query) for mode, query in tasks for name, _ in _available(ctx, query)]
+    planned = scopes(
+        "survey",
+        {
+            **owner,
+            "topic": topic.model_dump(mode="json"),
+            "topic_id": topic.id,
+            "topic_hash": topic.topic_hash,
+            "fingerprint": fingerprint(ctx, topic, settings),
+            "settings": settings.model_dump(mode="json"),
+            "timezone": str(ctx.settings.timezone),
+            "tasks": [{"mode": mode, "query": q.model_dump(mode="json")} for mode, q in tasks],
+        },
+        [(name, query, None) for _, name, query in calls],
+    )
+    return {
+        (mode, query.hash, name): scope
+        for (mode, name, query), scope in zip(calls, planned, strict=True)
+    }
+
+
 def collect(
     ctx: AppContext,
     topic: Topic,
@@ -228,6 +267,7 @@ def collect(
     *,
     dois: tuple[str, ...],
     historical: bool = True,
+    capture_owner: Mapping[str, Any] | None = None,
 ) -> SurveyCollected:
     """第一轮含三类历史查询，后续轮只扩展调用者明确传入的高分 DOI。"""
     today = ctx.clock().astimezone(ctx.settings.timezone).date()
@@ -236,22 +276,48 @@ def collect(
     uncovered: list[str] = []
     seeds = _seeds(dois, settings, uncovered)
     tasks = tuple(_tasks(topic, settings, today, seeds, historical))
+    group = _capture_scopes(
+        ctx,
+        topic,
+        settings,
+        tasks,
+        {
+            **(capture_owner or {}),
+            "seeds": list(dois),
+            "historical": historical,
+            "today": today.isoformat(),
+        },
+    )
     if historical and not any(term.strip() for term in topic.query.terms):
         uncovered.append("未配置非空关键词，未进行历史检索")
+    return _collect_tasks(ctx, settings, tasks, group, uncovered)
+
+
+def _collect_tasks(
+    ctx: AppContext,
+    settings: SurveySettings,
+    tasks: tuple[tuple[SurveyMode, Query], ...],
+    group: Mapping[tuple[SurveyMode, str, str], CaptureScope],
+    uncovered: list[str],
+) -> SurveyCollected:
     pool = CandidatePool()
     reports: list[SurveySource] = []
     edges: list[SurveyEdge] = []
     for task in tasks:
         mode, query = task
-        available = [
-            (name, source)
-            for name, source in sorted(ctx.sources.items())
-            if type(query) in source.capabilities
-        ]
+        available = _available(ctx, query)
         if not available:
             uncovered.append(f"{mode} 没有启用支持该能力的来源")
         for name, source in available:
-            report, found_edges = _capture(ctx, name, source, task, settings, pool=pool)
+            report, found_edges = _capture(
+                ctx,
+                name,
+                source,
+                task,
+                settings,
+                pool=pool,
+                scope=group.get((mode, query.hash, name)),
+            )
             reports.append(report)
             edges.extend(found_edges)
             if report.error:

@@ -10,6 +10,7 @@ from typing import Any
 
 import httpx
 
+from litgleaner.adapters.common.capture import capture_format
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.zotero.options import LibraryOptions
 from litgleaner.domain.errors import ConfigError, SchemaChanged
@@ -124,7 +125,8 @@ class ZoteroWebApi:
         return f"{self.base_url}{self._path(f'/items/{key}/file')}"
 
     def _get(self, path: str, params: Mapping[str, str]) -> httpx.Response:
-        response = self._http.get(path, params)
+        with capture_format("json"):
+            response = self._http.get(path, params)
         if response is None:  # 没有 allow_missing 时 HttpClient 不会返回 None
             raise SchemaChanged(f"Zotero {path} 没有返回内容")
         return response

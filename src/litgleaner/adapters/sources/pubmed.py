@@ -15,6 +15,7 @@ from typing import Any
 import httpx
 from pydantic import Field
 
+from litgleaner.adapters.common.capture import capture_format, captured_today
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import SourceOptions, Today, parse_options, utc_today
 from litgleaner.adapters.common.query import boolean_query
@@ -52,7 +53,7 @@ class PubMedSource:
     ) -> None:
         self.name = name
         self._options = parse_options(PubMedOptions, options, name)
-        self._today = today
+        self._today = captured_today(today)
         self._common = {"tool": "litgleaner"}
         if contact_email:
             self._common["email"] = contact_email
@@ -121,7 +122,8 @@ class PubMedSource:
 
     def _fetch_batch(self, ids: list[str]) -> list[ET.Element]:
         params = {**self._common, "db": "pubmed", "id": ",".join(ids), "retmode": "xml"}
-        response = self._http.get("/efetch.fcgi", params)
+        with capture_format("xml"):
+            response = self._http.get("/efetch.fcgi", params)
         content = response.content if response is not None else b""
         try:
             root = ET.fromstring(content)

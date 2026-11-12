@@ -22,6 +22,7 @@ from urllib.parse import quote
 import httpx
 from pydantic import Field
 
+from litgleaner.adapters.common.capture import captured_today
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import SourceOptions, Today, parse_options, utc_today
 from litgleaner.adapters.common.query import boolean_query
@@ -90,7 +91,7 @@ class OpenAlexSource:
         self._options = parse_options(OpenAlexOptions, options, name)
         self._contact = contact_email
         self._keyed = bool(api_key)
-        self._today = today
+        self._today = captured_today(today)
         self._http = HttpClient(
             "OpenAlex",
             base_url=self._options.base_url,

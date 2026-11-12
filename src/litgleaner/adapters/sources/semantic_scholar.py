@@ -1,7 +1,6 @@
 """Semantic Scholar：关键词检索、引用追踪、作者追踪。
 
-- 关键词用 /paper/search/bulk：支持布尔语法（| 表示或，紧贴括号的 - 表示排除，引号表示短语），
-  用 publicationDateOrYear 限定窗口，按 token 翻页。
+- /paper/search/bulk：| 表示或，紧贴括号的 - 排除，引号表示短语；按日期限窗，用 token 翻页。
 - 引用追踪用 /paper/DOI:{doi}/citations，作者追踪先 /author/search 再 /author/{id}/papers，
   都按 offset/limit 翻页。这两个接口也接受 publicationDateOrYear，服务端先缩小范围，
   本地再按 publicationDate（缺失时按年份的 1 月 1 日，与服务端一致）过滤一遍。
@@ -20,6 +19,7 @@ from urllib.parse import quote
 import httpx
 from pydantic import Field
 
+from litgleaner.adapters.common.capture import captured_today
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import SourceOptions, Today, parse_options, utc_today
 from litgleaner.adapters.common.query import boolean_query
@@ -106,7 +106,7 @@ class SemanticScholarSource:
     ) -> None:
         self.name = name
         self._options = parse_options(SemanticScholarOptions, options, name)
-        self._today = today
+        self._today = captured_today(today)
         default_interval = _INTERVAL_WITH_KEY if api_key else _INTERVAL_WITHOUT_KEY
         interval = self._options.min_interval_seconds
         self._http = HttpClient(

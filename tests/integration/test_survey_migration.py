@@ -9,6 +9,7 @@ from alembic.runtime.migration import MigrationContext
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import IntegrityError
 from tests.integration.relation_migration_helpers import (
+    CAPTURE_TABLES,
     FTS_RAW_COLUMNS,
     assert_feedback_extension,
     assert_search_upgrade_triggers,
@@ -100,7 +101,8 @@ def test_0015_upgrade_preserves_old_facts_triggers_foreign_keys_and_matches_sche
     upgrade_database(url)
     upgrade_database(url)
     after, current, current_keys = _snapshot(path)
-    assert before.keys() == after.keys()
+    assert after.keys() == before.keys() | CAPTURE_TABLES
+    assert all(after[name] == [] for name in CAPTURE_TABLES)
     for table in before:
         if table == "feedback":
             assert_feedback_extension(

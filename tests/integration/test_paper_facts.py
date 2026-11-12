@@ -10,6 +10,7 @@ from sqlalchemy import text
 from tests.e2e.conftest import _write_config
 
 from litgleaner.application import inbox
+from litgleaner.application.codec import decompress
 from litgleaner.application.stages.discover import DiscoverStage, resolve_record
 from litgleaner.bootstrap import build_context
 from litgleaner.domain.identity import Alias
@@ -150,4 +151,13 @@ def test_discover_preserves_source_facts_and_archives_original_response(ctx, tmp
     paper_id = next(iter(ctx.store.papers.find_ids_by_aliases((Alias("doi", query.doi),))))
     assert ctx.store.papers.get(paper_id).publication_types == ("Review",)
     assert ctx.store.papers.get(paper_id).citation_count == 42
-    assert len(tuple(tmp_path.rglob("*.zst"))) == 1
+    original = (tmp_path / "config/demo/papers.json").read_bytes()
+    (old_key,) = ctx.store._db.fetch(
+        text("SELECT raw_key FROM sighting WHERE paper_id=:id").bindparams(id=paper_id)
+    )[0]
+    (attempt,) = ctx.store.source_captures.list("alpha")
+    (saved,) = ctx.store.source_captures.inputs(attempt.id)
+    assert old_key.startswith("raw/alpha/") and saved.blob_key.startswith("source_inputs/")
+    assert (
+        decompress(ctx.blobs.get(old_key)) == decompress(ctx.blobs.get(saved.blob_key)) == original
+    )

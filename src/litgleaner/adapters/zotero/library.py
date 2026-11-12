@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from litgleaner.adapters.common.capture import CapturedSqlReader, SqlReader
 from litgleaner.adapters.zotero.discovery import DB_NAME
 from litgleaner.adapters.zotero.mapping import item_arxiv, item_doi
 from litgleaner.domain.errors import ConfigError, SchemaChanged, TransientError
@@ -114,7 +115,8 @@ class LocalLibrary:
         self, *, after: str, limit: int, collection: str | None
     ) -> list[dict[str, Any]]:
         """用户“我的文库”里 dateAdded 晚于 after 的常规条目，按加入时间升序。"""
-        with snapshot(self.data_dir) as db:
+        with snapshot(self.data_dir) as connection:
+            db = CapturedSqlReader(connection)
             params: list[Any] = [after]
             clause = ""
             if collection is not None:
@@ -150,14 +152,14 @@ def _marks(values: Sequence[Any]) -> str:
     return ",".join("?" for _ in values)
 
 
-def _collection_ids(db: sqlite3.Connection, collection: str) -> list[int]:
+def _collection_ids(db: SqlReader, collection: str) -> list[int]:
     ids = [int(row[0]) for row in db.execute(_COLLECTIONS, (collection, collection))]
     if not ids:
         raise ConfigError(f"Zotero 我的文库里找不到 collection “{collection}”（按名称或 key 查找）")
     return ids
 
 
-def _load_items(db: sqlite3.Connection, rows: Sequence[Sequence[Any]]) -> list[dict[str, Any]]:
+def _load_items(db: SqlReader, rows: Sequence[Sequence[Any]]) -> list[dict[str, Any]]:
     """把条目行补全为 Web API data 一样的结构：字段名 → 值，creators 按顺序。"""
     items = {
         int(item_id): {
