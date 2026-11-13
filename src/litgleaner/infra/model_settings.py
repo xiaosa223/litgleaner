@@ -134,6 +134,8 @@ def _provider_options(old: AdapterConfig | None, draft: ModelDraft) -> dict[str,
     ):
         if not same_protocol or options.get(name, default) != value:
             options[name] = value
+    if draft.max_tokens_field is not None:
+        options["max_tokens_field"] = draft.max_tokens_field
     previous_url = options.get("base_url")
     if draft.base_url and (
         not isinstance(previous_url, str) or previous_url.rstrip("/") != draft.base_url.rstrip("/")

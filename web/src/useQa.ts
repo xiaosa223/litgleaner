@@ -1,6 +1,6 @@
 // 只读轮询不会重新提交问题或触发模型调用；请求失败时保留幂等键。
-import { useEffect, useRef, useState } from "react";
-import { api, ApiError } from "./api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api, ApiError, missingModel } from "./api";
 import { mergeQa, qaWaiting, submission, type QaSelection, type QaSubmission, type QaView } from "./qa";
 
 export function useQa(paperId: string) {
@@ -9,11 +9,12 @@ export function useQa(paperId: string) {
   const [sending, setSending] = useState(false);
   const [readError, setReadError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [modelMissing, setModelMissing] = useState(false); // 提交被拒：还没有配置问答模型
   const [version, setVersion] = useState(0);
   const pending = useRef<QaSubmission | null>(null);
   const busy = useRef(false);
   const mounted = useRef(false);
-  const reload = () => setVersion((value) => value + 1);
+  const reload = useCallback(() => setVersion((value) => value + 1), []);
 
   useEffect(() => {
     mounted.current = true;
@@ -45,6 +46,7 @@ export function useQa(paperId: string) {
     busy.current = true;
     setSending(true);
     setSendError(null);
+    setModelMissing(false);
     const request = submission(text, selected, pending.current);
     pending.current = request;
     try {
@@ -55,7 +57,10 @@ export function useQa(paperId: string) {
       reload();
       return true;
     } catch (cause) {
-      if (mounted.current) {
+      if (mounted.current && missingModel(cause) !== null) {
+        setSendError("还没有配置问答模型，配好后会自动提交这个问题。");
+        setModelMissing(true);
+      } else if (mounted.current) {
         const rejected = cause instanceof ApiError && cause.status >= 400 && cause.status < 500;
         setSendError((cause instanceof Error ? cause.message : "提问未能确认") +
           (rejected ? "" : "；请再次点击提问，同一请求会复用，避免重复计费。"));
@@ -66,5 +71,5 @@ export function useQa(paperId: string) {
       if (mounted.current) setSending(false);
     }
   };
-  return { views, loading, sending, error: sendError ?? readError, reload, send };
+  return { views, loading, sending, modelMissing, error: sendError ?? readError, reload, send };
 }

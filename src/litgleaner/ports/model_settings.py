@@ -6,6 +6,10 @@ from typing import Literal, Protocol
 
 from litgleaner.ports.llm import LLM
 
+# 兼容接口常只认 max_tokens；None 表示沿用已有配置或协议默认字段。
+MaxTokensField = Literal["max_tokens", "max_completion_tokens"]
+# 连接测试的输出上限：推理模型先思考再作答，太小会把可用模型误报为失败（实测约 250 token）。
+PROBE_MAX_OUTPUT_TOKENS = 1024
 ModelTask = Literal["triage", "extract", "assess", "translate", "ask", "map", "outline", "relate"]
 
 
@@ -22,6 +26,7 @@ class ModelDraft:
     daily_budget_usd: float = 2.0
     max_output_tokens: int = 4000
     structured: Literal["native", "prompt"] = "native"
+    max_tokens_field: MaxTokensField | None = None
     task_budgets_usd: Mapping[ModelTask, float | None] = field(default_factory=dict)
 
 
@@ -63,3 +68,8 @@ class ModelSettings(Protocol):
     def save(self, draft: ModelDraft) -> ModelSettingsView:
         """原子保存并替换后续请求使用的运行时；不调用模型。"""
         ...
+
+
+def probe_output_tokens(draft: ModelDraft) -> int:
+    """连接测试实际使用的输出上限；发送和费用估计共用。"""
+    return min(draft.max_output_tokens, PROBE_MAX_OUTPUT_TOKENS)

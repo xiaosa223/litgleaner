@@ -8,10 +8,18 @@ from pydantic import Field, SecretStr, field_validator, model_validator
 
 from litgleaner.application import model_setup
 from litgleaner.domain.errors import InvalidRequest
-from litgleaner.ports.model_settings import ModelDraft, ModelSettings, ModelSettingsView, ModelTask
+from litgleaner.ports.model_settings import (
+    MaxTokensField,
+    ModelDraft,
+    ModelSettings,
+    ModelSettingsView,
+    ModelTask,
+)
 from litgleaner.server.runtime import Context
 from litgleaner.server.schemas import _Body
 
+# 只有 Chat Completions 风格的协议用这两个字段名；其他协议各有自己的字段
+_MAX_TOKENS_FIELD_PROTOCOLS = frozenset({"openai_chat"})
 _TaskBudget = Annotated[float, Field(ge=0, strict=True, allow_inf_nan=False)]
 
 
@@ -27,12 +35,15 @@ class ModelBody(_Body):
     daily_budget_usd: float = Field(default=2, ge=0, le=1_000_000, allow_inf_nan=False)
     max_output_tokens: int = Field(default=4000, ge=128, le=200_000)
     structured: Literal["native", "prompt"] = "native"
+    max_tokens_field: MaxTokensField | None = None
     task_budgets_usd: dict[ModelTask, _TaskBudget | None] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _selected_budgets(self) -> "ModelBody":
         if set(self.task_budgets_usd) - set(self.tasks):
             raise ValueError("model_task_budget_invalid")
+        if self.max_tokens_field and self.protocol not in _MAX_TOKENS_FIELD_PROTOCOLS:
+            raise ValueError("model_max_tokens_field_invalid")
         return self
 
     @field_validator("base_url")

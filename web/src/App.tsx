@@ -13,6 +13,7 @@ import { useRoute } from "./router";
 import { SearchPalette } from "./SearchPalette";
 import { Shell } from "./Shell";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { ModelSetupProvider } from "./ModelSetup";
 import { ToastProvider } from "./ui";
 import { useAsync } from "./useAsync";
 
@@ -53,6 +54,7 @@ export function App() {
   return (
     <ErrorBoundary>
     <ToastProvider>
+    <ModelSetupProvider>
       {route.name === "paper" ? <Reader key={route.paperId} paperId={route.paperId} /> : (
         <Shell route={route} onAdd={add} onSearch={() => setSearching(true)}>
           {route.name === "today" && <Today inbox={inbox} reload={reload} onAdd={add} />}
@@ -65,6 +67,7 @@ export function App() {
       )}
       {adding && <AddPaper onClose={() => setAdding(false)} />}
       {searching && <SearchPalette onClose={() => setSearching(false)} />}
+    </ModelSetupProvider>
     </ToastProvider>
     </ErrorBoundary>
   );

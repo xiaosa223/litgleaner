@@ -1,6 +1,7 @@
 // 整篇翻译（第 12.3 节）：先估算费用，用户确认后排入后台任务；翻译过程中按段显示，可以继续阅读。
 import { useCallback, useEffect, useState } from "react";
-import { api } from "./api";
+import { api, missingModel } from "./api";
+import { useModelSetup } from "./ModelSetup";
 import type { TranslationPlan } from "./types";
 import { Modal } from "./ui";
 
@@ -10,11 +11,25 @@ const running = (plan: TranslationPlan | null) => plan?.state === "queued" || pl
 /** 后台整篇翻译的进度。排队或进行中时每 3 秒查一次，并让译文重新读缓存。 */
 export function useWholeTranslation(paperId: string, enabled: boolean, onProgress: () => void) {
   const [plan, setPlan] = useState<TranslationPlan | null>(null);
+  const [failure, setFailure] = useState<{ needsModel: boolean; message: string } | null>(null);
   // 没有可翻译的正文（还没解析完）时不查，免得接口报错
-  const refresh = useCallback(
-    () => (enabled ? api.translationPlan(paperId).then(setPlan, () => setPlan(null)) : Promise.resolve(setPlan(null))),
-    [paperId, enabled],
-  );
+  const refresh = useCallback(() => {
+    if (!enabled) {
+      setPlan(null);
+      setFailure(null);
+      return Promise.resolve();
+    }
+    return api.translationPlan(paperId).then(
+      (next) => { setPlan(next); setFailure(null); },
+      (error: unknown) => {
+        setPlan(null);
+        setFailure({
+          needsModel: missingModel(error) !== null,
+          message: error instanceof Error ? error.message : "估算失败",
+        });
+      },
+    );
+  }, [paperId, enabled]);
   useEffect(() => void refresh(), [refresh]);
   useEffect(() => {
     if (!running(plan)) return;
@@ -28,7 +43,7 @@ export function useWholeTranslation(paperId: string, enabled: boolean, onProgres
     if (plan?.state === "done") onProgress(); // 最后一批译文
   }, [plan?.state, onProgress]);
   const confirm = useCallback(async () => setPlan(await api.confirmTranslationPlan(paperId)), [paperId]);
-  return { plan, refresh, confirm, running: running(plan) };
+  return { plan, failure, refresh, confirm, running: running(plan) };
 }
 
 function cost(plan: TranslationPlan): string {
@@ -36,17 +51,25 @@ function cost(plan: TranslationPlan): string {
   return `预计费用约 $${plan.estimated_usd < 0.01 ? plan.estimated_usd.toFixed(4) : plan.estimated_usd.toFixed(2)}（按价目表和字数估算，实际以记录为准）`;
 }
 
-export function WholeTranslationDialog({ plan, onConfirm, onClose }: {
-  plan: TranslationPlan | null; onConfirm: () => Promise<void>; onClose: () => void;
+export function WholeTranslationDialog({ plan, failure, onConfirm, onRefresh, onClose }: {
+  plan: TranslationPlan | null; failure: { needsModel: boolean; message: string } | null;
+  onConfirm: () => Promise<void>; onRefresh: () => Promise<void>; onClose: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const start = async () => {
+  const requireModel = useModelSetup();
+  const start = async (): Promise<void> => {
     setSending(true);
     try {
       await onConfirm();
       onClose();
     } catch (e) {
+      const task = missingModel(e);
+      if (task !== null) {
+        setError("还没有配置翻译模型，配好后会自动开始。");
+        requireModel(task || "translate", () => void start());
+        return;
+      }
       setError(e instanceof Error ? e.message : "排队失败");
     } finally {
       setSending(false);
@@ -54,7 +77,13 @@ export function WholeTranslationDialog({ plan, onConfirm, onClose }: {
   };
   return (
     <Modal title="翻译全文" onClose={onClose} width={440}>
-      {!plan ? <p>正在估算…</p> : plan.pending === 0 ? (
+      {!plan && failure?.needsModel ? (
+        <p>翻译全文需要先配置翻译模型。配好后会重新估算费用，确认后才开始翻译。{" "}
+          <button className="linkbtn" onClick={() => requireModel("translate", () => void onRefresh())}>现在配置</button>
+        </p>
+      ) : !plan && failure ? (
+        <p style={{ color: "var(--warn)" }}>{failure.message}</p>
+      ) : !plan ? <p>正在估算…</p> : plan.pending === 0 ? (
         <p>全文 {plan.paragraphs} 段都已经有当前版本的译文。</p>
       ) : running(plan) ? (
         <p>后台正在翻译：还剩 {plan.pending} / {plan.paragraphs} 段。可以关掉这个窗口继续阅读，译文会陆续出现。</p>

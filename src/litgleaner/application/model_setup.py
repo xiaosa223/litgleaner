@@ -8,7 +8,12 @@ from jsonschema import Draft202012Validator
 from litgleaner.application.context import AppContext
 from litgleaner.domain.errors import BudgetExceeded, LitGleanerError
 from litgleaner.ports.llm import LLM, LLMRequest, StreamDone, TextDelta, TextRequest
-from litgleaner.ports.model_settings import ModelDraft, ModelSettings, ModelSettingsView
+from litgleaner.ports.model_settings import (
+    ModelDraft,
+    ModelSettings,
+    ModelSettingsView,
+    probe_output_tokens,
+)
 from litgleaner.ports.store import LLMCall
 
 _SCHEMA = {
@@ -95,7 +100,9 @@ def probe(ctx: AppContext, settings: ModelSettings, draft: ModelDraft) -> ProbeR
     ctx.llm.check_budget()
     capabilities: list[str] = []
     costs: list[float] = []
-    estimated = (128 * draft.input_price + 256 * draft.output_price) / 1_000_000
+    # 上限估计：最多两次调用，每次输出不超过测试上限
+    tokens = probe_output_tokens(draft)
+    estimated = 2 * (128 * draft.input_price + tokens * draft.output_price) / 1_000_000
     llm: LLM | None = None
     try:
         llm = settings.client(draft)

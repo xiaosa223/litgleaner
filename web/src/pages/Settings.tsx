@@ -1,8 +1,12 @@
-// 设置：外观、阅读偏好、花费、界面预览。偏好存在浏览器里；渠道、模型等要等后端提供接口后再加。
+// 设置：模型、外观、阅读偏好、花费、界面预览。偏好存在浏览器里；模型配置存在本机服务；渠道等要等后端提供接口后再加。
+import { useState } from "react";
 import { api } from "../api";
+import { ModelSetupForm } from "../ModelSetup";
+import { taskSummary } from "../modelForm";
 import { usePref, useTranslateMode } from "../prefs";
 import { usePreview } from "../preview/usePreview";
 import type { View } from "../ReaderHeader";
+import { Modal } from "../ui";
 import { useAsync } from "../useAsync";
 
 export type Theme = "system" | "light" | "dark";
@@ -23,9 +27,41 @@ export function Settings() {
   const [mode, setMode] = useTranslateMode();
   const [preview, setPreview] = usePreview();
   const [costs] = useAsync(() => api.costs(), []);
+  const [models, reloadModels] = useAsync(() => api.models(), []);
+  const [editing, setEditing] = useState(false);
+  const rows = models.state === "ready" ? taskSummary(models.data) : [];
+  const configured = rows.some((row) => row.status === "ready");
   return (
     <div className="screen-in">
       <div className="screen-head"><h1>设置</h1></div>
+
+      <h2 className="block-title">模型</h2>
+      <div className="setting">
+        <div>
+          <b>大模型</b>
+          <span className="d">翻译、提问、每日推荐要用到。不配置也能打开 PDF、高亮、记笔记和检索；第一次用到时也会提示你配置。</span>
+        </div>
+        <button className={configured ? "ghost" : "primary"} onClick={() => setEditing(true)}>{configured ? "修改" : "配置模型"}</button>
+      </div>
+      {models.state === "error" && <p className="hint-line bad">{models.message}</p>}
+      {configured && (
+        <div className="model-status" aria-label="各功能使用的模型">
+          {rows.map((row) => (
+            <div key={row.task} style={{ display: "contents" }}>
+              <span>{row.label}</span>
+              <span className={row.status === "ready" ? "ok" : row.status}>
+                {row.status === "ready" ? `${row.model ?? ""}${row.budget !== null ? ` · 每天最多 $${row.budget}` : ""}`
+                  : row.status === "demo" ? "演示模式（不调用真实模型）" : "未配置"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {editing && (
+        <Modal title="配置模型" onClose={() => setEditing(false)} width={560}>
+          <ModelSetupForm onCancel={() => setEditing(false)} onSaved={() => { setEditing(false); reloadModels(); }} />
+        </Modal>
+      )}
 
       <h2 className="block-title">外观</h2>
       <div className="setting">

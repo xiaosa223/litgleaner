@@ -4,6 +4,7 @@ import { api } from "../api";
 import { qaStatus, type QaCitation, type QaSelection } from "../qa";
 import { useQa } from "../useQa";
 import { useToast } from "../ui";
+import { useModelSetup } from "../ModelSetup";
 import { QaAnswer } from "./QaAnswer";
 
 export function QaTab({ paperId, selected, onSelection, onJump, onChange, onAnswered, savedQuestions }: {
@@ -12,10 +13,22 @@ export function QaTab({ paperId, selected, onSelection, onJump, onChange, onAnsw
   onAnswered: () => void; savedQuestions: string[];
 }) {
   const [draft, setDraft] = useState("");
-  const { views, loading, sending, error, reload, send } = useQa(paperId);
+  const { views, loading, sending, modelMissing, error, reload, send } = useQa(paperId);
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<Set<string>>(new Set());
   const toast = useToast();
+  const requireModel = useModelSetup();
+  const needsModel = views.some((view) => view.state === "configuration_required");
+  const lastState = views[views.length - 1]?.state;
+  const prompted = useRef(false);
+  // 第一次提问就遇到没有配置模型：直接在原地弹出配置；配好后排队的问题会自动继续
+  useEffect(() => {
+    if (lastState !== "configuration_required") prompted.current = false; // 下次再遇到时还会提示
+    else if (!prompted.current) {
+      prompted.current = true;
+      requireModel("ask", reload);
+    }
+  }, [lastState, requireModel, reload]);
   const end = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const currentSelection = useRef(selected);
@@ -32,6 +45,15 @@ export function QaTab({ paperId, selected, onSelection, onJump, onChange, onAnsw
       if (currentSelection.current === selected) onSelection(null);
     }
   };
+  const askRef = useRef(ask);
+  askRef.current = ask;
+  // 提交时还没有配置模型：原地弹出配置，配好后用同一请求编号重新提交，不会重复计费
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+  useEffect(() => {
+    // 配好时如果已经离开这篇论文，不再替用户提交
+    if (modelMissing) requireModel("ask", () => { if (alive.current) void askRef.current(); });
+  }, [modelMissing, requireModel]);
   const save = async (id: string) => {
     setSaving(id);
     try {
@@ -50,6 +72,12 @@ export function QaTab({ paperId, selected, onSelection, onJump, onChange, onAnsw
         {loading && <div role="status" className="tag">正在读取问答记录…</div>}
         {!loading && !views.length && <p className="tag">选中文字点“问”，或针对整篇提问。有原文依据的回答附页码；证据不足的判断标为模型推断。</p>}
         {error && <div className="msg system" role="alert">{error}</div>}
+        {needsModel && (
+          <div className="msg system" role="note">
+            还没有配置问答模型，问题已保存，配好后自动回答。{" "}
+            <button className="linkbtn" onClick={() => requireModel("ask", reload)}>现在配置</button>
+          </div>
+        )}
         <div className="msgs">
           {views.map((view) => (
             <section className="qa-turn" key={view.question.id} aria-label="问答记录">

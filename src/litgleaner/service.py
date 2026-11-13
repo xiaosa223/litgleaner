@@ -33,7 +33,11 @@ from litgleaner.infra.db.backup import ensure_daily_snapshot
 from litgleaner.infra.model_settings import ModelConfigFile, SecretOverlay, prepare, settings_view
 from litgleaner.ports.inbound import CardClick
 from litgleaner.ports.llm import LLM
-from litgleaner.ports.model_settings import ModelDraft, ModelSettingsView
+from litgleaner.ports.model_settings import (
+    ModelDraft,
+    ModelSettingsView,
+    probe_output_tokens,
+)
 from litgleaner.ports.secrets import SecretStore
 from litgleaner.server.app import create_app
 from litgleaner.server.security import LocalSecurity
@@ -67,9 +71,8 @@ class ModelRuntime:
 
     def client(self, draft: ModelDraft) -> LLM:
         with self._lock:
-            candidate, name = prepare(
-                self._file.config, replace(draft, max_output_tokens=128), self._protocols
-            )
+            probe = replace(draft, max_output_tokens=probe_output_tokens(draft))
+            candidate, name = prepare(self._file.config, probe, self._protocols)
             return build_model_client(
                 candidate, draft.provider, SecretOverlay(self._file.secrets, name, draft.api_key)
             )

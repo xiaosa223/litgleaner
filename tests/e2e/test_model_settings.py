@@ -212,7 +212,9 @@ def test_probe_exercises_structured_and_streaming_protocol_and_records_cost_only
     structured, streamed = [body for _, body in ui.peer.requests]
     assert structured["response_format"]["type"] == "json_schema"
     assert streamed["stream"] and streamed["stream_options"]["include_usage"]
-    assert all(body["max_completion_tokens"] == 128 for _, body in ui.peer.requests)
+    # 推理模型先思考再作答，上限太小会把可用模型误报为连接失败
+    assert all(body["max_completion_tokens"] == 1024 for _, body in ui.peer.requests)
+    assert response.json()["estimated_usd"] == pytest.approx(2 * (128 * 2.0 + 1024 * 4.0) / 1e6)
     assert ui.harness.llm_calls("configuration_test") == 2
     assert ui.harness.ctx.store.runs.llm_cost_since("2026-01-01") == pytest.approx(0.00008)
     assert path.read_bytes() == previous and not path.with_suffix(".yaml.bak").exists()
@@ -394,3 +396,21 @@ def test_http_model_settings_support_outline_alone_and_all_seven_tasks(model_ui,
     assert {task["task"] for task in response.json()["tasks"] if task["ready"]} == set(tasks)
     assert ui.runtime.snapshot().llm.routes["outline"].prompt.name == "outline"
     assert ui.peer.requests == [] and ui.harness.llm_calls() == before
+
+
+def test_probe_uses_requested_output_limit_field_and_rejects_unknown_names(model_ui):
+    response = model_ui.client.post(SETTINGS + "/test", json=draft(max_tokens_field="max_tokens"))
+    assert response.status_code == 200 and response.json()["ok"]
+    for _, body in model_ui.peer.requests:
+        assert body["max_tokens"] == 1024 and "max_completion_tokens" not in body
+    bad = model_ui.client.post(SETTINGS + "/test", json=draft(max_tokens_field="temperature"))
+    assert bad.status_code == 422
+    # 只有 Chat Completions 风格的协议有这两个字段名；其他协议各有自己的字段
+    other = draft(protocol="openai_responses", max_tokens_field="max_tokens")
+    assert model_ui.client.post(SETTINGS + "/test", json=other).status_code == 422
+
+
+def test_probe_never_exceeds_a_smaller_user_output_limit(model_ui):
+    response = model_ui.client.post(SETTINGS + "/test", json=draft(max_output_tokens=300))
+    assert response.status_code == 200 and response.json()["ok"]
+    assert all(body["max_completion_tokens"] == 300 for _, body in model_ui.peer.requests)

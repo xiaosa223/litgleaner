@@ -1,5 +1,6 @@
 // 所有请求同源发出；改变状态的请求带 CSRF 令牌（第 15.5 节）。
 import type { Identified } from "./identify";
+import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
 import type {
   Annotation,
@@ -18,14 +19,19 @@ import type {
 
 export class ApiError extends Error {
   readonly status: number;
-  constructor(
-    status: number,
-    message: string,
-  ) {
+  readonly code: string | null; // 服务端的稳定错误码，例如 model_configuration_required
+  readonly task: string | null; // 与模型任务有关的错误带任务名
+  constructor(status: number, message: string, code: string | null = null, task: string | null = null) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.task = task;
   }
 }
+
+/** 第一次用到模型、还没有配置时返回任务名，调用方据此在原地引导配置。 */
+export const missingModel = (error: unknown): string | null =>
+  error instanceof ApiError && error.code === "model_configuration_required" ? error.task ?? "" : null;
 
 let csrf: Promise<string> | null = null;
 
@@ -40,13 +46,17 @@ function csrfToken(): Promise<string> {
 async function parse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = `请求失败（${response.status}）`;
+    let code: string | null = null;
+    let task: string | null = null;
     try {
-      const body = (await response.json()) as { detail?: unknown };
+      const body = (await response.json()) as { detail?: unknown; code?: unknown; task?: unknown };
       if (typeof body.detail === "string") message = body.detail;
+      if (typeof body.code === "string") code = body.code;
+      if (typeof body.task === "string") task = body.task;
     } catch {
       // 响应不是 JSON 时用通用提示
     }
-    throw new ApiError(response.status, message);
+    throw new ApiError(response.status, message, code, task);
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
@@ -117,12 +127,16 @@ async function streamTranslation(path: string, body: unknown, handlers: Translat
       const name = /^event: (.+)$/m.exec(raw)?.[1];
       const data = /^data: (.+)$/m.exec(raw)?.[1];
       if (!name || !data) continue;
-      const payload = JSON.parse(data) as { index?: number; text?: string; message?: string };
+      const payload = JSON.parse(data) as { index?: number; text?: string; message?: string; code?: string; task?: string };
       if (name === "delta" && payload.index !== undefined) handlers.onDelta(payload.index, payload.text ?? "");
       if (name === "status") handlers.onThinking();
       if (name === "block") handlers.onBlock(payload as unknown as BlockTranslation);
       if (name === "end") return;
-      if (name === "error") throw new ApiError(400, payload.message ?? "翻译失败");
+      if (name === "error") {
+        const code = payload.code ?? null;
+        const task = payload.task ?? (code === "model_configuration_required" ? "translate" : null);
+        throw new ApiError(code === "model_configuration_required" ? 409 : 400, payload.message ?? "翻译失败", code, task);
+      }
     }
     if (done) throw new ApiError(500, "翻译中断，请重试");
   }
@@ -173,6 +187,10 @@ export const api = {
     send<QaView>("POST", `${paperPath(id)}/qa`, question),
   saveQa: (id: string, questionId: string) =>
     send<Annotation>("POST", `${paperPath(id)}/qa/${encodeURIComponent(questionId)}/annotation`),
+  models: () => get<ModelSettingsView>("/api/settings/models"),
+  /** 用草稿参数实际调用一次模型：会产生很少的费用，不保存任何东西。 */
+  testModel: (body: ModelBody) => send<ProbeResult>("POST", "/api/settings/models/test", body),
+  saveModel: (body: ModelBody) => send<ModelSettingsView>("PUT", "/api/settings/models", body),
   // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4 节），调用方用 isNotConnected 处理 ----
   createTopic: (topic: { name: string; background: string; content: string; goals: string[] }) =>
     send<{ id: string }>("POST", "/api/topics", topic),

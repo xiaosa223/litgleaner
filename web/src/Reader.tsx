@@ -265,7 +265,7 @@ export function Reader({ paperId }: { paperId: string }) {
         onNote={() => { const p = popup; setPopup(null); setNoteTarget({ quote: p.text, page: p.page, block: p.block, rects: p.rects }); }} />}
       {noteTarget && <NoteDialog target={noteTarget} onCancel={() => setNoteTarget(null)}
         onSave={(body) => { const t = noteTarget; setNoteTarget(null); window.getSelection()?.removeAllRanges(); void create("note", t, body); }} />}
-      {wholeOpen && <WholeTranslationDialog plan={whole.plan} onConfirm={whole.confirm} onClose={() => setWholeOpen(false)} />}
+      {wholeOpen && <WholeTranslationDialog plan={whole.plan} failure={whole.failure} onConfirm={whole.confirm} onRefresh={whole.refresh} onClose={() => setWholeOpen(false)} />}
       {help && (
         <Modal onClose={() => setHelp(false)} width={440}>
           <h3 className="dialog-title">快捷键</h3>

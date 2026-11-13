@@ -222,3 +222,14 @@ def test_updating_provider_used_by_other_tasks_requires_explicit_selection(confi
     with pytest.raises(InvalidRequest, match=r"^model_provider_used_by_other_tasks$"):
         prepare(config_file.config, draft(provider="main", tasks=("translate",)), PROTOCOLS)
     assert config_file.secrets.calls == []
+
+
+def test_compatible_endpoint_can_choose_output_limit_field_and_omission_keeps_it(config_file):
+    candidate, name = prepare(config_file.config, draft(max_tokens_field="max_tokens"), PROTOCOLS)
+    assert candidate.llm.providers["personal"].options["max_tokens_field"] == "max_tokens"
+    config_file.commit(candidate, name, KEY)
+    file = ModelConfigFile(load_config(config_file.path.parent), config_file.secrets)
+    kept, _ = prepare(file.config, draft(api_key=None), PROTOCOLS)
+    assert kept.llm.providers["personal"].options["max_tokens_field"] == "max_tokens"
+    plain, _ = prepare(load_config(config_file.path.parent), draft(provider="fresh"), PROTOCOLS)
+    assert "max_tokens_field" not in plain.llm.providers["fresh"].options

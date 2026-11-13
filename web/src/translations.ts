@@ -1,6 +1,7 @@
 // 本篇的译文：已缓存的、正在生成的、出错的。翻译以段落为单位，一次请求可能返回同段的几块。
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, type TranslationHandlers } from "./api";
+import { api, missingModel, type TranslationHandlers } from "./api";
+import { useModelSetup } from "./ModelSetup";
 import type { BlockTranslation } from "./types";
 
 export interface Translations {
@@ -31,6 +32,9 @@ export function useTranslations(paperId: string, enabled: boolean, onSpent: () =
   const [errors, setErrors] = useState(new Map<number, string>());
   const [thinking, setThinking] = useState(false);
   const running = useRef(new Set<number>()); // 已发出请求、还没结束的块，避免重复请求
+  const requireModel = useModelSetup();
+  // 配好模型后重发同一个请求；run 依赖自身，所以经由引用调用
+  const runRef = useRef<(indices: number[], request: (handlers: TranslationHandlers) => Promise<void>) => void>(() => undefined);
 
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion((v) => v + 1), []);
@@ -69,7 +73,15 @@ export function useTranslations(paperId: string, enabled: boolean, onSpent: () =
         },
       };
       request(handlers)
-        .catch((error: Error) => setErrors((m) => withAll(m, fresh, error.message)))
+        .catch((error: Error) => {
+          const task = missingModel(error);
+          if (task === null) {
+            setErrors((m) => withAll(m, fresh, error.message));
+            return;
+          }
+          setErrors((m) => withAll(m, fresh, "还没有配置翻译模型"));
+          requireModel(task || "translate", () => runRef.current(indices, request));
+        })
         .finally(() => {
           touched.forEach((i) => running.current.delete(i));
           setLive((m) => without(m, touched));
@@ -77,8 +89,9 @@ export function useTranslations(paperId: string, enabled: boolean, onSpent: () =
           onSpent();
         });
     },
-    [onSpent],
+    [onSpent, requireModel],
   );
+  runRef.current = run;
 
   const translate = useCallback(
     (index: number) => run([index], (handlers) => api.translate(paperId, index, handlers)),
