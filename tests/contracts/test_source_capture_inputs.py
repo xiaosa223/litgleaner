@@ -4,6 +4,7 @@ import base64
 import gzip
 import json
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from threading import Barrier
 from urllib.parse import quote, quote_plus
 
@@ -289,3 +290,20 @@ def test_broken_response_stream_retains_received_wire_bytes_as_incomplete():
     assert base64.b64decode(page["body"]) == b"partial bytes"
     assert "connection lost" not in repr(page)
     http.close()
+
+
+def test_streaming_lines_survive_each_step_running_in_a_fresh_context():
+    """Starlette 在线程池里逐次 next() 同步流式生成器，每次都在新的上下文副本里执行。"""
+    sink = Sink()
+    stream = client(lambda _: httpx.Response(200, text="one\ntwo\n"))
+    with capture_inputs(sink):
+        lines = stream.post_lines("/stream", {})
+        received = []
+        while True:
+            try:
+                received.append(copy_context().run(next, lines))
+            except StopIteration:
+                break
+    assert received == ["one", "two"]
+    assert sink.events == []
+    stream.close()

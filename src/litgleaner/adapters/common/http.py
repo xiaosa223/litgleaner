@@ -206,14 +206,18 @@ class HttpClient:
         """
         self._wait_turn()
         try:
-            with (
-                capture_inputs(None),
-                self._client.stream("POST", path, json=body, params=params) as response,
-            ):
+            request = self._client.build_request("POST", path, json=body, params=params)
+            # 留档钩子只在收到响应头时触发；停用留档只包住发送，不跨 yield 持有上下文令牌。
+            # 服务端在线程池里逐次 next() 流式生成器，每次都在新的上下文副本里执行。
+            with capture_inputs(None):
+                response = self._client.send(request, stream=True)
+            try:
                 if response.status_code >= _ERROR_STATUS:
                     response.read()
                     self._raise_for_status(response)
                 yield from response.iter_lines()
+            finally:
+                response.close()
         except httpx.HTTPError as error:
             raise TransientError(f"{self.service} 连接中断：{type(error).__name__}") from error
 
