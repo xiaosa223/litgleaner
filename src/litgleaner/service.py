@@ -25,12 +25,17 @@ from litgleaner.adapters.secrets import SystemSecretStore
 from litgleaner.application.context import AppContext
 from litgleaner.application.inbound import apply_click
 from litgleaner.application.pipeline import RunReport, has_on_demand_work, run_pipeline
+from litgleaner.application.topic_setup import define_topic
+from litgleaner.application.topics import activate_topic
 from litgleaner.bootstrap import LLMS, build_feishu_listener, build_llm, build_model_client
 from litgleaner.cli_shared import try_run_lock
-from litgleaner.domain.errors import ConfigError
+from litgleaner.domain.errors import ConfigError, NotFound
+from litgleaner.domain.glossary import Glossary, GlossaryTerm
+from litgleaner.domain.topic import Topic, TopicQuery
 from litgleaner.infra.config import LoadedConfig
 from litgleaner.infra.db.backup import ensure_daily_snapshot
 from litgleaner.infra.model_settings import ModelConfigFile, SecretOverlay, prepare, settings_view
+from litgleaner.infra.topic_files import TopicFiles
 from litgleaner.ports.inbound import CardClick
 from litgleaner.ports.llm import LLM
 from litgleaner.ports.model_settings import (
@@ -39,6 +44,7 @@ from litgleaner.ports.model_settings import (
     probe_output_tokens,
 )
 from litgleaner.ports.secrets import SecretStore
+from litgleaner.ports.topic_settings import TopicFields
 from litgleaner.server.app import create_app
 from litgleaner.server.security import LocalSecurity
 
@@ -51,11 +57,15 @@ _JOIN_TIMEOUT_SECONDS = 10
 
 
 class ModelRuntime:
-    """每次请求或调度取一个不可变快照；正在输出的流使用原来的快照。"""
+    """每次请求或调度取一个不可变快照；正在输出的流使用原来的快照。
+
+    在领读器里改模型设置或新建课题时写配置文件，再替换之后的快照。
+    """
 
     def __init__(self, config: LoadedConfig, ctx: AppContext, secrets: SecretStore) -> None:
         self._lock = threading.RLock()
         self._file = ModelConfigFile(config, secrets)
+        self._topics = TopicFiles(config.settings_dir / "topics")
         self._ctx = ctx
         self._protocols = tuple(name for name in LLMS if not name.startswith("fake_"))
 
@@ -94,6 +104,34 @@ class ModelRuntime:
             self._file.commit(candidate, name, draft.api_key)
             self._ctx = replace(self._ctx, llm=gateway)
             return view
+
+    def create(self, fields: TopicFields) -> Topic:
+        with self._lock:
+            topic = define_topic(fields, self._ctx.topics.keys(), self._ctx.rubrics)
+            self._topics.create(topic)
+            self._ctx = replace(self._ctx, topics={**self._ctx.topics, topic.id: topic})
+            return topic
+
+    def apply_query(
+        self, topic_id: str, query: TopicQuery, glossary: tuple[GlossaryTerm, ...]
+    ) -> Topic:
+        with self._lock:
+            before = self._ctx.topics.get(topic_id)
+            if before is None:
+                raise NotFound(f"未找到主题：{topic_id}")
+            after = before.model_copy(update={"query": query})
+            terms = Glossary(target_lang=self._ctx.settings.reading_language, terms=glossary)
+            self._topics.update(before, after, terms)
+            self._ctx = replace(
+                self._ctx,
+                topics={**self._ctx.topics, topic_id: after},
+                glossaries={**self._ctx.glossaries, topic_id: terms},
+            )
+            if self._ctx.store.judgments.get_topic_state(topic_id) is None:
+                activate_topic(
+                    self._ctx, topic_id
+                )  # 只启用新课题；暂停的课题保持暂停，不悄悄开始花钱
+            return after
 
 
 def run_due(config: LoadedConfig, ctx: AppContext) -> RunReport | None:
@@ -184,6 +222,7 @@ class Service:
             self._static_dir,
             context_provider=self._models.snapshot,
             model_settings=self._models,
+            topic_settings=self._models,
         )
         settings = uvicorn.Config(
             app,

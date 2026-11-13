@@ -155,7 +155,9 @@ class LLMBudget(FrozenModel):
 class LLMFile(FrozenModel):
     providers: Mapping[str, AdapterConfig] = Field(default_factory=dict)
     tasks: Mapping[
-        Literal["triage", "extract", "assess", "translate", "ask", "map", "outline", "relate"],
+        Literal[
+            "triage", "extract", "assess", "translate", "ask", "map", "outline", "relate", "draft"
+        ],
         LLMTask,
     ] = Field(default_factory=dict)
     budget: LLMBudget = LLMBudget(daily_usd=2)

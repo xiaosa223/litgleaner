@@ -21,6 +21,7 @@ from litgleaner.application.stages.relate import RelateStage
 from litgleaner.application.stages.score import ScoreStage
 from litgleaner.application.stages.select import SelectStage
 from litgleaner.application.stages.survey import SurveyStage
+from litgleaner.application.stages.topic_draft import TopicDraftStage
 from litgleaner.application.stages.topic_map import TopicMapStage
 from litgleaner.application.stages.triage import TriageStage
 from litgleaner.application.topics import sync_topics
@@ -61,6 +62,7 @@ ON_DEMAND: tuple[Stage, ...] = (
     TranslatePaperStage(),
     SurveyStage(),
     TopicMapStage(),
+    TopicDraftStage(),
     OutlineStage(),
     MemoryAdmissionStage(),
     RelateStage(),

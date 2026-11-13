@@ -1,31 +1,39 @@
 // 课题：列表、新建，以及每个课题一页（调研进度、阅读路线、课题地图、论文）。第 7.5、12.8 节。
 import { useEffect, useState } from "react";
-import { api, isNotConnected, NOT_CONNECTED } from "../api";
+import { ApiError, topicApi } from "../api";
 import { mergeLibrary } from "../library";
 import { PaperCard } from "../PaperCard";
 import { navigate, paths } from "../router";
-import type { Inbox, TopicProfile } from "../types";
+import { topicStatus, type TopicSummary } from "../topicView";
+import type { Inbox } from "../types";
 import { Modal } from "../ui";
-import type { Async } from "../useAsync";
+import { useAsync, type Async } from "../useAsync";
+import { QueryTab } from "./TopicQuery";
 import { MapTab, RouteTab } from "./TopicRoute";
 import { SurveyTab } from "./TopicSurvey";
+
+function createError(error: unknown): string {
+  if (error instanceof ApiError && error.message === "topic_save_failed") return "课题没有保存成功：数据目录可能不可写，检查后再试。";
+  if (error instanceof ApiError && error.message === "topic_exists") return "刚好有同名的课题文件，再点一次创建即可。";
+  return error instanceof Error ? error.message : "创建失败";
+}
 
 function NewTopic({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ name: "", background: "", content: "", goals: "" });
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const goals = form.goals.split("\n").map((g) => g.trim()).filter(Boolean);
-  const ready = form.name.trim() !== "" && goals.length > 0;
+  const ready = [form.name, form.background, form.content].every((v) => v.trim() !== "") && goals.length > 0;
   const set = (key: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value });
   const submit = async () => {
     setBusy(true);
     setMessage(null);
     try {
-      const created = await api.createTopic({ name: form.name.trim(), background: form.background.trim(), content: form.content.trim(), goals });
+      const created = await topicApi.create({ name: form.name.trim(), background: form.background.trim(), content: form.content.trim(), goals });
       onClose();
       navigate(paths.topic(created.id));
     } catch (error) {
-      setMessage(isNotConnected(error) ? NOT_CONNECTED : error instanceof Error ? error.message : "创建失败");
+      setMessage(createError(error));
     } finally {
       setBusy(false);
     }
@@ -50,7 +58,7 @@ function NewTopic({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Goals({ topic }: { topic: TopicProfile }) {
+function Goals({ topic }: { topic: Pick<TopicSummary, "goals"> }) {
   return (
     <ul className="goals">
       {topic.goals.map((goal) => <li key={goal.id}><span className="goal">{goal.id}</span> {goal.text}</li>)}
@@ -59,6 +67,7 @@ function Goals({ topic }: { topic: TopicProfile }) {
 }
 
 export function Topics({ inbox }: { inbox: Async<Inbox> }) {
+  const [list] = useAsync(() => topicApi.list(), []);
   const [creating, setCreating] = useState(window.location.hash === "#new");
   useEffect(() => {
     const onHash = () => window.location.hash === "#new" && setCreating(true);
@@ -76,51 +85,60 @@ export function Topics({ inbox }: { inbox: Async<Inbox> }) {
     if (window.location.hash) window.history.replaceState(window.history.state, "", paths.topics);
   };
   const dialog = creating && <NewTopic onClose={close} />;
-  if (inbox.state === "loading") return <div className="screen-in">{head}<div className="view-msg">正在加载…</div>{dialog}</div>;
-  if (inbox.state === "error") return <div className="screen-in">{head}<div className="view-msg">{inbox.message}</div>{dialog}</div>;
-  const papers = mergeLibrary(inbox.data);
+  if (list.state === "loading") return <div className="screen-in">{head}<div className="view-msg">正在加载…</div>{dialog}</div>;
+  if (list.state === "error") return <div className="screen-in">{head}<div className="view-msg">{list.message}</div>{dialog}</div>;
+  const papers = inbox.state === "ready" ? mergeLibrary(inbox.data) : [];
   return (
     <div className="screen-in">
       {head}
-      {inbox.data.topics.length === 0 && (
+      {list.data.length === 0 && (
         <div className="empty">
           <h2>还没有课题</h2>
           <p>写下研究背景、内容和目标，系统会找这个方向已有的论文，告诉你先读哪几篇，之后每天跟踪新论文。</p>
           <button className="primary" onClick={() => setCreating(true)}>新建课题</button>
         </div>
       )}
-      {inbox.data.topics.map((topic) => (
+      {list.data.map((topic) => {
+        const { label, hint } = topicStatus(topic);
+        return (
         <button key={topic.id} className="pcard topic-card" onClick={() => navigate(paths.topic(topic.id))}>
           <div className="pcard-top">
             <h3>{topic.name}</h3>
-            <span className="pcard-by" style={{ marginLeft: "auto" }}>{papers.filter((p) => p.topic_id === topic.id).length} 篇论文</span>
+            {label && <span className="badge b-state">{label}</span>}
+            <span className="pcard-by" style={{ marginLeft: "auto" }}>{hint ?? `${papers.filter((p) => p.topic_id === topic.id).length} 篇推荐`}</span>
           </div>
           <Goals topic={topic} />
         </button>
-      ))}
+        );
+      })}
       {dialog}
     </div>
   );
 }
 
-type Tab = "survey" | "route" | "map" | "papers";
+type Tab = "query" | "survey" | "route" | "map" | "papers";
 
 export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: Async<Inbox>; reload: () => void }) {
   const [chosen, setTab] = useState<Tab | null>(null);
+  const [list, reloadList] = useAsync(() => topicApi.list(), [topicId]);
+  const loaded = list.state === "ready" ? list.data.find((t) => t.id === topicId) : undefined;
+  // 第一次读到课题时定下默认标签：新课题先起草检索词（调研要用它），之后不随数据刷新跳动
+  useEffect(() => { if (chosen === null && loaded) setTab(loaded.terms === 0 ? "query" : "survey"); }, [chosen, loaded]);
   const crumb = <div className="crumb"><a onClick={() => navigate(paths.topics)}>课题</a> /</div>;
-  if (inbox.state === "loading") return <div className="screen-in">{crumb}<div className="view-msg">正在加载…</div></div>;
-  if (inbox.state === "error") return <div className="screen-in">{crumb}<div className="view-msg">{inbox.message}</div></div>;
-  const topic = inbox.data.topics.find((t) => t.id === topicId);
+  if (list.state === "loading") return <div className="screen-in">{crumb}<div className="view-msg">正在加载…</div></div>;
+  if (list.state === "error") return <div className="screen-in">{crumb}<div className="view-msg">{list.message}</div></div>;
+  const topic = list.data.find((t) => t.id === topicId);
   if (!topic) {
-    return <div className="screen-in">{crumb}<div className="empty"><h2>没有找到这个课题</h2><p>它可能已经暂停或改名。</p></div></div>;
+    return <div className="screen-in">{crumb}<div className="empty"><h2>没有找到这个课题</h2><p>课题文件可能被删除或改名了。</p></div></div>;
   }
-  const papers = mergeLibrary(inbox.data).filter((p) => p.topic_id === topic.id);
-  const tabs: [Tab, string][] = [["survey", "调研进度"], ["route", "阅读路线"], ["map", "课题地图"], ["papers", `每日推荐 ${papers.length}`]];
-  const tab = chosen ?? "survey";
+  const papers = (inbox.state === "ready" ? mergeLibrary(inbox.data) : []).filter((p) => p.topic_id === topic.id);
+  const tabs: [Tab, string][] = [["survey", "调研进度"], ["route", "阅读路线"], ["map", "课题地图"], ["query", "检索词"], ["papers", `每日推荐 ${papers.length}`]];
+  const tab = chosen ?? (topic.terms === 0 ? "query" : "survey");
+  const { label } = topicStatus(topic);
   return (
     <div className="screen-in">
       {crumb}
-      <div className="screen-head" style={{ marginBottom: 4 }}><h1>{topic.name}</h1></div>
+      <div className="screen-head" style={{ marginBottom: 4 }}><h1>{topic.name}</h1>{label && <span className="badge b-state">{label}</span>}</div>
       <Goals topic={topic} />
       <div className="subtabs" role="tablist">
         {tabs.map(([key, text]) => <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}>{text}</button>)}
@@ -128,6 +146,13 @@ export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: 
       {tab === "survey" && <SurveyTab topicId={topic.id} />}
       {tab === "route" && <RouteTab topicId={topic.id} />}
       {tab === "map" && <MapTab topicId={topic.id} />}
+      {/* 一直挂着，切到别的标签再回来时没保存的修改还在 */}
+      <div hidden={tab !== "query"}>
+        <QueryTab topicId={topic.id} active={topic.status === "active"} onSaved={(status) => {
+          if (topic.status !== "active" && status === "active") setTab("survey"); // 刚启用：下一步是调研
+          reloadList(); reload();
+        }} />
+      </div>
       {tab === "papers" && (papers.length === 0
         ? <div className="empty"><p>每天检索到的这个课题的新论文，筛选评分后会推荐到这里。调研找到的论文在“阅读路线”和“课题地图”里。</p></div>
         : papers.map((item) => <PaperCard key={item.paper_id} item={item} onChange={reload} showTopic={false} />))}

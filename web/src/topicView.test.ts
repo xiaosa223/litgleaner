@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { gapText, money, routeGroups, sourceLabel, surveyAdvice, surveyEstimate, surveyTotals, type SurveyPreview, type SurveyRound } from "./topicView.ts";
+import { gapText, money, topicStatus, routeGroups, sourceLabel, surveyAdvice, surveyEstimate, surveyTotals, type SurveyPreview, type SurveyRound } from "./topicView.ts";
 
 const round = (over: Partial<SurveyRound> = {}): SurveyRound => ({
   number: 1, run_id: "r", iteration: 1, candidates: 100, new_papers: 80, passed: 30, new_passed: 20, undetermined: 0,
@@ -109,4 +109,10 @@ test("第一轮全部复用：说明不再调用模型，费用来自后面几�
 test("第一轮就没有候选：不说“顺着前面的论文”", () => {
   const advice = surveyAdvice([round({ candidates: 0, new_papers: 0, passed: 0, new_passed: 0, coverage: null, next_recommended: null })]);
   assert.doesNotMatch(advice!.text, /前面/);
+});
+
+test("课题状态：没有检索词时提示先起草，未启用和已暂停分开说", () => {
+  assert.deepEqual(topicStatus({ status: "new", terms: 0 }), { label: "未启用", hint: "还没有检索词" });
+  assert.deepEqual(topicStatus({ status: "paused", terms: 4 }), { label: "已暂停", hint: null });
+  assert.deepEqual(topicStatus({ status: "active", terms: 4 }), { label: null, hint: null });
 });

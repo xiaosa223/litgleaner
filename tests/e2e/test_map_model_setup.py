@@ -8,7 +8,7 @@ from tests.e2e.test_model_settings import model_ui as mock_model_ui
 
 model_ui = mock_model_ui
 
-TASKS = {"triage", "extract", "assess", "translate", "ask", "map", "outline", "relate"}
+TASKS = {"triage", "extract", "assess", "translate", "ask", "map", "outline", "relate", "draft"}
 
 
 def test_settings_advertise_unconfigured_map_without_disabling_reading(harness):

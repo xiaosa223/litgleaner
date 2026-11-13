@@ -27,6 +27,7 @@ from litgleaner.ports.publisher import Publisher, Renderer
 from litgleaner.ports.source import Source
 from litgleaner.ports.source_capture import SourceCapture
 from litgleaner.ports.store import Store
+from litgleaner.ports.topic_draft import TopicDraftStore
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,7 @@ class AppContext:
     library: ReferenceLibrary | None = None
     embedder: Embedder | None = None
     source_capture: SourceCapture | None = None
+    topic_drafts: TopicDraftStore | None = None  # 检索式草稿写在主题文件旁边（第 7.2 节）
 
     def now_iso(self) -> str:
         return self.clock().isoformat()

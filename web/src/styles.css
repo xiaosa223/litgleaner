@@ -203,6 +203,7 @@ mark.flash { color: inherit; animation: flash 1.8s ease-out forwards; }
 .b-infer { color: var(--infer); background: var(--infer-soft); }
 .b-user { color: var(--user); background: var(--user-soft); }
 .b-author { color: var(--author); background: var(--surface-2); }
+.b-state { color: var(--muted); background: var(--surface-2); }
 .model, .infer { padding: 6px 10px; border-radius: 0 6px 6px 0; margin: 4px 0; }
 .model { border-left: 3px dashed var(--model); background: var(--model-soft); }
 .infer { border-left: 3px dashed var(--infer); background: var(--infer-soft); }

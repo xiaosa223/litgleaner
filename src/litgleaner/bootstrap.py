@@ -55,6 +55,7 @@ from litgleaner.domain.errors import ConfigError
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.infra.config import AdapterConfig, EmbeddingConfig, LoadedConfig
 from litgleaner.infra.db.store import SqlStore
+from litgleaner.infra.topic_files import DraftFiles
 from litgleaner.ports.embedder import Embedder
 from litgleaner.ports.fulltext import FullTextProvider
 from litgleaner.ports.inbound import CardClick
@@ -379,4 +380,5 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         rubrics=config.rubrics,
         routes=config.routes,
         source_capture=DurableSourceCapture(store.source_captures, blobs, now, recipes, sources),
+        topic_drafts=DraftFiles(config.settings_dir / "topics"),
     )

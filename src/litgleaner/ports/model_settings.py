@@ -10,7 +10,9 @@ from litgleaner.ports.llm import LLM
 MaxTokensField = Literal["max_tokens", "max_completion_tokens"]
 # 连接测试的输出上限：推理模型先思考再作答，太小会把可用模型误报为失败（实测约 250 token）。
 PROBE_MAX_OUTPUT_TOKENS = 1024
-ModelTask = Literal["triage", "extract", "assess", "translate", "ask", "map", "outline", "relate"]
+ModelTask = Literal[
+    "triage", "extract", "assess", "translate", "ask", "map", "outline", "relate", "draft"
+]
 
 
 @dataclass(frozen=True)

@@ -65,6 +65,8 @@ tasks:
   # 已读论文的综述骨架：先预览并确认固定输入才运行，与课题地图独立；旧配置可以不写
   outline: { provider: main, model: demo-strong, prompt: outline }
   relate: { provider: main, model: demo-cheap, prompt: relate, daily_budget_usd: 0.2 }
+  # 新建课题时起草检索词和术语表（第 7.2 节）：先预览再确认，每次一次调用
+  draft: { provider: main, model: demo-strong, prompt: draft }
   # 领读器的段落翻译：流式返回，按课题术语表统一译名（ADR 0004）。用便宜、快的模型即可
   translate: { provider: main, model: demo-cheap, prompt: translate }
 budget:

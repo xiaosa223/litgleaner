@@ -1,6 +1,17 @@
 // 课题页：调研轮次、调研前的费用说明、阅读路线、课题地图（第 7.5 节）。
 // 只做数据到界面文字的转换，纯函数，可单测。接口说明见 docs/SURVEY.md、READING-ROUTE.md、TOPIC-MAP.md。
 
+/** GET /api/topics 的一项：所有课题，包括还没启用的。 */
+export interface TopicSummary {
+  id: string; name: string; goals: { id: string; text: string }[];
+  status: "active" | "paused" | "new"; terms: number;
+}
+
+export function topicStatus(topic: Pick<TopicSummary, "status" | "terms">): { label: string | null; hint: string | null } {
+  const label = topic.status === "new" ? "未启用" : topic.status === "paused" ? "已暂停" : null;
+  return { label, hint: topic.terms === 0 ? "还没有检索词" : null };
+}
+
 export interface SurveySource { source: string; mode: string; fetched: number; truncated: boolean; error: string | null }
 
 export interface SurveyRound {

@@ -108,8 +108,8 @@ input.field:focus, textarea.field:focus, select.pick:focus { outline: 0; border-
 .pal-foot { border-top: 1px solid var(--line); padding: 8px 18px; font-size: 12px; color: var(--faint); display: flex; gap: 14px; }
 
 /* ---------- 课题 ---------- */
-.subtabs { display: flex; gap: 20px; border-bottom: 1px solid var(--line); margin: 20px 0 18px; }
-.subtabs button { border: 0; background: transparent; padding: 8px 0; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.subtabs { display: flex; gap: 20px; border-bottom: 1px solid var(--line); margin: 20px 0 18px; overflow-x: auto; scrollbar-width: none; }
+.subtabs button { white-space: nowrap; flex: none; border: 0; background: transparent; padding: 8px 0; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .subtabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 .goals { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .topic-card { display: block; width: 100%; text-align: left; }
@@ -203,3 +203,13 @@ input.field:focus, textarea.field:focus, select.pick:focus { outline: 0; border-
   .preset-grid { grid-template-columns: 1fr 1fr; }
   .form-pair, .task-checks { grid-template-columns: 1fr; }
 }
+
+/* 课题页“检索词”：每行一个词，理由在下面 */
+.query-block { margin-bottom: 20px; }
+.query-row { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.query-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 8px; align-items: center; }
+.query-row .why { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.query-block > .ghost.sm { margin-top: 8px; }
+.query-fields.two { grid-template-columns: minmax(0, 1fr) auto; }
+.query-fields.glossary { grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 3fr) auto; }
+@media (max-width: 640px) { .query-fields, .query-fields.two, .query-fields.glossary { grid-template-columns: 1fr; } }

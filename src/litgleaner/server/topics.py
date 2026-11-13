@@ -1,13 +1,19 @@
-"""课题的只读阅读路线接口。"""
+"""课题：新建、列表、阅读路线和调研接口。"""
 
-from fastapi import FastAPI, Query
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated, cast
+
+from fastapi import FastAPI, HTTPException, Query, Request
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from litgleaner.application.reading_route import ReadingRoute, reading_route
 from litgleaner.application.survey import SurveyStatus, get_preview, preview, queue, status
 from litgleaner.application.survey_plan import require_topic
+from litgleaner.application.topic_setup import MAX_GOALS, MAX_NAME, TopicSummary, topic_summaries
+from litgleaner.domain.errors import ConfigError, InvalidRequest
 from litgleaner.domain.survey import SurveyPreview, SurveyRound
+from litgleaner.ports.topic_settings import TopicFields, TopicSettings
 from litgleaner.server.runtime import Context
+from litgleaner.server.topic_drafts import install_topic_draft_routes
 from litgleaner.server.topic_maps import install_topic_map_routes
 
 
@@ -21,10 +27,47 @@ class PreviewSurvey(BaseModel):
 
 
 _EMPTY_PREVIEW = PreviewSurvey()
+_Text = Annotated[str, StringConstraints(max_length=8000)]
+
+
+class NewTopic(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=MAX_NAME)
+    background: _Text
+    content: _Text
+    goals: list[Annotated[str, StringConstraints(max_length=1000)]] = Field(
+        min_length=1, max_length=MAX_GOALS
+    )
+
+    def fields(self) -> TopicFields:
+        return TopicFields(self.name, self.background, self.content, tuple(self.goals))
+
+
+class CreatedTopic(BaseModel):
+    id: str
+
+
+def _topic_settings(request: Request) -> TopicSettings:
+    settings = cast(TopicSettings | None, request.app.state.topic_settings)
+    if settings is None:
+        raise InvalidRequest("topic_settings_unavailable")
+    return settings
 
 
 def install_topic_routes(app: FastAPI) -> None:
     install_topic_map_routes(app)
+    install_topic_draft_routes(app)
+
+    @app.get("/api/topics")
+    def topics(ctx: Context) -> tuple[TopicSummary, ...]:
+        return topic_summaries(ctx)
+
+    @app.post("/api/topics")
+    def create_topic(request: Request, body: NewTopic) -> CreatedTopic:
+        try:
+            return CreatedTopic(id=_topic_settings(request).create(body.fields()).id)
+        except ConfigError:  # 写文件失败是服务端的问题；通用处理器的文案是模型设置的
+            raise HTTPException(500, "topic_save_failed") from None
 
     @app.get("/api/topics/{topic_id}/reading-route")
     def route(

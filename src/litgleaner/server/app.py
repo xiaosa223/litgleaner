@@ -23,6 +23,7 @@ from litgleaner.domain.inbox import InboxItem
 from litgleaner.domain.reading import Annotation, NewAnnotation
 from litgleaner.ports.catalog import CatalogQuery, StatusFilter
 from litgleaner.ports.model_settings import ModelSettings
+from litgleaner.ports.topic_settings import TopicSettings
 from litgleaner.server.citations import install_citation_routes
 from litgleaner.server.exports import install_export_routes
 from litgleaner.server.knowledge import install_knowledge_routes
@@ -231,11 +232,13 @@ def create_app(
     *,
     context_provider: Callable[[], AppContext] | None = None,
     model_settings: ModelSettings | None = None,
+    topic_settings: TopicSettings | None = None,
 ) -> FastAPI:
     app = FastAPI(title="拾穗领读器", docs_url=None, redoc_url=None, openapi_url=None)
     install_guard(app, security)
     app.state.context_provider = context_provider or (lambda: ctx)
     app.state.model_settings = model_settings
+    app.state.topic_settings = topic_settings
     _configuration_errors(app)
 
     @app.exception_handler(NotFound)

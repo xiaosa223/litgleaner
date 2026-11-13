@@ -2,7 +2,8 @@
 import type { Identified } from "./identify";
 import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
-import type { MapPreview, MapStatus, MapView, ReadingRoute, SurveyPreview, SurveyRound, SurveyStatus } from "./topicView";
+import type { DraftPreview, DraftStatus, DraftView, QueryBody } from "./topicQuery";
+import type { MapPreview, MapStatus, MapView, ReadingRoute, SurveyPreview, SurveyRound, SurveyStatus, TopicSummary } from "./topicView";
 import type {
   Annotation,
   BlockTranslation,
@@ -192,15 +193,23 @@ export const api = {
   /** 用草稿参数实际调用一次模型：会产生很少的费用，不保存任何东西。 */
   testModel: (body: ModelBody) => send<ProbeResult>("POST", "/api/settings/models/test", body),
   saveModel: (body: ModelBody) => send<ModelSettingsView>("PUT", "/api/settings/models", body),
-  // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4 节），调用方用 isNotConnected 处理 ----
-  createTopic: (topic: { name: string; background: string; content: string; goals: string[] }) =>
-    send<{ id: string }>("POST", "/api/topics", topic),
 };
 
 const topicPath = (id: string) => `/api/topics/${encodeURIComponent(id)}`;
 
 /** 课题调研、阅读路线和课题地图（docs/SURVEY.md、READING-ROUTE.md、TOPIC-MAP.md）。 */
 export const topicApi = {
+  list: () => get<TopicSummary[]>("/api/topics"),
+  draft: (id: string) => get<DraftView>(`${topicPath(id)}/draft`),
+  /** 不调用模型，只算费用 */
+  previewDraft: (id: string) => send<DraftPreview>("POST", `${topicPath(id)}/draft/preview`, {}),
+  startDraft: (id: string, planHash: string) => send<DraftStatus>("POST", `${topicPath(id)}/draft`, { plan_hash: planHash }),
+  draftJob: (id: string, key: string) => get<DraftStatus>(`${topicPath(id)}/draft/jobs/${encodeURIComponent(key)}`),
+  /** 写入检索词和术语表，并启用课题 */
+  saveQuery: (id: string, body: QueryBody) => send<{ id: string; terms: number; status: TopicSummary["status"] }>("PUT", `${topicPath(id)}/query`, body),
+  /** 只写课题定义，不启用、不调用模型 */
+  create: (topic: { name: string; background: string; content: string; goals: string[] }) =>
+    send<{ id: string }>("POST", "/api/topics", topic),
   route: (id: string) => get<ReadingRoute>(`${topicPath(id)}/reading-route?limit_per_group=20`),
   rounds: (id: string) => get<SurveyRound[]>(`${topicPath(id)}/survey/rounds`),
   /** 会请求各来源（可能要一两分钟），不调用模型 */

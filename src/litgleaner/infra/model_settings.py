@@ -32,6 +32,7 @@ TASKS: tuple[ModelTask, ...] = (
     "map",
     "outline",
     "relate",
+    "draft",
 )
 
 

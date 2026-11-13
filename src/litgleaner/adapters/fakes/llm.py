@@ -21,6 +21,16 @@ _UNTRUSTED = re.compile(r"</?untrusted_paper>")
 _MARKER = re.compile(r"^\s*(\[\[\d+\]\])\s*(.*)$")
 
 
+_DRAFT: Mapping[str, Any] = {
+    "include": [
+        {"term": "demo term", "reason": "演示理由：对应研究内容", "synonyms": ["demo synonym"]}
+    ],
+    "exclude": [],
+    "glossary": [{"term": "demo term", "translation": "演示术语", "definition": "演示释义"}],
+}
+_FIXED: Mapping[str, Mapping[str, Any]] = {"relate": {"relations": []}, "draft": _DRAFT}
+
+
 class FakeLLM:
     def __init__(self) -> None:
         self.calls: list[LLMRequest] = []
@@ -63,8 +73,8 @@ class FakeLLM:
         return LLMResponse(data, request.model, 100, 20, _COST_PER_CALL)
 
     def _answer(self, request: LLMRequest) -> Mapping[str, Any]:
-        if request.task == "relate":
-            return {"relations": []}
+        if fixed := _FIXED.get(request.task):
+            return fixed
         if request.task == "outline":
             return self._outline(request)
         if request.task == "map":
