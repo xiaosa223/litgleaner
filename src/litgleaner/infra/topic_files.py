@@ -95,24 +95,30 @@ class TopicFiles:
         finally:
             Path(temporary).unlink(missing_ok=True)
 
-    def update(self, before: Topic, after: Topic, glossary: Glossary) -> None:
-        """主题文件被手改过时拒绝。主题文件和术语表各留一份 .bak；主题文件写失败时术语表还原。"""
+    def update(self, before: Topic, after: Topic, glossary: Glossary | None = None) -> None:
+        """主题文件被手改过时拒绝。主题文件和术语表各留一份 .bak；主题文件写失败时术语表还原。
+
+        glossary 为 None 时不动术语表（只改研究画像）。
+        """
         path = self.directory / f"{before.id}.yaml"
         terms = self.directory / f"{before.id}.glossary.yaml"
         if _read_topic(path) != before:
             raise InvalidRequest("topic_changed_on_disk")
+        old_terms: bytes | None = None
         try:
-            old_terms = terms.read_bytes() if terms.exists() else None
             _replace(path.with_suffix(".yaml.bak"), path.read_bytes())
-            if old_terms is not None:
-                _replace(terms.with_suffix(".yaml.bak"), old_terms)
-            _replace(terms, _dump(glossary.model_dump(mode="json")))
+            if glossary is not None:
+                old_terms = terms.read_bytes() if terms.exists() else None
+                if old_terms is not None:
+                    _replace(terms.with_suffix(".yaml.bak"), old_terms)
+                _replace(terms, _dump(glossary.model_dump(mode="json")))
         except OSError:
             raise ConfigError("topic_save_failed") from None
         try:
             _replace(path, topic_yaml(after))
         except OSError:
-            self._restore(terms, old_terms)
+            if glossary is not None:
+                self._restore(terms, old_terms)
             raise ConfigError("topic_save_failed") from None
 
     @staticmethod

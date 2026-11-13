@@ -2,9 +2,9 @@
 
 import pytest
 
-from litgleaner.application.topic_setup import define_topic, topic_id_for
+from litgleaner.application.topic_setup import define_topic, revise_topic, topic_id_for
 from litgleaner.domain.errors import ConfigError, InvalidRequest
-from litgleaner.ports.topic_settings import TopicFields
+from litgleaner.ports.topic_settings import GoalText, TopicFields, TopicProfile
 
 RUBRICS = {"default": object(), "other": object()}
 
@@ -71,3 +71,41 @@ def test_define_topic_without_rubrics_is_a_configuration_error():
 def test_define_topic_rejects_incomplete_or_oversized_profiles(change):
     with pytest.raises(InvalidRequest):
         define_topic(fields(**change), set(), RUBRICS)
+
+
+def _topic():
+    return define_topic(
+        TopicFields("Alpha", "背景", "内容", ("目标一", "目标二", "目标三")), (), {"default": 1}
+    )
+
+
+def test_revise_keeps_goal_ids_and_never_reuses_a_deleted_one():
+    before = _topic()
+    profile = TopicProfile(
+        " Alpha 2 ",
+        " 新背景 ",
+        "内容",
+        (GoalText("g1", " 目标一改 "), GoalText(None, "新目标"), GoalText(None, " ")),
+    )
+    after = revise_topic(before, profile)
+    assert after.id == before.id and after.name == "Alpha 2" and after.background == "新背景"
+    assert [(g.id, g.text) for g in after.goals] == [("g1", "目标一改"), ("g4", "新目标")]
+    assert after.query == before.query and after.rubric == before.rubric
+
+
+@pytest.mark.parametrize(
+    "goals",
+    [
+        (GoalText("g9", "不存在的编号"),),
+        (GoalText("g1", "一"), GoalText("g1", "重复")),
+        (GoalText(None, " "),),
+    ],
+)
+def test_revise_rejects_unknown_duplicate_or_missing_goals(goals):
+    with pytest.raises(InvalidRequest):
+        revise_topic(_topic(), TopicProfile("Alpha", "背景", "内容", goals))
+
+
+def test_revise_rejects_blank_text():
+    with pytest.raises(InvalidRequest, match="topic_incomplete"):
+        revise_topic(_topic(), TopicProfile("Alpha", " ", "内容", (GoalText("g1", "一"),)))

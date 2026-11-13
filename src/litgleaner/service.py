@@ -25,11 +25,11 @@ from litgleaner.adapters.secrets import SystemSecretStore
 from litgleaner.application.context import AppContext
 from litgleaner.application.inbound import apply_click
 from litgleaner.application.pipeline import RunReport, has_on_demand_work, run_pipeline
-from litgleaner.application.topic_setup import define_topic
-from litgleaner.application.topics import activate_topic
+from litgleaner.application.topic_setup import define_topic, revise_topic
+from litgleaner.application.topics import ACTIVE, activate_topic, pause_topic
 from litgleaner.bootstrap import LLMS, build_feishu_listener, build_llm, build_model_client
 from litgleaner.cli_shared import try_run_lock
-from litgleaner.domain.errors import ConfigError, NotFound
+from litgleaner.domain.errors import ConfigError, InvalidRequest, NotFound
 from litgleaner.domain.glossary import Glossary, GlossaryTerm
 from litgleaner.domain.topic import Topic, TopicQuery
 from litgleaner.infra.config import LoadedConfig
@@ -44,7 +44,7 @@ from litgleaner.ports.model_settings import (
     probe_output_tokens,
 )
 from litgleaner.ports.secrets import SecretStore
-from litgleaner.ports.topic_settings import TopicFields
+from litgleaner.ports.topic_settings import ProfileChange, TopicFields, TopicProfile
 from litgleaner.server.app import create_app
 from litgleaner.server.security import LocalSecurity
 
@@ -116,9 +116,7 @@ class ModelRuntime:
         self, topic_id: str, query: TopicQuery, glossary: tuple[GlossaryTerm, ...]
     ) -> Topic:
         with self._lock:
-            before = self._ctx.topics.get(topic_id)
-            if before is None:
-                raise NotFound(f"未找到主题：{topic_id}")
+            before = self._topic(topic_id)
             after = before.model_copy(update={"query": query})
             terms = Glossary(target_lang=self._ctx.settings.reading_language, terms=glossary)
             self._topics.update(before, after, terms)
@@ -127,11 +125,38 @@ class ModelRuntime:
                 topics={**self._ctx.topics, topic_id: after},
                 glossaries={**self._ctx.glossaries, topic_id: terms},
             )
-            if self._ctx.store.judgments.get_topic_state(topic_id) is None:
-                activate_topic(
-                    self._ctx, topic_id
-                )  # 只启用新课题；暂停的课题保持暂停，不悄悄开始花钱
+            self._refresh_state(topic_id, activate_new=True)
             return after
+
+    def update_profile(self, topic_id: str, profile: TopicProfile) -> ProfileChange:
+        with self._lock:
+            before = self._topic(topic_id)
+            after = revise_topic(before, profile)
+            if after != before:
+                self._topics.update(before, after)
+                self._ctx = replace(self._ctx, topics={**self._ctx.topics, topic_id: after})
+            self._refresh_state(topic_id, activate_new=False)  # 上次刷新失败时重试也能补上
+            return ProfileChange(after, after.topic_hash != before.topic_hash)
+
+    def set_tracking(self, topic_id: str, *, active: bool) -> None:
+        with self._lock:  # 与修改定义互斥，状态里记的总是当前定义的指纹
+            if not active:
+                pause_topic(self._ctx, topic_id)
+            elif not self._topic(topic_id).query.terms:
+                raise InvalidRequest("topic_query_missing")  # 没有检索词，启用了也搜不到东西
+            else:
+                activate_topic(self._ctx, topic_id)
+
+    def _topic(self, topic_id: str) -> Topic:
+        if (topic := self._ctx.topics.get(topic_id)) is None:
+            raise NotFound(f"未找到主题：{topic_id}")
+        return topic
+
+    def _refresh_state(self, topic_id: str, *, activate_new: bool) -> None:
+        """启用中的课题立即换成新定义；暂停的保持暂停，从未启用的只在确认检索式时启用。"""
+        state = self._ctx.store.judgments.get_topic_state(topic_id)
+        if (state is None and activate_new) or (state is not None and state.status == ACTIVE):
+            activate_topic(self._ctx, topic_id)
 
 
 def run_due(config: LoadedConfig, ctx: AppContext) -> RunReport | None:

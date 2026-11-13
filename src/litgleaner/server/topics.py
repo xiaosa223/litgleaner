@@ -15,6 +15,7 @@ from litgleaner.ports.topic_settings import TopicFields, TopicSettings
 from litgleaner.server.runtime import Context
 from litgleaner.server.topic_drafts import install_topic_draft_routes
 from litgleaner.server.topic_maps import install_topic_map_routes
+from litgleaner.server.topic_settings import install_topic_settings_routes
 
 
 class ConfirmSurvey(BaseModel):
@@ -57,6 +58,7 @@ def _topic_settings(request: Request) -> TopicSettings:
 def install_topic_routes(app: FastAPI) -> None:
     install_topic_map_routes(app)
     install_topic_draft_routes(app)
+    install_topic_settings_routes(app)
 
     @app.get("/api/topics")
     def topics(ctx: Context) -> tuple[TopicSummary, ...]:

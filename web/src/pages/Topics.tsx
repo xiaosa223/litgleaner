@@ -1,4 +1,4 @@
-// 课题：列表、新建，以及每个课题一页（调研进度、阅读路线、课题地图、论文）。第 7.5、12.8 节。
+// 课题：列表、新建，以及每个课题一页（调研进度、阅读路线、课题地图、检索词、论文、课题设置）。第 7.5、12.8 节。
 import { useEffect, useState } from "react";
 import { ApiError, topicApi } from "../api";
 import { mergeLibrary } from "../library";
@@ -9,6 +9,7 @@ import type { Inbox } from "../types";
 import { Modal } from "../ui";
 import { useAsync, type Async } from "../useAsync";
 import { QueryTab } from "./TopicQuery";
+import { SettingsTab } from "./TopicSettings";
 import { MapTab, RouteTab } from "./TopicRoute";
 import { SurveyTab } from "./TopicSurvey";
 
@@ -116,7 +117,7 @@ export function Topics({ inbox }: { inbox: Async<Inbox> }) {
   );
 }
 
-type Tab = "query" | "survey" | "route" | "map" | "papers";
+type Tab = "query" | "survey" | "route" | "map" | "papers" | "settings";
 
 export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: Async<Inbox>; reload: () => void }) {
   const [chosen, setTab] = useState<Tab | null>(null);
@@ -132,7 +133,7 @@ export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: 
     return <div className="screen-in">{crumb}<div className="empty"><h2>没有找到这个课题</h2><p>课题文件可能被删除或改名了。</p></div></div>;
   }
   const papers = (inbox.state === "ready" ? mergeLibrary(inbox.data) : []).filter((p) => p.topic_id === topic.id);
-  const tabs: [Tab, string][] = [["survey", "调研进度"], ["route", "阅读路线"], ["map", "课题地图"], ["query", "检索词"], ["papers", `每日推荐 ${papers.length}`]];
+  const tabs: [Tab, string][] = [["survey", "调研进度"], ["route", "阅读路线"], ["map", "课题地图"], ["query", "检索词"], ["papers", `每日推荐 ${papers.length}`], ["settings", "课题设置"]];
   const tab = chosen ?? (topic.terms === 0 ? "query" : "survey");
   const { label } = topicStatus(topic);
   return (
@@ -148,10 +149,13 @@ export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: 
       {tab === "map" && <MapTab topicId={topic.id} />}
       {/* 一直挂着，切到别的标签再回来时没保存的修改还在 */}
       <div hidden={tab !== "query"}>
-        <QueryTab topicId={topic.id} active={topic.status === "active"} onSaved={(status) => {
+        <QueryTab key={topic.id} topicId={topic.id} active={topic.status === "active"} onSaved={(status) => {
           if (topic.status !== "active" && status === "active") setTab("survey"); // 刚启用：下一步是调研
           reloadList(); reload();
         }} />
+      </div>
+      <div hidden={tab !== "settings"}>
+        <SettingsTab key={topic.id} topic={topic} goQuery={() => setTab("query")} onChanged={() => { reloadList(); reload(); }} />
       </div>
       {tab === "papers" && (papers.length === 0
         ? <div className="empty"><p>每天检索到的这个课题的新论文，筛选评分后会推荐到这里。调研找到的论文在“阅读路线”和“课题地图”里。</p></div>

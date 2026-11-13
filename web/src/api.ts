@@ -3,6 +3,7 @@ import type { Identified } from "./identify";
 import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
 import type { DraftPreview, DraftStatus, DraftView, QueryBody } from "./topicQuery";
+import type { BackfillPlan, ProfileBody, TopicDetail } from "./topicSettings";
 import type { MapPreview, MapStatus, MapView, ReadingRoute, SurveyPreview, SurveyRound, SurveyStatus, TopicSummary } from "./topicView";
 import type {
   Annotation,
@@ -200,6 +201,14 @@ const topicPath = (id: string) => `/api/topics/${encodeURIComponent(id)}`;
 /** 课题调研、阅读路线和课题地图（docs/SURVEY.md、READING-ROUTE.md、TOPIC-MAP.md）。 */
 export const topicApi = {
   list: () => get<TopicSummary[]>("/api/topics"),
+  detail: (id: string) => get<TopicDetail>(topicPath(id)),
+  /** 只改名称、背景、内容、目标；返回保存后的定义（新目标有了编号），changed 表示之后的论文会按新描述筛选 */
+  saveProfile: (id: string, body: ProfileBody) => send<{ topic: TopicDetail; changed: boolean }>("PUT", `${topicPath(id)}/profile`, body),
+  activate: (id: string) => send<{ id: string; status: TopicSummary["status"] }>("POST", `${topicPath(id)}/activate`, {}),
+  pause: (id: string) => send<{ id: string; status: TopicSummary["status"] }>("POST", `${topicPath(id)}/pause`, {}),
+  /** 不调用模型，只数篇数、估初筛费用 */
+  previewBackfill: (id: string) => send<BackfillPlan>("POST", `${topicPath(id)}/backfill/preview`, {}),
+  startBackfill: (id: string, plan: string) => send<{ queued: number }>("POST", `${topicPath(id)}/backfill`, { plan }),
   draft: (id: string) => get<DraftView>(`${topicPath(id)}/draft`),
   /** 不调用模型，只算费用 */
   previewDraft: (id: string) => send<DraftPreview>("POST", `${topicPath(id)}/draft/preview`, {}),

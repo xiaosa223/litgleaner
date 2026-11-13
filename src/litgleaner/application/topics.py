@@ -3,7 +3,8 @@
 from dataclasses import dataclass, replace
 
 from litgleaner.application.context import AppContext
-from litgleaner.domain.errors import ConfigError
+from litgleaner.domain.errors import ConfigError, InvalidRequest
+from litgleaner.domain.hashing import stable_hash
 from litgleaner.domain.topic import Topic
 from litgleaner.ports.store import JobSpec, TopicState
 
@@ -98,6 +99,37 @@ def backfill_topic(ctx: AppContext, topic_id: str, since: str | None, dry_run: b
     for paper_id in papers:
         ctx.store.jobs.enqueue(triage_job(paper_id, topic), now, reopen=True)
     return plan
+
+
+@dataclass(frozen=True)
+class BackfillPlan:
+    """领读器里的回填：先看篇数和初筛费用，带着 plan 确认；之间库或定义变了就要重新看。"""
+
+    papers: int
+    estimated_usd: float | None
+    plan: str
+
+
+def _backfill_papers(ctx: AppContext, topic_id: str) -> tuple[Topic, tuple[str, ...]]:
+    topic = _require(ctx, topic_id)
+    state = ctx.store.judgments.get_topic_state(topic_id)
+    if state is None or state.status != ACTIVE or state.topic_hash != topic.topic_hash:
+        raise InvalidRequest("topic_not_active")  # 暂停的课题排了也会被初筛跳过
+    return topic, ctx.store.judgments.untriaged_papers(topic.id, topic.topic_hash, None)
+
+
+def preview_backfill(ctx: AppContext, topic_id: str) -> BackfillPlan:
+    topic, papers = _backfill_papers(ctx, topic_id)
+    plan = stable_hash({"topic_hash": topic.topic_hash, "papers": papers})
+    return BackfillPlan(len(papers), estimate(ctx, "triage", len(papers)), plan)
+
+
+def queue_backfill(ctx: AppContext, topic_id: str, plan: str) -> int:
+    """没有配置初筛模型时不排队：排了也只会一直等，界面据此原地引导配置。"""
+    if preview_backfill(ctx, topic_id).plan != plan:
+        raise InvalidRequest("plan_changed")
+    ctx.llm.require_route("triage")
+    return backfill_topic(ctx, topic_id, None, dry_run=False).papers
 
 
 def triage_job(paper_id: str, topic: Topic) -> JobSpec:
