@@ -99,6 +99,8 @@ OpenAlex 和 Semantic Scholar 另外支持 `ReferenceList`：查论文引用的�
 
 `HistoricalCitations` 同样由这两个来源实现，按明确的 `dois`、`since`、`until`、`limit` 读取历史被引论文，返回 `next_cursor=None`。调研对每个种子单独查询，按实际目标保存“引用方论文 → 种子”关系；读取上限按原始条目计算，坏条目和重复也占额度。日常 `CitationWatch` 不变。参考文献扩展继续使用 `ReferenceList`，其网络上限与采集后限额区别见[调研说明](SURVEY.md)。
 
+`TermCount` 只由 OpenAlex 实现：一个检索词连同同义词（最多 9 个）、排除词和日期闭区间，用与日常关键词检索相同的 `search.title_abstract_keywords`，`per_page=1`、只取 `id`，结果放在 `FetchResult.total`（`meta.count`），不返回论文。领读器“检索词”标签据此显示每个词近一年的篇数（[说明](TOPIC-DRAFT.md)）；每行一次检索请求，计入 OpenAlex 的用量。有多个来源支持时按名称排序取第一个。`fake_source` 只有在选项 `term_counts: true` 时才支持，演示配置里不开，篇数总是来自真实来源。
+
 ## 已知限制
 
 | 来源 | 限制 |

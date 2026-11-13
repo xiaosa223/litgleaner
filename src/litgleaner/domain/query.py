@@ -53,6 +53,22 @@ class HistoricalSearch(_QueryBase):
         return self
 
 
+class TermCount(_QueryBase):
+    """一个检索词连同同义词，在日期窗口内能搜到多少篇（第 7.2 节）。只要总数，不取论文。"""
+
+    kind: Literal["term_count"] = "term_count"
+    terms: tuple[_HistoricalTerm, ...] = Field(min_length=1, max_length=9)
+    exclude: tuple[_HistoricalTerm, ...] = Field(default=(), max_length=100)
+    since: date
+    until: date
+
+    @model_validator(mode="after")
+    def _date_order(self) -> Self:
+        if self.since > self.until:
+            raise ValueError("计数开始日期不能晚于结束日期")
+        return self
+
+
 class CitationWatch(_QueryBase):
     kind: Literal["citation_watch"] = "citation_watch"
     dois: tuple[str, ...]
@@ -111,6 +127,7 @@ Query = (
     | AuthorWatch
     | InboxDrain
     | IdentifierLookup
+    | TermCount
 )
 
 _ADAPTER: TypeAdapter[Query] = TypeAdapter(Annotated[Query, Field(discriminator="kind")])

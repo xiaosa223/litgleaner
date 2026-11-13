@@ -5,6 +5,7 @@ import { useModelSetup } from "../ModelSetup";
 import { money, jobText } from "../topicView";
 import { draftEditor, editorFrom, queryBody, queryError, reasonFor, type DraftPreview, type DraftStatus, type DraftView, type Editor, type QueryDraft } from "../topicQuery";
 import { Modal, useToast } from "../ui";
+import { CountButton, Hits, useTermCounts, type TermCountState } from "./TermCounts";
 import { useAsync } from "../useAsync";
 
 const POLL_MS = 3000;
@@ -72,7 +73,7 @@ function ConfirmDraft({ plan, busy, error, onStart, onClose }: {
 
 const Reason = ({ text }: { text: string | null }) => (text ? <div className="why"><span className="badge b-model">模型说明</span> {text}</div> : null);
 
-function TermRows({ editor, draft, onChange }: { editor: Editor; draft: QueryDraft | null; onChange: (e: Editor) => void }) {
+function TermRows({ editor, draft, counts, onChange }: { editor: Editor; draft: QueryDraft | null; counts: TermCountState; onChange: (e: Editor) => void }) {
   const setInclude = (i: number, field: "term" | "synonyms", value: string) =>
     onChange({ ...editor, include: editor.include.map((row, j) => (j === i ? { ...row, [field]: value } : row)) });
   return (
@@ -87,9 +88,11 @@ function TermRows({ editor, draft, onChange }: { editor: Editor; draft: QueryDra
             <button className="ghost sm" aria-label={`删除检索词 ${i + 1}`} onClick={() => onChange({ ...editor, include: editor.include.filter((_, j) => j !== i) })}>删除</button>
           </div>
           <Reason text={reasonFor(draft, "include", row.term)} />
+          <Hits item={counts.hitsFor(editor, row)} />
         </div>
       ))}
       <button className="ghost sm" onClick={() => onChange({ ...editor, include: [...editor.include, { term: "", synonyms: "" }] })}>添加检索词</button>
+      <CountButton state={counts} editor={editor} />
       <h2 className="block-title">排除词</h2>
       <p className="tag">标题或摘要含这些词的论文直接跳过，不花初筛费用。拿不准就不要加，漏掉论文比多看几篇更糟。</p>
       {editor.exclude.map((term, i) => (
@@ -159,6 +162,7 @@ export function QueryTab({ topicId, active, onSaved }: { topicId: string; active
     reload();
   }, [reload, toast]);
   const { job, drafting, lost, track } = useDraftJob(topicId, drafted);
+  const counts = useTermCounts(topicId);
   useEffect(() => { if (viewState.state === "ready" && editor === null) setEditor(initialEditor(viewState.data)); }, [viewState, editor]);
   useEffect(() => { if (error) errorLine.current?.scrollIntoView({ block: "center", behavior: "smooth" }); }, [error]);
   const edit = (next: Editor) => { setEditor(next); setDirty(true); };
@@ -215,7 +219,7 @@ export function QueryTab({ topicId, active, onSaved }: { topicId: string; active
         </div>
         {draft?.warnings.map((w) => <p key={w} className="tag">{w}</p>)}
       </div>
-      {editor && <TermRows editor={editor} draft={draft} onChange={edit} />}
+      {editor && <TermRows editor={editor} draft={draft} counts={counts} onChange={edit} />}
       {editor && <GlossaryRows editor={editor} onChange={edit} />}
       <div ref={errorLine} className={`hint-line${error ? " bad" : ""}`} role="alert">{error}</div>
       <div className="dialog-actions" style={{ justifyContent: "flex-start" }}>

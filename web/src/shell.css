@@ -210,6 +210,8 @@ input.field:focus, textarea.field:focus, select.pick:focus { outline: 0; border-
 .query-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; gap: 8px; align-items: center; }
 .query-row .why { margin-top: 4px; font-size: 13px; color: var(--muted); }
 .query-block > .ghost.sm { margin-top: 8px; }
+.query-count { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.query-count .hint-line { flex-basis: 100%; }
 .query-fields.two { grid-template-columns: minmax(0, 1fr) auto; }
 .query-fields.glossary { grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 3fr) auto; }
 @media (max-width: 640px) { .query-fields, .query-fields.two, .query-fields.glossary { grid-template-columns: 1fr; } }

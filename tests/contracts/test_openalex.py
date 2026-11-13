@@ -22,6 +22,7 @@ from litgleaner.domain.query import (
     JournalWatch,
     KeywordSearch,
     ReferenceList,
+    TermCount,
 )
 from litgleaner.ports.fulltext import FullTextRequest
 
@@ -55,6 +56,7 @@ def test_declares_query_types_and_rejects_inbox():
         ReferenceList,
         HistoricalSearch,
         HistoricalCitations,
+        TermCount,
     }
     with pytest.raises(ValueError, match="不支持"):
         source(Router()).fetch(InboxDrain(), None)

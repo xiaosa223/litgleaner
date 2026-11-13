@@ -18,6 +18,7 @@ class FetchResult:
     truncated: bool = False
     references: tuple[ReferenceRecord, ...] = ()
     citations: tuple[SourceCitation, ...] = ()
+    total: int | None = None  # 来源报告的匹配总数，只有计数查询（TermCount）给出
 
 
 class Source(Protocol):

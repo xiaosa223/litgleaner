@@ -10,15 +10,18 @@ from pydantic import ValidationError
 from litgleaner.adapters.common.capture import read_source_bytes
 from litgleaner.domain.errors import SchemaChanged
 from litgleaner.domain.paper import SourceRecord
-from litgleaner.domain.query import IdentifierLookup, JournalWatch, KeywordSearch, Query
+from litgleaner.domain.query import IdentifierLookup, JournalWatch, KeywordSearch, Query, TermCount
 from litgleaner.ports.source import FetchResult
 
 
 class FakeSource:
-    capabilities: frozenset[type] = frozenset({JournalWatch, KeywordSearch, IdentifierLookup})
-
-    def __init__(self, name: str, records_file: Path) -> None:
+    def __init__(self, name: str, records_file: Path, *, term_counts: bool = False) -> None:
+        """term_counts 默认关：演示配置里假来源和真实来源并存时，篇数应来自真实来源。"""
         self.name = name
+        self.capabilities: frozenset[type] = frozenset(
+            {JournalWatch, KeywordSearch, IdentifierLookup}
+            | ({TermCount} if term_counts else set())
+        )
         self._file = records_file
         self.fail_next: list[Exception] = []
 
@@ -34,9 +37,19 @@ class FakeSource:
             records = tuple(SourceRecord.model_validate(item) for item in items[start:])
         except ValidationError as error:
             raise SchemaChanged(f"记录不符合结构：{error}") from error
+        if isinstance(query, TermCount):  # 在标题和摘要里数，不看日期，演示用
+            return FetchResult(records=(), next_cursor=None, raw=raw, total=_count(query, items))
         if isinstance(query, IdentifierLookup):  # 按标识符查：在全部记录里找，不用游标
             wanted = {query.doi, query.arxiv_id} - {None}
             everything = (SourceRecord.model_validate(item) for item in items)
             found = tuple(r for r in everything if wanted & {r.doi, r.arxiv_id})
             return FetchResult(records=found[:1], next_cursor=None, raw=raw)
         return FetchResult(records=records, next_cursor=str(len(items)), raw=raw)
+
+
+def _count(query: TermCount, items: list[Mapping[str, Any]]) -> int:
+    def has(text: str, terms: tuple[str, ...]) -> bool:
+        return any(term.lower() in text for term in terms)
+
+    texts = (f"{item.get('title', '')} {item.get('abstract') or ''}".lower() for item in items)
+    return sum(1 for text in texts if has(text, query.terms) and not has(text, query.exclude))

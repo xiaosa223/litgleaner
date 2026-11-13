@@ -4,6 +4,7 @@ import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
 import type { DraftPreview, DraftStatus, DraftView, QueryBody } from "./topicQuery";
 import type { BackfillPlan, ProfileBody, TopicDetail } from "./topicSettings";
+import type { CountBody, TermCounts } from "./termCounts";
 import type { MapPreview, MapStatus, MapView, ReadingRoute, SurveyPreview, SurveyRound, SurveyStatus, TopicSummary } from "./topicView";
 import type {
   Annotation,
@@ -214,6 +215,8 @@ export const topicApi = {
   previewDraft: (id: string) => send<DraftPreview>("POST", `${topicPath(id)}/draft/preview`, {}),
   startDraft: (id: string, planHash: string) => send<DraftStatus>("POST", `${topicPath(id)}/draft`, { plan_hash: planHash }),
   draftJob: (id: string, key: string) => get<DraftStatus>(`${topicPath(id)}/draft/jobs/${encodeURIComponent(key)}`),
+  /** 每个检索词近一年的篇数：不调用模型，每行一次来源检索 */
+  termCounts: (id: string, body: CountBody) => send<TermCounts>("POST", `${topicPath(id)}/term-counts`, body),
   /** 写入检索词和术语表，并启用课题 */
   saveQuery: (id: string, body: QueryBody) => send<{ id: string; terms: number; status: TopicSummary["status"] }>("PUT", `${topicPath(id)}/query`, body),
   /** 只写课题定义，不启用、不调用模型 */

@@ -77,7 +77,9 @@ NCBI_KEY = "NCBI_API_KEY"
 
 
 SOURCES: Mapping[str, Callable[[BuildArgs], Source]] = {
-    "fake_source": lambda a: FakeSource(a.name, a.path("records_file")),
+    "fake_source": lambda a: FakeSource(
+        a.name, a.path("records_file"), term_counts=bool(a.options.get("term_counts", False))
+    ),
     "crossref": lambda a: CrossrefSource(a.name, a.options, contact_email=a.contact),
     "openalex": lambda a: OpenAlexSource(
         a.name, a.options, contact_email=a.contact, api_key=a.optional_secret(OPENALEX_KEY)

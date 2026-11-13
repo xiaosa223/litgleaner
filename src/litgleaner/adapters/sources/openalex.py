@@ -30,6 +30,7 @@ from litgleaner.adapters.common.records import RecordBuilder, ensure_supported
 from litgleaner.adapters.common.text import parse_date, strip_markup
 from litgleaner.adapters.common.window import next_cursor, window_from_cursor
 from litgleaner.adapters.sources.historical_common import HistoryCollector, citation_count
+from litgleaner.adapters.sources.openalex_count import count_works
 from litgleaner.adapters.sources.openalex_daily import OpenAlexDaily, Seeds, work_id
 from litgleaner.adapters.sources.openalex_history import OpenAlexHistory
 from litgleaner.adapters.sources.openalex_references import OpenAlexReferences
@@ -44,6 +45,7 @@ from litgleaner.domain.query import (
     KeywordSearch,
     Query,
     ReferenceList,
+    TermCount,
 )
 from litgleaner.ports.source import FetchResult
 
@@ -74,6 +76,7 @@ class OpenAlexSource:
             ReferenceList,
             HistoricalSearch,
             HistoricalCitations,
+            TermCount,
         }
     )
 
@@ -106,6 +109,8 @@ class OpenAlexSource:
     def fetch(self, query: Query, cursor: str | None) -> FetchResult:
         ensure_supported(self.capabilities, query)
         options = self._options
+        if isinstance(query, TermCount):
+            return count_works(self._http, query, self._polite({}))
         if isinstance(query, HistoricalSearch | HistoricalCitations):
             return OpenAlexHistory(
                 self._http,
