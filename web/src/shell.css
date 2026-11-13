@@ -134,8 +134,12 @@ input.field:focus, textarea.field:focus, select.pick:focus { outline: 0; border-
 .route-item { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .route-item .no { color: var(--faint); font: 600 13px var(--sans); padding-top: 2px; }
 .route-item .t { font: 600 15px/1.4 var(--serif); }
+.route-item a.t, .map-card li a { color: var(--text); text-decoration: none; }
+.route-item a.t:hover, .map-card li a:hover { color: var(--accent); text-decoration: underline; }
 .route-item .why { font-size: 13px; margin-top: 4px; }
 .route-item .cited { font-size: 12px; color: var(--muted); white-space: nowrap; padding-top: 2px; }
+.route-rest { margin-top: 20px; }
+.route-rest summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 6px 0; }
 .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .map-card h4 { margin: 0; font-size: 15px; color: var(--text); display: flex; justify-content: space-between; align-items: baseline; }
 .map-card h4 span { font: 400 12px var(--sans); color: var(--muted); }

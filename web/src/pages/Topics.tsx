@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { api, isNotConnected, NOT_CONNECTED } from "../api";
 import { mergeLibrary } from "../library";
 import { PaperCard } from "../PaperCard";
-import { usePreview } from "../preview/usePreview";
 import { navigate, paths } from "../router";
 import type { Inbox, TopicProfile } from "../types";
-import { Modal, useToast } from "../ui";
+import { Modal } from "../ui";
 import type { Async } from "../useAsync";
-import { MapTab, RouteTab, SurveyTab } from "./TopicSurvey";
+import { MapTab, RouteTab } from "./TopicRoute";
+import { SurveyTab } from "./TopicSurvey";
 
 function NewTopic({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ name: "", background: "", content: "", goals: "" });
@@ -106,8 +106,6 @@ export function Topics({ inbox }: { inbox: Async<Inbox> }) {
 type Tab = "survey" | "route" | "map" | "papers";
 
 export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: Async<Inbox>; reload: () => void }) {
-  const [preview] = usePreview();
-  const toast = useToast();
   const [chosen, setTab] = useState<Tab | null>(null);
   const crumb = <div className="crumb"><a onClick={() => navigate(paths.topics)}>课题</a> /</div>;
   if (inbox.state === "loading") return <div className="screen-in">{crumb}<div className="view-msg">正在加载…</div></div>;
@@ -117,18 +115,8 @@ export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: 
     return <div className="screen-in">{crumb}<div className="empty"><h2>没有找到这个课题</h2><p>它可能已经暂停或改名。</p></div></div>;
   }
   const papers = mergeLibrary(inbox.data).filter((p) => p.topic_id === topic.id);
-  const tabs: [Tab, string][] = preview
-    ? [["survey", "调研进度"], ["route", "阅读路线"], ["map", "课题地图"], ["papers", `论文 ${papers.length}`]]
-    : [["papers", `论文 ${papers.length}`]];
-  const tab = chosen && tabs.some(([key]) => key === chosen) ? chosen : tabs[0][0];
-  const expand = async () => {
-    try {
-      await api.startSurvey(topic.id);
-      toast("已开始新一轮调研");
-    } catch (error) {
-      toast(isNotConnected(error) ? NOT_CONNECTED : error instanceof Error ? error.message : "操作失败");
-    }
-  };
+  const tabs: [Tab, string][] = [["survey", "调研进度"], ["route", "阅读路线"], ["map", "课题地图"], ["papers", `每日推荐 ${papers.length}`]];
+  const tab = chosen ?? "survey";
   return (
     <div className="screen-in">
       {crumb}
@@ -137,11 +125,11 @@ export function TopicPage({ topicId, inbox, reload }: { topicId: string; inbox: 
       <div className="subtabs" role="tablist">
         {tabs.map(([key, text]) => <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}>{text}</button>)}
       </div>
-      {tab === "survey" && <SurveyTab onExpand={() => void expand()} />}
-      {tab === "route" && <RouteTab />}
-      {tab === "map" && <MapTab />}
+      {tab === "survey" && <SurveyTab topicId={topic.id} />}
+      {tab === "route" && <RouteTab topicId={topic.id} />}
+      {tab === "map" && <MapTab topicId={topic.id} />}
       {tab === "papers" && (papers.length === 0
-        ? <div className="empty"><p>这个课题下还没有推荐的论文。</p></div>
+        ? <div className="empty"><p>每天检索到的这个课题的新论文，筛选评分后会推荐到这里。调研找到的论文在“阅读路线”和“课题地图”里。</p></div>
         : papers.map((item) => <PaperCard key={item.paper_id} item={item} onChange={reload} showTopic={false} />))}
     </div>
   );

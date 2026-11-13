@@ -2,6 +2,7 @@
 import type { Identified } from "./identify";
 import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
+import type { MapPreview, MapStatus, MapView, ReadingRoute, SurveyPreview, SurveyRound, SurveyStatus } from "./topicView";
 import type {
   Annotation,
   BlockTranslation,
@@ -194,5 +195,20 @@ export const api = {
   // ---- 下面的接口后端还没有实现（ARCHITECTURE 第 7.5、12.4 节），调用方用 isNotConnected 处理 ----
   createTopic: (topic: { name: string; background: string; content: string; goals: string[] }) =>
     send<{ id: string }>("POST", "/api/topics", topic),
-  startSurvey: (topicId: string) => send<void>("POST", `/api/topics/${encodeURIComponent(topicId)}/survey`),
+};
+
+const topicPath = (id: string) => `/api/topics/${encodeURIComponent(id)}`;
+
+/** 课题调研、阅读路线和课题地图（docs/SURVEY.md、READING-ROUTE.md、TOPIC-MAP.md）。 */
+export const topicApi = {
+  route: (id: string) => get<ReadingRoute>(`${topicPath(id)}/reading-route?limit_per_group=20`),
+  rounds: (id: string) => get<SurveyRound[]>(`${topicPath(id)}/survey/rounds`),
+  /** 会请求各来源（可能要一两分钟），不调用模型 */
+  previewSurvey: (id: string) => send<SurveyPreview>("POST", `${topicPath(id)}/survey/preview`, {}),
+  startSurvey: (id: string, planId: string) => send<SurveyStatus>("POST", `${topicPath(id)}/survey`, { plan_id: planId }),
+  survey: (id: string, runId: string) => get<SurveyStatus>(`${topicPath(id)}/survey/runs/${encodeURIComponent(runId)}`),
+  map: (id: string) => get<MapView>(`${topicPath(id)}/map`),
+  previewMap: (id: string) => send<MapPreview>("POST", `${topicPath(id)}/map/preview`, {}),
+  startMap: (id: string, planHash: string) => send<MapStatus>("POST", `${topicPath(id)}/map`, { plan_hash: planHash }),
+  mapJob: (id: string, jobKey: string) => get<MapStatus>(`${topicPath(id)}/map/jobs/${encodeURIComponent(jobKey)}`),
 };
