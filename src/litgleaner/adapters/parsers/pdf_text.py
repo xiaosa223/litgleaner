@@ -1,6 +1,7 @@
 """直接读取 PDF 文字层。不需要网络和额度，用作对照组和降级方案。
 
 拿不到表格、公式结构和图片位置，扫描件没有文字层时会被标记为低质量。
+段落坐标按文字层估算（见 pdf_layout），只用于原版视图定位，不改变文字和切分。
 """
 
 import io
@@ -9,6 +10,7 @@ import statistics
 
 from pypdf import PdfReader
 
+from litgleaner.adapters.parsers.pdf_layout import Box, block_bbox, page_lines
 from litgleaner.domain.document import DOCUMENT_SCHEMA_VERSION, Block, NormalizedDocument
 from litgleaner.domain.errors import PermanentError
 from litgleaner.ports.parser import ParseResult
@@ -53,25 +55,27 @@ def _join(lines: list[str]) -> str:
     return text
 
 
-def _page_blocks(text: str, page: int) -> list[Block]:
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
-    typical = statistics.median(len(line) for line in lines) if lines else 0
+def _page_blocks(lines: list[tuple[str, Box | None]], page: int) -> list[Block]:
+    typical = statistics.median(len(line) for line, _ in lines) if lines else 0
     blocks: list[Block] = []
     paragraph: list[str] = []
+    boxes: list[Box | None] = []
 
     def flush() -> None:
         if paragraph:
-            blocks.append(Block("text", _join(paragraph), page))
+            blocks.append(Block("text", _join(paragraph), page, block_bbox(boxes)))
             paragraph.clear()
+            boxes.clear()
 
-    for line in lines:
+    for line, box in lines:
         if _is_heading(line):
             flush()
-            blocks.append(Block("heading", line, page))
+            blocks.append(Block("heading", line, page, block_bbox([box])))
             continue
         if _RUN_IN_START.match(line):
             flush()  # 摘要常和标题、作者挤在同一段，要单独成段才能被识别
         paragraph.append(line)
+        boxes.append(box)
         ends_sentence = line.endswith((".", "。", "?", "!", ":"))
         if ends_sentence and len(line) < typical * _SHORT_LINE_RATIO:
             flush()
@@ -85,13 +89,13 @@ class PdfTextParser:
     def __init__(self, max_pages: int = DEFAULT_MAX_PAGES) -> None:
         self._max_pages = max_pages
 
-    def _pages(self, pdf: bytes) -> list[str]:
+    def _pages(self, pdf: bytes) -> list[list[tuple[str, Box | None]]]:
         """PDF 是不可信输入，读取中的任何异常都说明这个文件处理不了，重试也没用。"""
         try:
             reader = PdfReader(io.BytesIO(pdf))
             if len(reader.pages) > self._max_pages:
                 raise PermanentError(f"PDF 超过 {self._max_pages} 页，不处理")
-            return [page.extract_text() or "" for page in reader.pages]
+            return [page_lines(page) for page in reader.pages]
         except PermanentError:
             raise
         except Exception as error:
@@ -100,7 +104,7 @@ class PdfTextParser:
     def parse(self, pdf: bytes, sha256: str) -> ParseResult:
         pages = self._pages(pdf)
         blocks = tuple(
-            block for index, text in enumerate(pages) for block in _page_blocks(text, index)
+            block for index, lines in enumerate(pages) for block in _page_blocks(lines, index)
         )
         characters = sum(len(block.text) for block in blocks)
         document = NormalizedDocument(

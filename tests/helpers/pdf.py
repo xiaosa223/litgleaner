@@ -5,15 +5,24 @@ def _escape(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
-def _content(lines: list[str]) -> bytes:
+Line = str | tuple[str, float, float] | tuple[str, float, float, float]
+
+
+def _content(lines: list[Line]) -> bytes:
+    """字符串行接着上一行往下排；(文字, x, y[, 缩放]) 把这一行放到指定位置，用来模拟分栏。"""
     body = ["BT", "/F1 10 Tf", "12 TL", "72 760 Td"]
     for line in lines:
-        body.append(f"({_escape(line)}) Tj T*")
+        if isinstance(line, tuple):
+            text, x, y, *rest = line
+            k = rest[0] if rest else 1
+            body.append(f"{k} 0 0 {k} {x} {y} Tm ({_escape(text)}) Tj T*")
+        else:
+            body.append(f"({_escape(line)}) Tj T*")
     body.append("ET")
     return "\n".join(body).encode("latin-1")
 
 
-def make_pdf(pages: list[list[str]]) -> bytes:
+def make_pdf(pages: list[list[Line]], rotate: int = 0) -> bytes:
     objects: list[bytes] = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"",  # Pages，最后填
@@ -25,8 +34,8 @@ def make_pdf(pages: list[list[str]]) -> bytes:
         objects.append(b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream")
         content_id = len(objects)
         objects.append(
-            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-            b"/Resources << /Font << /F1 3 0 R >> >> /Contents %d 0 R >>" % content_id
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Rotate %d "
+            b"/Resources << /Font << /F1 3 0 R >> >> /Contents %d 0 R >>" % (rotate, content_id)
         )
         kids.append(f"{len(objects)} 0 R")
     objects[1] = f"<< /Type /Pages /Kids [{' '.join(kids)}] /Count {len(kids)} >>".encode()

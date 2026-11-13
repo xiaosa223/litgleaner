@@ -320,6 +320,10 @@ blockquote.author { margin: 4px 0; padding: 4px 10px; border-left: 3px solid var
 /* ---------- 正式版补充 ---------- */
 #root { height: 100%; }
 .view-msg { max-width: 720px; margin: 40px auto; color: var(--muted); text-align: center; }
+/* 段落结构识别中：原版视图里浮在页面上方，不占 PDF 的版面 */
+.parse-note { max-width: 720px; margin: 0 auto 16px; }
+main.doc.pdf-mode { position: relative; }
+main.doc.pdf-mode .parse-note { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); margin: 0; z-index: 5; box-shadow: 0 2px 8px rgb(0 0 0 / 12%); }
 .seg button:disabled, .acts button:disabled, .side button:disabled, .selbar button:disabled { opacity: .35; cursor: not-allowed; }
 .selbar button:disabled:hover { background: transparent; }
 .selpop textarea { width: 100%; min-height: 72px; }

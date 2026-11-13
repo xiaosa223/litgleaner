@@ -1,5 +1,6 @@
 // 阅读页：顶栏 + 目录 | 正文（原版或段落视图）| 侧栏。正文优先：目录和侧栏可以折叠（第 12.8 节）。
 import { useCallback, useEffect, useRef, useState } from "react";
+import { parseChanged, parseNote, PARSE_POLL_LIMIT, PARSE_POLL_MS } from "./parsing";
 import { api } from "./api";
 import { FlowView, type FlowTranslation } from "./FlowView";
 import { Panel, type Tab } from "./panel/Panel";
@@ -52,6 +53,30 @@ export function Reader({ paperId }: { paperId: string }) {
     );
     return () => { active = false; };
   }, [paperId, reload, toast]);
+  const [parseTimedOut, setParseTimedOut] = useState(false);
+  useEffect(() => setParseTimedOut(false), [paperId]);
+  const parsing = paper ? parseNote(paper, parseTimedOut) : null;
+  const waiting = !!parsing?.waiting;
+  const shownPaper = useRef(paper);
+  shownPaper.current = paper;
+  // 段落结构识别完成前定时查状态，有变化才刷新阅读页，完成后原版视图上自动出现逐段按钮。
+  // 单独请求、不经过 reload：某次查询失败只是跳过，下次再查，不会把整页换成错误提示。
+  useEffect(() => {
+    if (!waiting) return;
+    let count = 0;
+    let busy = false;
+    let alive = true;
+    const timer = window.setInterval(() => {
+      if (++count > PARSE_POLL_LIMIT) { window.clearInterval(timer); setParseTimedOut(true); return; }
+      if (busy) return;
+      busy = true;
+      api.paper(paperId).then(
+        (latest) => { if (alive && shownPaper.current && parseChanged(shownPaper.current, latest)) reload(); },
+        () => undefined,
+      ).finally(() => { busy = false; });
+    }, PARSE_POLL_MS);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, [waiting, reload, paperId]);
   const [docState] = useAsync(() => (paper?.has_document ? api.document(paperId) : Promise.resolve(null)), [paperId, paper?.has_document]);
   const doc = docState.state === "ready" ? docState.data : null;
   const { pdf, error: pdfError } = usePdf(paper?.has_pdf ? api.pdfUrl(paperId) : null);
@@ -245,6 +270,7 @@ export function Reader({ paperId }: { paperId: string }) {
           {!data.has_pdf && !data.has_document && (
             <article className="flow"><h1>{data.title}</h1><div className="degraded">还没有全文，下面是摘要。</div><p>{data.abstract ?? "（无摘要）"}</p></article>
           )}
+          {parsing && <div className="degraded parse-note" role="status">{parsing.text}</div>}
           {view === "pdf" && pdfError && <div className="view-msg">{pdfError}</div>}
           {view === "pdf" && canPdf && !pdf && <div className="view-msg">正在打开 PDF…</div>}
           {view === "pdf" && pdf && <PdfView pdf={pdf} blocks={blocks} annotations={data.annotations} focus={focus} onAction={onBlockAction}

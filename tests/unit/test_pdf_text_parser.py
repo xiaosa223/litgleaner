@@ -4,6 +4,7 @@ import pytest
 from tests.helpers.pdf import make_pdf
 
 import litgleaner.adapters.parsers.pdf_text as module
+from litgleaner.adapters.parsers.pdf_layout import _font_widths
 from litgleaner.adapters.parsers.pdf_text import PdfTextParser
 from litgleaner.domain.chunker import ChunkerConfig, chunk_document
 from litgleaner.domain.errors import PermanentError
@@ -95,3 +96,78 @@ def test_any_reader_crash_is_permanent(monkeypatch):
 def test_page_limit_is_enforced():
     with pytest.raises(PermanentError, match="页"):
         PdfTextParser(max_pages=1).parse(make_pdf([["a"], ["b"]]), "c" * 64)
+
+
+def _close(actual: int, expected: float, tolerance: float = 3) -> bool:
+    return abs(actual - expected) <= tolerance
+
+
+def test_blocks_carry_page_coordinates_for_the_original_view():
+    """原版视图靠块坐标放“译 / 问 / 记”和覆盖译文；坐标是 0–1000 千分比，原点在左上。"""
+    document = parse([["1. Introduction", LONG, LONG, "End."]])
+    heading, paragraph = document.blocks
+    assert heading.bbox is not None and paragraph.bbox is not None
+    hx0, hy0, _, hy1 = heading.bbox
+    px0, py0, px1, py1 = paragraph.bbox
+    # 第一行基线 y=760、字号 10：顶边约在基线上方 8pt
+    assert _close(hx0, 72 / 612 * 1000) and _close(px0, 72 / 612 * 1000)
+    assert _close(hy0, (792 - 768) / 792 * 1000)
+    # 段落三行（基线 748、736、724），在标题下方
+    assert py0 >= hy1 - 1
+    assert _close(py0, (792 - 756) / 792 * 1000)
+    assert _close(py1, (792 - 722) / 792 * 1000)
+    assert 650 < px1 <= 1000
+
+
+def test_coordinates_do_not_change_block_text_or_segmentation():
+    pages = [["1. Introduction", LONG, LONG, "End.", "2. Method", LONG]]
+    document = parse(pages)
+    assert [(b.kind, b.text) for b in document.blocks] == [
+        ("heading", "1. Introduction"),
+        ("text", f"{LONG} {LONG} End."),
+        ("heading", "2. Method"),
+        ("text", LONG),
+    ]
+
+
+def test_right_column_paragraph_is_placed_in_the_right_column():
+    document = parse([[("1. Results", 320, 700), LONG]])
+    heading, paragraph = document.blocks
+    assert heading.bbox is not None and paragraph.bbox is not None
+    assert _close(paragraph.bbox[0], 320 / 612 * 1000)
+
+
+def test_paragraph_continuing_into_next_column_keeps_the_longer_part():
+    """跨栏续写的段落只框住行数多的那一栏，不能框成横跨两栏的大方块。"""
+    left = [(LONG, 72, 110), LONG, LONG]
+    document = parse([[*left, (LONG, 320, 760), "Done."]])
+    (paragraph,) = document.blocks
+    assert paragraph.bbox is not None
+    x0, y0, _, y1 = paragraph.bbox
+    assert _close(x0, 72 / 612 * 1000)
+    assert y0 > 800 and y1 <= 1000
+
+
+def test_rotated_pages_have_no_coordinates():
+    document = PdfTextParser().parse(make_pdf([["1. Conclusion", LONG]], rotate=90), "c" * 64)
+    assert document.document.blocks
+    assert all(block.bbox is None for block in document.document.blocks)
+
+
+def test_character_widths_come_from_the_font_width_table():
+    width = _font_widths({"/Widths": [500, 600], "/FirstChar": 65})
+    assert (width("A"), width("B")) == (0.5, 0.6)
+    assert width("z") == pytest.approx(0.55)  # 表外的字按平均字宽
+
+
+@pytest.mark.parametrize("font", [{}, {"/Widths": "broken"}, {"/Widths": [0, 0]}])
+def test_missing_or_broken_width_table_falls_back_to_estimates(font):
+    width = _font_widths(font)
+    assert (width("a"), width("中")) == (0.5, 1.0)
+
+
+def test_text_drawn_far_off_the_page_gets_no_coordinates():
+    """页面外的文字（常见于隐藏文字）不能被夹到页边上，变成看似合理的错框。"""
+    document = parse([[("1. Results", 5000, 700), ("2. Method", 0, 0, 1e6)]])
+    assert [b.text for b in document.blocks] == ["1. Results", "2. Method"]
+    assert all(block.bbox is None for block in document.blocks)
