@@ -1,0 +1,26 @@
+# 一个主题一个文件，文件名必须和 id 一致。
+# 是否启用记录在数据库：litgleaner topic activate / pause。
+id: demo-topic
+name: 演示主题
+# 背景、内容、目标可以用中文写。改这三项或 query 会让初筛和评估结果失效（只影响新论文，
+# 历史论文要显式 topic backfill）；改 name、public 不会。
+background: >
+  研究背景：领域现状，要解决的问题为什么重要。
+content: >
+  研究内容：打算研究什么、用什么方法、关心什么、不关心什么。
+goals:
+  - id: g1
+    text: 研究目标一
+  - id: g2
+    text: 研究目标二
+query:
+  include: ["demo keyword"]
+  synonyms:
+    demo keyword: ["同义词"]
+  exclude: []
+journal_sets: [core]
+seeds:
+  dois: []
+  authors: []
+rubric: default
+public: false

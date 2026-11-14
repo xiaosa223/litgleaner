@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "default",
+  "metric": { "key": "reading_value", "label": "阅读价值分", "range": [0, 100] },
+  "levels": { "min": 0, "max": 5 },
+  "dimensions": [
+    {
+      "key": "relevance",
+      "label": "相关性",
+      "weight": 35,
+      "requires_fulltext": false,
+      "question": "这篇论文和当前研究主题有多接近？",
+      "anchors": { "0": "完全无关", "3": "同领域，可借鉴", "5": "直接解决主题的核心问题" }
+    },
+    {
+      "key": "novelty",
+      "label": "创新性",
+      "weight": 25,
+      "requires_fulltext": false,
+      "question": "是否提出了新方法或新发现？",
+      "anchors": { "0": "重复已有工作", "3": "对已有方法有实质改进", "5": "提出全新思路并显著突破" }
+    },
+    {
+      "key": "evidence",
+      "label": "证据可信度",
+      "weight": 20,
+      "requires_fulltext": true,
+      "question": "实验设计、基线对比和数据是否支撑其结论？",
+      "anchors": { "0": "没有实证", "3": "有基线对比但存在明显局限", "5": "设计严谨且结果可复现" }
+    },
+    {
+      "key": "reusability",
+      "label": "可复用性",
+      "weight": 20,
+      "requires_fulltext": true,
+      "question": "方法、代码或数据能否用到我的研究中？",
+      "anchors": { "0": "无法复用", "3": "方法可借鉴但需较多适配", "5": "代码和数据公开，可以直接使用" }
+    }
+  ],
+  "gates": [{ "dimension": "relevance", "min_level": 2 }],
+  "tiers": [
+    { "key": "must_read", "label": "必读", "min_score": 80 },
+    { "key": "digest", "label": "周报", "min_score": 60 },
+    { "key": "drop", "label": "不推送", "min_score": 0 }
+  ],
+  "provisional": { "tier": "need_fulltext", "min_score": 60 }
+}

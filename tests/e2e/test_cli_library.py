@@ -11,7 +11,7 @@ from tests.e2e.test_cli import ROOT, invoke
 
 @pytest.fixture
 def config_dir(tmp_path: Path) -> Path:
-    shutil.copytree(ROOT / "config", tmp_path / "config")
+    shutil.copytree(ROOT / "tests/fixtures/demo_config", tmp_path / "config")
     shutil.copytree(ROOT / "prompts", tmp_path / "prompts")
     return tmp_path / "config"
 

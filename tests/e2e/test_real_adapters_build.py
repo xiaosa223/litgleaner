@@ -25,6 +25,7 @@ ENV = {
     "OPENAI_API_KEY": "openai-key",
     "GEMINI_API_KEY": "gemini-key",
     "COMPAT_API_KEY": "compat-key",
+    "MINERU_API_TOKEN": "mineru-token",
 }
 
 
@@ -67,7 +68,7 @@ def test_every_template_entry_builds(config: Path):
     template_sources = set(yaml.safe_load((config / "sources.yaml").read_text())["sources"])
     assert set(ctx.sources) == template_sources
     assert all(source.capabilities for source in ctx.sources.values())
-    assert [p.name for p in ctx.fulltext][1:] == [
+    assert [p.name for p in ctx.fulltext] == [
         "zotero",
         "arxiv",
         "europe_pmc",

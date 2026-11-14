@@ -1,0 +1,27 @@
+# channels 定义发到哪里，routes 定义什么内容、什么时候发。
+# visibility: public 的渠道只能收到公开主题，并且只有白名单字段。
+channels:
+  me:
+    adapter: fake_publisher
+    renderer: plain_text
+    visibility: private
+    options:
+      output_file: data/demo/outbox.jsonl
+routes:
+  - id: daily-me
+    topic: "*"
+    channel: me
+    schedule: daily 00:00
+    tiers: [must_read, need_fulltext]
+    limit: 5
+# 飞书：一份推送一张卡片，每篇带“加入 Zotero / 不感兴趣”按钮。需要 uv sync --extra feishu，
+# 启用后 litgleaner serve 自动接收按钮点击。配置步骤见 docs/CHANNELS.md。
+#  feishu_me:
+#    adapter: feishu
+#    renderer: feishu_card
+#    visibility: private
+#    credentials_env: [FEISHU_APP_ID, FEISHU_APP_SECRET]
+#    options:
+#      receive_id: ou_xxx          # 你的 open_id；发到群里时写 chat_id 并改 receive_id_type
+#      receive_id_type: open_id
+#      # answerers: [ou_xxx]       # 发到群里时必填：谁的点击算数

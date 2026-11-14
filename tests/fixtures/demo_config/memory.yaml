@@ -1,0 +1,31 @@
+# 启动、查询和默认预览不加载或下载模型；首次入库只用就绪资产，显式重算才准备资产。
+embedding:
+  enabled: true
+  adapter: fastembed
+  model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+  dimensions: 384
+  # 缺省时放在数据库所在目录的 models/embeddings 下；相对路径以项目根目录为准。
+  # cache_dir: data/models/embeddings
+  threads: 1
+  batch_size: 16
+  max_input_chars: 8000
+candidates:
+  max_pairs: 5
+  common_reference_min: 2
+  cosine_min: 0.5
+  minimum_score: 0.5
+  query_terms_limit: 32
+  weights:
+    direct_citation: 6
+    citation_intent: 5
+    common_references: 4
+    core_concepts: 4
+    methods: 4
+    cosine: 3
+    datasets: 2
+    text: 1
+
+relate:
+  token_budget: 8000
+  max_fragments_per_side: 4
+  fragment_chars: 1600

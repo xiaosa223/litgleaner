@@ -6,22 +6,14 @@
 # 然后把需要的来源改成 enabled: true，执行 litgleaner doctor 检查。
 # 每个来源支持的查询类型、可选项和限额见 docs/SOURCES.md。
 sources:
-  demo:
-    adapter: fake_source
-    options:
-      records_file: config/demo/papers.json
-
   # ---- 通用：所有学科 ----
   crossref:            # 期刊追踪（ISSN）、关键词。DOI 注册机构，覆盖最全
     adapter: crossref
-    enabled: false
   openalex:            # 期刊、关键词、引文追踪、作者追踪
     adapter: openalex
-    enabled: false
     optional_env: [OPENALEX_API_KEY]
   semantic_scholar:    # 关键词、引文追踪、作者追踪。无 key 时经常限频
     adapter: semantic_scholar
-    enabled: false
     optional_env: [SEMANTIC_SCHOLAR_API_KEY]
   core:                # 关键词。聚合全球机构知识库，免费注册 key
     adapter: core
@@ -31,22 +23,17 @@ sources:
   # ---- 预印本与学科库 ----
   arxiv:               # 关键词、作者。物理、数学、计算机等预印本
     adapter: arxiv
-    enabled: false
   openreview:          # 关键词。机器学习会议投稿（含审稿中的论文）
     adapter: openreview
-    enabled: false
   pubmed:              # 关键词、期刊、作者。生物医学
     adapter: pubmed
-    enabled: false
     optional_env: [NCBI_API_KEY]
   europe_pmc:          # 关键词、期刊、作者。含 PubMed 和 bioRxiv、medRxiv 等预印本
     adapter: europe_pmc
-    enabled: false
 
   # ---- 你自己的文献库：新加入 Zotero 的条目自动进入流程 ----
   zotero:
     adapter: zotero
-    enabled: false
     optional_env: [ZOTERO_API_KEY]   # 只有 mode: web 时需要
     options:
       mode: local                    # local 自动发现本机 Zotero 数据目录；服务器上用 web

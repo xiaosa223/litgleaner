@@ -1,8 +1,7 @@
-# 当前是演示配置：外部依赖都是假适配器，数据写入 data/demo/。
-# 接入真实信号源时，把路径和适配器换掉，流程代码不用动。
-database: data/demo/litgleaner.db
-blob_root: data/demo/blobs
-archive_dir: data/demo/archive
+# 真实接入配置：数据写入 data/。假适配器只给测试用，不出现在运行配置里。
+database: data/litgleaner.db
+blob_root: data/blobs
+archive_dir: data/archive
 prompts_dir: prompts
 timezone: Asia/Shanghai
 language:
@@ -34,37 +33,34 @@ survey:
 # 数据库快照：serve 每天自动备份，backup 手动生成，db upgrade 迁移前备份，共保留 keep 份。
 # 恢复演练：litgleaner restore --check <快照>。
 backup:
-  dir: data/demo/backups
+  dir: data/backups
   keep: 14
 # 全文来源按顺序尝试，第一个拿到 PDF 的生效。真实来源默认关闭，启用时改成 enabled: true。
 # 顺序建议：自己的库 → 预印本 → 开放获取聚合 → 机构订阅（只有在校园网或 VPN 里运行才有效）。
 fulltext:
-  - adapter: fake_fulltext
-  - { adapter: zotero, enabled: false, optional_env: [ZOTERO_API_KEY] }  # 你 Zotero 里已有的 PDF
-  - { adapter: arxiv, enabled: false }
-  - { adapter: europe_pmc, enabled: false }         # PubMed Central 开放获取子集
+  - { adapter: zotero, optional_env: [ZOTERO_API_KEY] }  # 你 Zotero 里已有的 PDF
+  - { adapter: arxiv }
+  - { adapter: europe_pmc }         # PubMed Central 开放获取子集
   - { adapter: unpaywall, enabled: false }          # 必须设置 LITGLEANER_CONTACT_EMAIL
-  - { adapter: openalex, enabled: false, optional_env: [OPENALEX_API_KEY] }
-  - { adapter: semantic_scholar, enabled: false, optional_env: [SEMANTIC_SCHOLAR_API_KEY] }
+  - { adapter: openalex, optional_env: [OPENALEX_API_KEY] }
+  - { adapter: semantic_scholar, optional_env: [SEMANTIC_SCHOLAR_API_KEY] }
   - { adapter: core, enabled: false, credentials_env: [CORE_API_KEY] }
-  - { adapter: crossref_tdm, enabled: false }       # 出版商登记的文本挖掘链接，订阅文章需机构网络
+  - { adapter: crossref_tdm }       # 出版商登记的文本挖掘链接，订阅文章需机构网络
+# token 由 .env.example 从钥匙串注入
 parser:
-  adapter: fake_parser
-# 接入真实解析时换成下面的配置（token 由 .env.example 从钥匙串注入）：
-# parser:
-#   adapter: mineru_cloud
-#   credentials_env: [MINERU_API_TOKEN]
-#   options:
-#     state_dir: data/mineru_state   # 未完成任务的续查记录，避免重复提交
-#     model_version: vlm
-#     language: ch                   # ch 同时覆盖中英文
-#     timeout_seconds: 600
+  adapter: mineru_cloud
+  credentials_env: [MINERU_API_TOKEN]
+  options:
+    state_dir: data/mineru_state   # 未完成任务的续查记录，避免重复提交
+    model_version: vlm
+    language: ch                   # ch 同时覆盖中英文
+    timeout_seconds: 600
 # 不耗额度的备选：adapter: pdf_text（英文论文效果接近，中文期刊明显较差）
 # 加入文献库：推送卡片上点“加入 Zotero”或运行 litgleaner zotero add <DOI> 后写进本机 Zotero。
 # 需要 Zotero 10 以上并开着；第一次先运行 litgleaner zotero authorize。说明见 docs/CHANNELS.md。
-# library:
-#   adapter: zotero_local
-#   options:
-#     collection: 拾穗       # 放进这个分组，没有就自动创建
-#     tags: [拾穗]           # 另外会自动加上主题名和推送等级
-#     attach_pdf: true           # 已经取到的 PDF 一起放进 Zotero（只存在本机）
+library:
+  adapter: zotero_local
+  options:
+    collection: 拾穗       # 放进这个分组，没有就自动创建
+    tags: [拾穗]           # 另外会自动加上主题名和推送等级
+    attach_pdf: true           # 已经取到的 PDF 一起放进 Zotero（只存在本机）

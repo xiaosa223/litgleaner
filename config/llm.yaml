@@ -22,8 +22,6 @@
 #   timeout_seconds     默认 180
 # credentials_env 只写一个环境变量名（本地服务可以不写）。声明了却没有值，启动时报错。
 providers:
-  main:
-    adapter: fake_llm
   anthropic:
     adapter: anthropic_messages
     enabled: false
@@ -46,32 +44,33 @@ providers:
     credentials_env: [GEMINI_API_KEY]
     options:
       prices: {}
-  compat:  # OpenAI 兼容接口：国内厂商、中转站、本地推理服务
+  compat:  # OpenAI 兼容接口：国内厂商、中转站、本地推理服务。当前接本机 Magpie 网关
     adapter: openai_chat
-    enabled: false
     credentials_env: [COMPAT_API_KEY]
     options:
-      base_url: https://api.example.com/v1
-      prices: {}
-      # structured: prompt          # 接口不支持或不强制执行 json_schema 时打开
-      # max_tokens_field: max_tokens
+      base_url: http://127.0.0.1:3425/v1
+      prices:
+        labs/gpt-6-luna: [0.1, 0.5]
+      structured: prompt              # 网关不强制执行 json_schema
+      max_tokens_field: max_tokens
+      max_output_tokens: 16000
 tasks:
   # 每个任务可加 daily_budget_usd: 0.5；省略/null 仅受全局限额，0 暂停该任务的新调用。
   # 任务和全局费用均按 UTC 自然日统计；换模型不重置已用额度。
-  triage: { provider: main, model: demo-cheap, prompt: triage }
-  extract: { provider: main, model: demo-strong, prompt: extract }
-  assess: { provider: main, model: demo-strong, prompt: assess }
-  map: { provider: main, model: demo-strong, prompt: map }
+  triage: { provider: compat, model: labs/gpt-6-luna, prompt: triage }
+  extract: { provider: compat, model: labs/gpt-6-luna, prompt: extract }
+  assess: { provider: compat, model: labs/gpt-6-luna, prompt: assess }
+  map: { provider: compat, model: labs/gpt-6-luna, prompt: map }
   # 已读论文的综述骨架：先预览并确认固定输入才运行，与课题地图独立；旧配置可以不写
-  outline: { provider: main, model: demo-strong, prompt: outline }
-  relate: { provider: main, model: demo-cheap, prompt: relate, daily_budget_usd: 0.2 }
+  outline: { provider: compat, model: labs/gpt-6-luna, prompt: outline }
+  relate: { provider: compat, model: labs/gpt-6-luna, prompt: relate, daily_budget_usd: 0.2 }
   # 新建课题时起草检索词和术语表（第 7.2 节）：先预览再确认，每次一次调用
-  draft: { provider: main, model: demo-strong, prompt: draft }
+  draft: { provider: compat, model: labs/gpt-6-luna, prompt: draft }
   # 领读器的段落翻译：流式返回，按课题术语表统一译名（ADR 0004）。用便宜、快的模型即可
-  translate: { provider: main, model: demo-cheap, prompt: translate }
+  translate: { provider: compat, model: labs/gpt-6-luna, prompt: translate }
   # 个性化导读和三个引导问题（第 12.7 节）：打开导读时用户确认后生成并缓存，每篇一次调用
-  guide: { provider: main, model: demo-strong, prompt: guide }
+  guide: { provider: compat, model: labs/gpt-6-luna, prompt: guide }
   # 回答卡片的评价：用户提交回答后调用，每次一张卡片
-  evaluate: { provider: main, model: demo-strong, prompt: evaluate }
+  evaluate: { provider: compat, model: labs/gpt-6-luna, prompt: evaluate }
 budget:
   daily_usd: 2.0
