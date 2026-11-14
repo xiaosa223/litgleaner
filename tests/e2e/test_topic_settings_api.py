@@ -188,3 +188,21 @@ def test_saving_the_same_profile_twice_reports_no_change_the_second_time(ui):
     second = ui.client.put(f"{BASE}/profile", json=again)
     assert second.status_code == 200 and second.json()["changed"] is False
     assert [g["id"] for g in second.json()["topic"]["goals"]] == ["g1", "g2"]
+
+
+def test_backfill_skips_papers_held_by_a_survey_and_says_so(ui, monkeypatch):
+    ui.harness.write_papers([paper("alpha one"), paper("alpha two")])
+    assert run_pipeline(ui.runtime.snapshot()).ok
+    ui.client.put(f"{BASE}/profile", json=PROFILE)
+    plan = ui.client.post(f"{BASE}/backfill/preview", json={}).json()
+    assert plan["papers"] == 2 and plan["held"] == 0
+    ctx = ui.runtime.snapshot()
+    held_id = ctx.store.judgments.untriaged_papers(TOPIC, ctx.topics[TOPIC].topic_hash, None)[0]
+    monkeypatch.setattr(
+        type(ctx.store.surveys), "held_paper_ids", lambda _self: frozenset({held_id})
+    )
+    plan = ui.client.post(f"{BASE}/backfill/preview", json={}).json()
+    assert plan["papers"] == 1 and plan["held"] == 1
+    queued = ui.client.post(f"{BASE}/backfill", json={"plan": plan["plan"]})
+    assert queued.json() == {"queued": 1}
+    assert ctx.store.jobs.get(f"triage:{held_id}:{TOPIC}:{ctx.topics[TOPIC].topic_hash}") is None

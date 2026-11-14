@@ -88,10 +88,17 @@ def estimate(ctx: AppContext, task: str, papers: int) -> float | None:
     return None if average is None else average * papers
 
 
-def backfill_topic(ctx: AppContext, topic_id: str, since: str | None, dry_run: bool) -> WorkPlan:
+def backfill_topic(
+    ctx: AppContext,
+    topic_id: str,
+    since: str | None,
+    dry_run: bool,
+    exclude: frozenset[str] = frozenset(),
+) -> WorkPlan:
     """用库内已有元数据重新初筛。已有的 PDF、解析和提取结果都会复用。"""
     topic = _require(ctx, topic_id)
-    papers = ctx.store.judgments.untriaged_papers(topic.id, topic.topic_hash, since)
+    found = ctx.store.judgments.untriaged_papers(topic.id, topic.topic_hash, since)
+    papers = tuple(paper_id for paper_id in found if paper_id not in exclude)
     plan = WorkPlan(len(papers), estimate(ctx, "triage", len(papers)))
     if dry_run:
         return plan
@@ -108,20 +115,25 @@ class BackfillPlan:
     papers: int
     estimated_usd: float | None
     plan: str
+    held: int = 0  # 正由课题调研处理的论文：调研自己会筛，这里不排，免得一直排队
 
 
-def _backfill_papers(ctx: AppContext, topic_id: str) -> tuple[Topic, tuple[str, ...]]:
+def _backfill_papers(
+    ctx: AppContext, topic_id: str
+) -> tuple[Topic, tuple[str, ...], frozenset[str]]:
     topic = _require(ctx, topic_id)
     state = ctx.store.judgments.get_topic_state(topic_id)
     if state is None or state.status != ACTIVE or state.topic_hash != topic.topic_hash:
         raise InvalidRequest("topic_not_active")  # 暂停的课题排了也会被初筛跳过
-    return topic, ctx.store.judgments.untriaged_papers(topic.id, topic.topic_hash, None)
+    found = ctx.store.judgments.untriaged_papers(topic.id, topic.topic_hash, None)
+    held = ctx.store.surveys.held_paper_ids().intersection(found)
+    return topic, tuple(paper_id for paper_id in found if paper_id not in held), held
 
 
 def preview_backfill(ctx: AppContext, topic_id: str) -> BackfillPlan:
-    topic, papers = _backfill_papers(ctx, topic_id)
+    topic, papers, held = _backfill_papers(ctx, topic_id)
     plan = stable_hash({"topic_hash": topic.topic_hash, "papers": papers})
-    return BackfillPlan(len(papers), estimate(ctx, "triage", len(papers)), plan)
+    return BackfillPlan(len(papers), estimate(ctx, "triage", len(papers)), plan, len(held))
 
 
 def queue_backfill(ctx: AppContext, topic_id: str, plan: str) -> int:
@@ -129,7 +141,8 @@ def queue_backfill(ctx: AppContext, topic_id: str, plan: str) -> int:
     if preview_backfill(ctx, topic_id).plan != plan:
         raise InvalidRequest("plan_changed")
     ctx.llm.require_route("triage")
-    return backfill_topic(ctx, topic_id, None, dry_run=False).papers
+    held = _backfill_papers(ctx, topic_id)[2]
+    return backfill_topic(ctx, topic_id, None, dry_run=False, exclude=held).papers
 
 
 def triage_job(paper_id: str, topic: Topic) -> JobSpec:

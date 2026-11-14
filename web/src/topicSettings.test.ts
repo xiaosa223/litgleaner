@@ -48,3 +48,8 @@ test("回填说明：没有要筛的、费用未知、有估价", () => {
   assert.match(backfillText({ papers: 3, estimated_usd: null, plan: "p" }), /3 篇.*估不出/);
   assert.match(backfillText({ papers: 3, estimated_usd: 0.5, plan: "p" }), /\$0\.50/);
 });
+
+test("被课题调研持有的论文单独说明，不算进要重新筛选的篇数", () => {
+  assert.match(backfillText({ papers: 0, estimated_usd: null, plan: "p", held: 70 }), /70 篇正由课题调研处理/);
+  assert.match(backfillText({ papers: 3, estimated_usd: 0.001, plan: "p", held: 2 }), /3 篇.*另有 2 篇/);
+});

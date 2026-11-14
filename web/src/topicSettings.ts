@@ -12,7 +12,7 @@ export interface ProfileForm { name: string; background: string; content: string
 
 export interface ProfileBody { name: string; background: string; content: string; goals: { id: string | null; text: string }[] }
 
-export interface BackfillPlan { papers: number; estimated_usd: number | null; plan: string }
+export interface BackfillPlan { papers: number; estimated_usd: number | null; plan: string; held?: number }
 
 /** 与服务端的校验一致（server/topic_settings.py） */
 export const LIMITS = { name: 100, text: 8000, goal: 1000, goals: 20 } as const;
@@ -58,7 +58,8 @@ const ERRORS: Record<string, string> = {
 export const settingsError = (message: string) => ERRORS[message] ?? message;
 
 export function backfillText(plan: BackfillPlan): string {
-  if (plan.papers === 0) return "文库里的论文都已按当前描述筛选过，不需要重新筛选。";
+  const held = plan.held ? `另有 ${plan.held} 篇正由课题调研处理，调研完成或在“调研进度”里重试后会自动筛选，这里不重复排队。` : "";
+  if (plan.papers === 0) return held || "文库里的论文都已按当前描述筛选过，不需要重新筛选。";
   const cost = plan.estimated_usd === null ? "还没有初筛的历史费用，暂时估不出金额" : `初筛预计约 ${money(plan.estimated_usd)}`;
-  return `文库里有 ${plan.papers} 篇论文还没按当前描述筛选过。${cost}；通过初筛的论文之后会照常取全文和评估，这部分另算费用。`;
+  return `文库里有 ${plan.papers} 篇论文还没按当前描述筛选过。${cost}；通过初筛的论文之后会照常取全文和评估，这部分另算费用。${held}`;
 }

@@ -83,3 +83,52 @@ def test_exclude_still_applies_when_include_is_empty():
 
 def test_empty_metadata_does_not_invent_a_match():
     assert not filter_keywords("", None, TopicQuery(include=("alpha",))).passed
+
+
+@pytest.mark.parametrize(
+    ("term", "text"),
+    [
+        # 实测漏筛：调研从 OpenAlex 找回的相关论文，写法与检索词不同（2026-11-14）
+        ("explanation faithfulness", "Are explanations faithful under fire? Evaluating XAI"),
+        (
+            "feature attribution faithfulness",
+            "Faithfulness of attributions for feature-based models",
+        ),
+        ("graph neural network", "Graph neural networks for molecules"),
+        ("neural network", "networks of neurons and neural models"),
+        ("explainability", "An explainable model"),
+    ],
+)
+def test_multiword_terms_match_all_words_in_any_order_and_form(term, text):
+    assert filter_keywords(text, None, TopicQuery(include=(term,))).passed
+
+
+@pytest.mark.parametrize(
+    ("term", "text"),
+    [
+        ("explanation faithfulness", "An explanation of the method"),  # 缺一个词
+        ("feature attribution faithfulness", "feature attribution maps"),
+        ("graph neural network", "subgraph neural networks"),
+        ("deep model", "deeper models"),  # 短词只允许复数变化
+    ],
+)
+def test_multiword_terms_still_need_every_word_with_boundaries(term, text):
+    assert not filter_keywords(text, None, TopicQuery(include=(term,))).passed
+
+
+def test_exclusion_stays_an_exact_phrase():
+    query = TopicQuery(include=("faithfulness",), exclude=("image captioning",))
+    assert filter_keywords("Faithfulness of captioning images", None, query).passed
+    assert not filter_keywords("Faithfulness in image captioning", None, query).passed
+
+
+@pytest.mark.parametrize(
+    ("term", "text"),
+    [
+        ("species richness", "spectral richness"),
+        ("time series", "serious time"),
+        ("t-cell", "a t-test cell"),
+    ],
+)
+def test_short_stems_and_single_letters_do_not_overmatch(term, text):
+    assert not filter_keywords(text, None, TopicQuery(include=(term,))).passed
