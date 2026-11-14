@@ -1,4 +1,5 @@
 // 所有请求同源发出；改变状态的请求带 CSRF 令牌（第 15.5 节）。
+import type { ConceptCard, ConceptCards, GuidePage, MasteryState, MergeView, MetadataField, MetadataView, Rating } from "./guidance";
 import type { Identified } from "./identify";
 import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
@@ -14,6 +15,7 @@ import type {
   LibraryFilters,
   LibraryPage,
   NewAnnotation,
+  NoteView,
   PaperView,
   ReadingStatus,
   SearchHit,
@@ -89,6 +91,18 @@ export const isNotConnected = (error: unknown): boolean =>
   error instanceof ApiError && [404, 405, 501].includes(error.status);
 
 export const NOT_CONNECTED = "这项功能的服务还没有接上，现在只能看界面。";
+
+/** 下载服务端生成的文件（POST + CSRF），返回文件内容，由页面触发保存。 */
+async function download(path: string, body: unknown): Promise<Blob> {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "X-CSRF-Token": await csrfToken(), "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) await parse<never>(response);
+  return response.blob();
+}
 
 /** 上传 PDF：请求体就是文件本身；文件名和首页找到的标识符放在请求头里。 */
 async function upload<T>(path: string, file: File, identifier: string | null): Promise<T> {
@@ -191,6 +205,33 @@ export const api = {
     send<QaView>("POST", `${paperPath(id)}/qa`, question),
   saveQa: (id: string, questionId: string) =>
     send<Annotation>("POST", `${paperPath(id)}/qa/${encodeURIComponent(questionId)}/annotation`),
+  guide: (id: string, signal?: AbortSignal) => get<GuidePage>(`${paperPath(id)}/guide`, signal),
+  /** 用户确认后才生成导读：plan_hash 对应确认时看到的输入和费用。 */
+  generateGuide: (id: string, planHash: string) => send<GuidePage>("POST", `${paperPath(id)}/guide`, { plan_hash: planHash }),
+  submitAnswer: (id: string, guideId: string, questionIndex: number, text: string, evaluate: boolean) =>
+    send<GuidePage>("POST", `${paperPath(id)}/guide/${encodeURIComponent(guideId)}/answers`, { question_index: questionIndex, text, evaluate }),
+  evaluateAnswer: (id: string, cardId: string) =>
+    send<GuidePage>("POST", `${paperPath(id)}/answers/${encodeURIComponent(cardId)}/evaluate`),
+  markEvaluationWrong: (id: string, cardId: string, reason: string) =>
+    send<void>("POST", `${paperPath(id)}/answers/${encodeURIComponent(cardId)}/wrong`, { reason }),
+  conceptCards: (query = "", topicId: string | null = null, signal?: AbortSignal) =>
+    get<ConceptCards>(`/api/knowledge/cards?${new URLSearchParams({ q: query, limit: "200", ...(topicId ? { topic_id: topicId } : {}) })}`, signal),
+  setMastery: (conceptId: string, level: number) =>
+    send<MasteryState>("POST", `/api/knowledge/concepts/${encodeURIComponent(conceptId)}/level`, { level }),
+  /** 个人数据导出：论文、笔记、回答卡片、概念和引用文件打成一个 zip。 */
+  exportMine: (includePdfs: boolean) => download("/api/exports/mine", { include_pdfs: includePdfs }),
+  metadata: (id: string) => get<MetadataView>(`${paperPath(id)}/metadata`),
+  /** 用户修正元数据：只在显示处覆盖来源元数据（ADR 0011）；空串撤销该字段的修正。 */
+  saveMetadata: (id: string, fields: Partial<Record<MetadataField, string>>) =>
+    send<MetadataView>("PUT", `${paperPath(id)}/metadata`, fields),
+  notes: (signal?: AbortSignal) => get<NoteView[]>("/api/notes?limit=200", signal),
+  pendingMerges: () => get<MergeView[]>("/api/knowledge/merges"),
+  /** 确认或删除模型提议的概念关系、疑似重复；只记一条决定，可以改主意。 */
+  decideConcept: (target: string, decision: "confirmed" | "rejected") =>
+    send<void>("POST", "/api/knowledge/decisions", { target, decision }),
+  reviewDue: () => get<ConceptCard[]>("/api/knowledge/review?limit=50"),
+  rateReview: (conceptId: string, rating: Rating) =>
+    send<MasteryState>("POST", `/api/knowledge/concepts/${encodeURIComponent(conceptId)}/review`, { rating }),
   models: () => get<ModelSettingsView>("/api/settings/models"),
   /** 用草稿参数实际调用一次模型：会产生很少的费用，不保存任何东西。 */
   testModel: (body: ModelBody) => send<ProbeResult>("POST", "/api/settings/models/test", body),

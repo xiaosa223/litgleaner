@@ -88,7 +88,7 @@ def test_upgrade_ddl_failure_rolls_back_new_tables_version_and_keeps_old_records
 @pytest.mark.parametrize("failure", ["DROP TABLE source_capture_attempt", "UPDATE alembic_version"])
 def test_downgrade_failure_restores_both_tables_inputs_and_version_before_retry(legacy, failure):
     url, store, original = legacy
-    upgrade_database(url)
+    command.upgrade(alembic_config(url), "0021")  # 只测 0021 自身的降级，不受之后迁移影响
     store.source_captures.start(attempt())
     store.source_captures.append(item())
     schema = _schema(store)

@@ -7,6 +7,20 @@ _SEARCH_TRIGGERS = ("search_", "qa_search_", "knowledge_search_")
 _NORMALIZE = "litgleaner_search_normalize_v1"
 
 CAPTURE_TABLES = {"source_capture_attempt", "source_capture_input"}
+LEARNING_TABLES = {
+    "explanation",
+    "answer_card",
+    "answer_evaluation",
+    "mastery_event",
+    "paper_correction",
+    "concept_link",
+    "concept_merge_candidate",
+    "concept_decision",
+}
+LEARNING_TRIGGERS = {
+    f"{table}_no_{event}" for table in sorted(LEARNING_TABLES) for event in ("update", "delete")
+}
+
 CAPTURE_TRIGGERS = {
     "source_capture_attempt_transition",
     "source_capture_attempt_no_replace",

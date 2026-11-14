@@ -1,12 +1,11 @@
-// 设置：模型、外观、阅读偏好、花费、界面预览。偏好存在浏览器里；模型配置存在本机服务；渠道等要等后端提供接口后再加。
-import { useState } from "react";
+// 设置：模型、外观、阅读偏好、花费。偏好存在浏览器里；模型配置存在本机服务；渠道等要等后端提供接口后再加。
+import { useEffect, useState } from "react";
 import { api } from "../api";
 import { ModelSetupForm } from "../ModelSetup";
 import { taskSummary } from "../modelForm";
 import { usePref, useTranslateMode } from "../prefs";
-import { usePreview } from "../preview/usePreview";
 import type { View } from "../ReaderHeader";
-import { Modal } from "../ui";
+import { Modal, useToast } from "../ui";
 import { useAsync } from "../useAsync";
 
 export type Theme = "system" | "light" | "dark";
@@ -21,16 +20,51 @@ function Seg<T extends string>({ value, options, onChange, label }: {
   );
 }
 
+/** 导出我的数据：只导出，不读回；用户写的、模型生成的、作者原文在文件里分开标明。 */
+function ExportData() {
+  const toast = useToast();
+  const [pdfs, setPdfs] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const blob = await api.exportMine(pdfs);
+      const url = URL.createObjectURL(blob);
+      const link = Object.assign(document.createElement("a"), { href: url, download: "litgleaner-export.zip" });
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (cause) {
+      toast(cause instanceof Error ? cause.message : "导出失败，请重试");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="setting" id="export">
+      <div>
+        <b>导出我的数据</b>
+        <span className="d">每篇论文、每个概念一个 Markdown 文件：笔记和高亮、你写的回答（含每次修改）、评价、掌握程度，另附 BibTeX。不调用模型。</span>
+        <label className="d" style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 6 }}>
+          <input type="checkbox" checked={pdfs} onChange={(e) => setPdfs(e.target.checked)} />一并导出 PDF（文件会大很多）
+        </label>
+      </div>
+      <button className="ghost" onClick={() => void run()} disabled={busy}>{busy ? "正在打包…" : "导出 zip"}</button>
+    </div>
+  );
+}
+
 export function Settings() {
   const [theme, setTheme] = usePref<Theme>("theme", "system");
   const [view, setView] = usePref<View>("view", "pdf");
   const [mode, setMode] = useTranslateMode();
-  const [preview, setPreview] = usePreview();
   const [costs] = useAsync(() => api.costs(), []);
   const [models, reloadModels] = useAsync(() => api.models(), []);
   const [editing, setEditing] = useState(false);
   const rows = models.state === "ready" ? taskSummary(models.data) : [];
   const configured = rows.some((row) => row.status === "ready");
+  useEffect(() => {
+    if (window.location.hash === "#export") document.getElementById("export")?.scrollIntoView({ block: "center" });
+  }, []);
   return (
     <div className="screen-in">
       <div className="screen-head"><h1>设置</h1></div>
@@ -79,18 +113,15 @@ export function Settings() {
         <Seg label="翻译" value={mode} onChange={setMode} options={[["off", "原文"], ["overlay", "覆盖"], ["column", "对照"]]} />
       </div>
 
+      <h2 className="block-title">数据</h2>
+      <ExportData />
+
       <h2 className="block-title">模型花费</h2>
       <div className="setting">
         <div><b>本月累计</b><span className="d">翻译、讲解、提问等用到模型的操作</span></div>
         <span style={{ fontVariantNumeric: "tabular-nums" }}>
           {costs.state === "ready" ? `$${costs.data.month_usd.toFixed(2)}` : costs.state === "error" ? "读取失败" : "…"}
         </span>
-      </div>
-
-      <h2 className="block-title">开发中</h2>
-      <div className="setting">
-        <div><b>界面预览</b><span className="d">用示例数据展示还没有接上服务的页面：课题调研、知识库、今日复习</span></div>
-        <button className="switch" role="switch" aria-checked={preview} aria-label="界面预览" onClick={() => setPreview(!preview)} />
       </div>
     </div>
   );

@@ -19,6 +19,11 @@ from sqlalchemy import (
 from litgleaner.infra.db.schema_citation import define_citation
 from litgleaner.infra.db.schema_embedding import define_embedding
 from litgleaner.infra.db.schema_knowledge import define_knowledge
+from litgleaner.infra.db.schema_learning import (
+    define_concept_links,
+    define_correction,
+    define_learning,
+)
 from litgleaner.infra.db.schema_outline import define_outline
 from litgleaner.infra.db.schema_relation import define_relations
 from litgleaner.infra.db.schema_survey import define_survey
@@ -386,4 +391,7 @@ qa_message = Table(
 )
 
 concept, concept_alias, concept_occurrence = define_knowledge(metadata)
+explanation, answer_card, answer_evaluation, mastery_event = define_learning(metadata)
+paper_correction = define_correction(metadata)
+concept_link, concept_merge_candidate, concept_decision = define_concept_links(metadata)
 citation = define_citation(metadata)

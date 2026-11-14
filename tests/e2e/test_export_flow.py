@@ -44,7 +44,7 @@ def test_empty_export_is_useful_without_models_or_budget_and_does_not_mutate(har
     assert json.loads(files["references.csl.json"]) == []
     manifest = json.loads(files["manifest.json"])
     assert manifest["papers"] == manifest["concepts"] == 0
-    assert manifest["unavailable_sections"]["answer_cards"]
+    assert manifest["answer_cards"] == 0
     assert ctx.store.stats() == before and harness.llm_calls() == 0
     assert not ctx.store.jobs.list_by_status("pending")
 
@@ -128,7 +128,7 @@ def test_user_questions_model_answers_and_original_quotes_are_distinct_without_h
     for index in range(60):
         assert f"用户问题 {index}" in text and f"模型推断 {index}" in text
     assert "模型推断" in text and "作者原文" in text and "PDF 第 3 页" in text
-    assert "saved-producer" in text and "当前版本尚未提供用户回答卡片" in text
+    assert "saved-producer" in text and "没有回答过这篇论文的引导问题" in text
 
 
 def test_concepts_export_original_definitions_locations_and_no_fabricated_mastery(harness):

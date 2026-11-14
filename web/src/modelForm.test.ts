@@ -32,7 +32,7 @@ test("合法表单转成接口请求体：去空白、数字化，默认所有�
   assert.equal(result.body.api_key, "sk-test-1234");
   assert.equal(result.body.input_price, 0.3);
   assert.equal(result.body.daily_budget_usd, 2);
-  assert.equal(result.body.tasks.length, 9);
+  assert.equal(result.body.tasks.length, 11);
   assert.equal(result.body.base_url, "https://api.deepseek.com/v1");
   assert.equal(result.body.max_tokens_field, "max_tokens");
 });

@@ -247,7 +247,7 @@ def test_concept_aliases_and_occurrences_keep_languages_zero_pages_and_original_
 
 
 @pytest.mark.parametrize("count", [0, 10, 1000])
-def test_snapshot_uses_twelve_parameterless_selects_on_one_connection_and_never_writes(
+def test_snapshot_uses_seventeen_parameterless_selects_on_one_connection_and_never_writes(
     store, count, monkeypatch
 ):
     with store.atomic():
@@ -271,7 +271,8 @@ def test_snapshot_uses_twelve_parameterless_selects_on_one_connection_and_never_
     finally:
         event.remove(store._db._engine, "before_cursor_execute", capture)
     selects = [(sql, params) for sql, params in statements if sql.startswith("SELECT")]
-    assert len(selects) == 12 and len(connections) == 1
+    # 12 次论文与概念事实 + 4 次学习记录 + 1 次用户元数据修正
+    assert len(selects) == 17 and len(connections) == 1
     assert all(not params for _sql, params in selects)
     assert all(sql.startswith(("SELECT", "BEGIN")) for sql, _params in statements)
     assert tuple(item.paper.id for item in snapshot.papers) == tuple(

@@ -5,6 +5,7 @@ import re
 from collections.abc import Iterator, Mapping
 from typing import Any
 
+from litgleaner.adapters.fakes.llm_learning import fake_evaluate, fake_guide
 from litgleaner.ports.llm import (
     LLMRequest,
     LLMResponse,
@@ -29,6 +30,9 @@ _DRAFT: Mapping[str, Any] = {
     "glossary": [{"term": "demo term", "translation": "演示术语", "definition": "演示释义"}],
 }
 _FIXED: Mapping[str, Mapping[str, Any]] = {"relate": {"relations": []}, "draft": _DRAFT}
+
+
+_BY_TASK = {"guide": fake_guide, "evaluate": fake_evaluate}
 
 
 class FakeLLM:
@@ -75,10 +79,10 @@ class FakeLLM:
     def _answer(self, request: LLMRequest) -> Mapping[str, Any]:
         if fixed := _FIXED.get(request.task):
             return fixed
-        if request.task == "outline":
-            return self._outline(request)
-        if request.task == "map":
-            return self._topic_map(request)
+        if handler := _BY_TASK.get(request.task):
+            return handler(request.user)
+        if request.task in {"outline", "map"}:
+            return self._outline(request) if request.task == "outline" else self._topic_map(request)
         if request.task == "triage":
             relevant = "[[irrelevant]]" not in request.user
             return {"relevant": relevant, "reason": "演示判断"}

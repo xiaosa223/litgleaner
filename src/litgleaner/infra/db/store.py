@@ -9,6 +9,8 @@ from litgleaner.infra.db.admission_repo import SqlAdmissionRepo
 from litgleaner.infra.db.candidate_repo import SqlCandidateRepo
 from litgleaner.infra.db.catalog_repo import SqlCatalogRepo
 from litgleaner.infra.db.citation_repo import SqlCitationRepo
+from litgleaner.infra.db.concept_link_repo import SqlConceptLinkRepo
+from litgleaner.infra.db.correction_repo import SqlCorrectionRepo
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.embedding_repo import SqlEmbeddingRepo
 from litgleaner.infra.db.export_repo import SqlExportRepo
@@ -17,6 +19,7 @@ from litgleaner.infra.db.inbox_repo import SqlInboxRepo
 from litgleaner.infra.db.jobs_repo import SqlJobRepo, SqlRunRepo
 from litgleaner.infra.db.judgments_repo import SqlJudgmentRepo
 from litgleaner.infra.db.knowledge_repo import SqlKnowledgeRepo
+from litgleaner.infra.db.learning_repo import SqlLearningRepo
 from litgleaner.infra.db.memory_repo import SqlMemoryRepo
 from litgleaner.infra.db.outline_repo import SqlOutlineRepo
 from litgleaner.infra.db.outputs_repo import SqlOutputRepo
@@ -96,6 +99,9 @@ class SqlStore:
         self._source_captures = SqlCaptureRepo(self._db)
         self._qa = SqlQARepo(self._db)
         self._knowledge = SqlKnowledgeRepo(self._db)
+        self._learning = SqlLearningRepo(self._db)
+        self._corrections = SqlCorrectionRepo(self._db)
+        self._concept_links = SqlConceptLinkRepo(self._db)
         self._citations = SqlCitationRepo(self._db)
         self._reading_routes = SqlReadingRouteRepo(self._db)
         self._surveys = SqlSurveyRepo(self._db)
@@ -159,6 +165,18 @@ class SqlStore:
     @property
     def knowledge(self) -> SqlKnowledgeRepo:
         return self._knowledge
+
+    @property
+    def learning(self) -> SqlLearningRepo:
+        return self._learning
+
+    @property
+    def corrections(self) -> SqlCorrectionRepo:
+        return self._corrections
+
+    @property
+    def concept_links(self) -> SqlConceptLinkRepo:
+        return self._concept_links
 
     @property
     def citations(self) -> SqlCitationRepo:

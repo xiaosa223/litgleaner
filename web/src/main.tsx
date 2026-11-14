@@ -4,6 +4,7 @@ import { App } from "./App";
 import { PdfEngineProvider } from "./pdf/EngineProvider";
 import "./styles.css";
 import "./shell.css";
+import "./guide.css";
 import "./tailwind.css";
 
 const root = document.getElementById("root");

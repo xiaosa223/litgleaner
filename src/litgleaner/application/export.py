@@ -10,6 +10,7 @@ from typing import Any
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import pdf_key
 from litgleaner.application.export_format import label
+from litgleaner.application.export_learning import LearningExport, collect
 from litgleaner.application.export_markdown import concept_markdown, paper_markdown
 from litgleaner.domain.errors import LitGleanerError
 from litgleaner.domain.export import ExportFile, export_name
@@ -33,7 +34,7 @@ def _readme(snapshot: ExportSnapshot, include_pdfs: bool) -> str:
         "作者原文、模型生成及用户所写分别标明；未核验的用户摘录与模型引文保留核验说明。",
         "正文显示的 PDF 页码从 1 开始；原始 JSON 的页码保持数据库的零基编号。",
         "保存全部论文、提取和评估历史、有效笔记和高亮、问答及概念记录。",
-        "当前版本尚未提供用户回答卡片；相关章节明确注明，不以模型问答代替。",
+        "用户回答卡片（含全部修订）、模型评价和掌握程度写在各论文和概念文件中，三种内容分开标明。",
         f"PDF 导出：{'包含已有且校验通过的原 PDF' if include_pdfs else '默认不包含 PDF'}。"
         "缺失与无法读取的 PDF 见 manifest.json。",
         "references.bib 与 references.csl.json 只收录具有有效标识符的来源元数据；"
@@ -69,12 +70,16 @@ def _pdf(ctx: AppContext, item: ExportPaper) -> tuple[ExportFile | None, str | N
     return ExportFile(export_name("pdfs", item.paper.id, "pdf"), content), None
 
 
-def _content(snapshot: ExportSnapshot, include_pdfs: bool) -> Iterator[ExportFile]:
+def _content(
+    snapshot: ExportSnapshot, learned: LearningExport, include_pdfs: bool
+) -> Iterator[ExportFile]:
     yield _text("README.md", _readme(snapshot, include_pdfs))
     for item in snapshot.papers:
-        yield _text(export_name("papers", item.paper.id), paper_markdown(item))
+        cards = learned.paper_sections.get(item.paper.id, "")
+        yield _text(export_name("papers", item.paper.id), paper_markdown(item, cards))
     for concept in snapshot.concepts:
-        yield _text(export_name("concepts", concept.concept.id), concept_markdown(concept))
+        extra = learned.concept_sections.get(concept.concept.id, "")
+        yield _text(export_name("concepts", concept.concept.id), concept_markdown(concept, extra))
     refs = render_references(tuple((item.paper, item.aliases) for item in snapshot.papers))
     yield _text("references.bib", refs.bibtex)
     yield _text("references.csl.json", refs.csl_json)
@@ -100,6 +105,7 @@ def _pdf_entries(
 
 def mine(ctx: AppContext, *, include_pdfs: bool = False) -> Iterator[ExportFile]:
     snapshot = ctx.store.export_snapshot()
+    learned = collect(snapshot)
     manifest: dict[str, Any] = {
         "format_version": 1,
         "created_at": ctx.now_iso(),
@@ -108,10 +114,10 @@ def mine(ctx: AppContext, *, include_pdfs: bool = False) -> Iterator[ExportFile]
         "include_pdfs": include_pdfs,
         "files": [],
         "warnings": [],
-        "unavailable_sections": {"answer_cards": "当前版本尚未提供用户回答卡片功能"},
+        "answer_cards": learned.answer_cards,
     }
     attachments = _pdf_entries(ctx, snapshot, manifest["warnings"]) if include_pdfs else ()
-    for entry in chain(_content(snapshot, include_pdfs), attachments):
+    for entry in chain(_content(snapshot, learned, include_pdfs), attachments):
         manifest["files"].append(_file_record(entry))
         yield entry
     yield _json("manifest.json", manifest)

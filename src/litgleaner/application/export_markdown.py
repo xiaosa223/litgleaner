@@ -85,7 +85,7 @@ def _questions(item: ExportPaper) -> list[str]:
     return sections
 
 
-def paper_markdown(item: ExportPaper) -> str:
+def paper_markdown(item: ExportPaper, cards: str = "") -> str:
     paper = item.paper
     sections = [
         f"# {label(paper.title)}",
@@ -101,18 +101,20 @@ def paper_markdown(item: ExportPaper) -> str:
     sections += _annotations(item) + _generated(item) + _questions(item)
     sections += [
         "## 用户回答卡片",
-        "当前版本尚未提供用户回答卡片功能；模型问答不作为用户回答卡片。",
+        cards or "没有回答过这篇论文的引导问题。模型问答不作为用户回答卡片。",
     ]
     return "\n\n".join(sections) + "\n"
 
 
-def concept_markdown(item: ExportConcept) -> str:
+def concept_markdown(item: ExportConcept, learning: str = "") -> str:
     sections = [
         f"# {label(item.concept.name)}",
         "## 概念与别名记录（未记录单独的创建者来源）",
         literal(asdict(item.concept)),
         literal([asdict(alias) for alias in item.aliases]),
     ]
+    if learning:  # 没有学习记录时不写等级，避免凭空给出掌握程度
+        sections += ["## 掌握程度与用户回答", learning]
     for occurrence in item.occurrences:
         target = "../" + export_name("papers", occurrence.paper_id)
         sections += [

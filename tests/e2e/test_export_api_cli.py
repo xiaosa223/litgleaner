@@ -101,7 +101,7 @@ def test_download_headers_and_manifest_are_complete_with_optional_body(export_ui
     assert manifest["format_version"] == 1 and manifest["papers"] == 1
     assert manifest["concepts"] == 0 and manifest["include_pdfs"] is False
     assert manifest["created_at"] == harness.ctx.now_iso()
-    assert "answer_cards" in manifest["unavailable_sections"]
+    assert manifest["answer_cards"] == 0
 
 
 def test_default_export_reads_no_pdf_and_works_without_models_or_budget(export_ui, monkeypatch):

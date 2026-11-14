@@ -142,7 +142,8 @@ def test_missing_paper_keeps_stable_link_without_extra_files_or_source_queries(
         event.remove(engine, "before_cursor_execute", capture)
     assert _link(missing) in text
     assert export_name("papers", missing) not in files
-    assert sum(sql.lstrip().upper().startswith("SELECT") for sql in queries) == 12
+    # 12 次论文与概念事实 + 4 次学习记录 + 1 次用户元数据修正，同一事务
+    assert sum(sql.lstrip().upper().startswith("SELECT") for sql in queries) == 17
     assert not any(
         sql.lstrip().upper().startswith(("INSERT", "UPDATE", "DELETE")) for sql in queries
     )

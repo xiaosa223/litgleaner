@@ -2,7 +2,6 @@
 import { BookOpen, Compass, Lightbulb, Plus, Search, Settings as SettingsIcon, Sun, type LucideIcon } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { MOD } from "./platform";
-import { usePreview } from "./preview/usePreview";
 import { navigate, paths, type Route } from "./router";
 
 const NAV: { name: Route["name"]; also?: Route["name"]; label: string; path: string; icon: LucideIcon }[] = [
@@ -28,7 +27,6 @@ function NavLink({ path, label, icon: Icon, active }: { path: string; label: str
 export function Shell({ route, onAdd, onSearch, children }: {
   route: Route; onAdd: () => void; onSearch: () => void; children: ReactNode;
 }) {
-  const [preview] = usePreview();
   return (
     <div className="shell">
       <nav className="side-nav" aria-label="主导航">
@@ -46,7 +44,6 @@ export function Shell({ route, onAdd, onSearch, children }: {
           ))}
         </div>
         <div className="nav-foot">
-          {preview && <div className="nav-note">界面预览已开启：标着“示例数据”的内容还没有接上服务。可以在设置里关掉。</div>}
           <NavLink path={paths.settings} label="设置" icon={SettingsIcon} active={route.name === "settings"} />
         </div>
       </nav>

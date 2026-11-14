@@ -1,11 +1,11 @@
 // 今天：现在该做什么。继续读 → 今日复习 → 新推荐 → 待读；什么都没有时给出两个入口（第 12.8、15.5 节）。
 import { Compass, FileText } from "lucide-react";
 import { PaperCard } from "../PaperCard";
-import { SAMPLE_CONCEPTS } from "../preview/sample";
-import { usePreview } from "../preview/usePreview";
+import { api } from "../api";
+import { translationOf } from "../guidance";
 import { navigate, paths } from "../router";
 import type { Inbox } from "../types";
-import type { Async } from "../useAsync";
+import { useAsync, type Async } from "../useAsync";
 
 const NEW_LIMIT = 5;
 const QUEUE_LIMIT = 3;
@@ -31,14 +31,14 @@ function Welcome({ onAdd }: { onAdd: () => void }) {
 }
 
 export function Today({ inbox, reload, onAdd }: { inbox: Async<Inbox>; reload: () => void; onAdd: () => void }) {
-  const [preview] = usePreview();
+  const [review] = useAsync(() => api.reviewDue(), []);
   const date = new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" });
   const head = <div className="screen-head"><h1>今天</h1><span className="sub">{date}</span></div>;
   if (inbox.state === "loading") return <div className="screen-in">{head}<div className="view-msg">正在加载…</div></div>;
   if (inbox.state === "error") return <div className="screen-in">{head}<div className="view-msg">{inbox.message}</div></div>;
   const { reading, queued, recommended } = inbox.data;
   const fresh = recommended.filter((item) => !item.reading_status);
-  const due = preview ? SAMPLE_CONCEPTS.filter((c) => c.due) : [];
+  const due = review.state === "ready" ? review.data : [];
   const nothing = reading.length + queued.length + recommended.length === 0;
 
   return (
@@ -53,12 +53,12 @@ export function Today({ inbox, reload, onAdd }: { inbox: Async<Inbox>; reload: (
       )}
       {due.length > 0 && (
         <section>
-          <h2 className="block-title">今日复习 <span className="topic-chip">示例数据</span></h2>
+          <h2 className="block-title">今日复习</h2>
           <div className="pcard">
             <div className="pcard-top">
               <div className="pcard-title" style={{ font: "600 15px var(--sans)" }}>{due.length} 个概念到了复习时间</div>
             </div>
-            <div className="pcard-by">{due.map((c) => c.translation).join("、")}</div>
+            <div className="pcard-by">{due.slice(0, 8).map((c) => translationOf(c.summary) || c.summary.concept.name).join("、")}{due.length > 8 ? " 等" : ""}</div>
             <div className="pcard-actions">
               <button className="primary sm" onClick={() => navigate(`${paths.knowledge}#review`)}>开始复习</button>
               <span className="tag">从你自己写过的回答出发，自评不花模型费用</span>

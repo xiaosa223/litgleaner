@@ -5,31 +5,39 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 
-from sqlalchemy import Row, select
+from sqlalchemy import Row, select, text
 
+from litgleaner.domain.correction import Correction
+from litgleaner.domain.guidance import Evaluation, Guide
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.knowledge import ConceptAlias
 from litgleaner.domain.reading import ReadingState, ReadingStatus
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.knowledge_repo import _concept, _occurrence
+from litgleaner.infra.db.learning_repo import _card, _event
 from litgleaner.infra.db.papers_repo import _to_paper
 from litgleaner.infra.db.qa_repo import _answer, _question
 from litgleaner.infra.db.reader_repo import _to_annotation
 from litgleaner.infra.db.schema import (
     annotation,
+    answer_card,
+    answer_evaluation,
     assessment,
     concept,
     concept_alias,
     concept_occurrence,
+    explanation,
     extraction,
     fulltext,
+    mastery_event,
     paper,
     paper_alias,
+    paper_correction,
     qa_message,
     reading_state,
     score,
 )
-from litgleaner.ports.export import ExportConcept, ExportPaper, ExportSnapshot
+from litgleaner.ports.export import ExportConcept, ExportLearning, ExportPaper, ExportSnapshot
 
 
 @dataclass(frozen=True)
@@ -46,6 +54,23 @@ class _Rows:
     concepts: Sequence[Row[Any]]
     concept_aliases: Sequence[Row[Any]]
     occurrences: Sequence[Row[Any]]
+    guides: Sequence[Row[Any]] = ()
+    cards: Sequence[Row[Any]] = ()
+    evaluations: Sequence[Row[Any]] = ()
+    events: Sequence[Row[Any]] = ()
+    corrections: Sequence[Row[Any]] = ()
+
+
+def _learning(rows: _Rows) -> ExportLearning:
+    return ExportLearning(
+        tuple(Guide.model_validate_json(row.data) for row in rows.guides if row.kind == "guide"),
+        tuple(_card(row) for row in rows.cards),
+        tuple(Evaluation.model_validate_json(row.data) for row in rows.evaluations),
+        tuple(_event(row) for row in rows.events),
+        tuple(
+            Correction(r.id, r.paper_id, r.field, r.value, r.created_at) for r in rows.corrections
+        ),
+    )
 
 
 def _group[K, T](
@@ -179,5 +204,38 @@ class SqlExportRepo:
                         concept_occurrence.c.paper_id,
                     )
                 ),
+                **self._learning_rows(),
             )
-        return ExportSnapshot(_papers(rows), _concepts(rows))
+        return ExportSnapshot(_papers(rows), _concepts(rows), _learning(rows))
+
+    def _learning_rows(self) -> dict[str, Sequence[Row[Any]]]:
+        """学习记录的 4 次无参查询；只在 snapshot 的同一事务里调用。"""
+        return {
+            "guides": self._db.fetch(
+                select(explanation.c.kind, explanation.c.data)
+                .where(text("explanation.kind = 'guide'"))  # 字面量，保持无参查询
+                .order_by(explanation.c.created_at, explanation.c.id)
+            ),
+            "cards": self._db.fetch(
+                select(answer_card).order_by(
+                    answer_card.c.explanation_id,
+                    answer_card.c.question_index,
+                    answer_card.c.revision,
+                )
+            ),
+            "evaluations": self._db.fetch(
+                select(answer_evaluation.c.data).order_by(answer_evaluation.c.card_id)
+            ),
+            "corrections": self._db.fetch(
+                select(paper_correction).order_by(
+                    paper_correction.c.paper_id,
+                    paper_correction.c.created_at,
+                    paper_correction.c.id,
+                )
+            ),
+            "events": self._db.fetch(
+                select(mastery_event).order_by(
+                    mastery_event.c.concept_id, mastery_event.c.created_at, mastery_event.c.id
+                )
+            ),
+        }

@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from tests.integration.relation_migration_helpers import (
     CAPTURE_TRIGGERS,
     FTS_RAW_COLUMNS,
+    LEARNING_TRIGGERS,
     RELATION_TRIGGERS,
     assert_legacy_preserved,
     assert_search_upgrade_triggers,
@@ -110,6 +111,7 @@ def test_0016_preserves_existing_tables_facts_keys_triggers_and_matches_metadata
         }
         | RELATION_TRIGGERS
         | CAPTURE_TRIGGERS
+        | LEARNING_TRIGGERS
     )
     engine = create_engine(url)
     try:

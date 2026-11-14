@@ -1,6 +1,9 @@
 // 读后卡片：模型提取的内容按“模型概括 / 模型推断 / 作者原话”区分显示。
 import type { PaperView } from "../types";
 import { AuthorQuote, ModelText } from "../ui";
+import type { useGuide } from "../useGuide";
+import { AnswerCards } from "./AnswerCards";
+import type { JumpQuote } from "./PersonalGuide";
 
 interface Limitation {
   text: string;
@@ -15,13 +18,16 @@ const FIELDS: [string, string, string][] = [
   ["conclusion", "主要结论", "作者用什么证据得出了什么结论"],
 ];
 
-export function CardTab({ paper, onMarkRead }: { paper: PaperView; onMarkRead: () => void }) {
+export function CardTab({ paper, onMarkRead, guide, onJump, onOpenGuide }: {
+  paper: PaperView; onMarkRead: () => void; guide: ReturnType<typeof useGuide>; onJump: JumpQuote; onOpenGuide: () => void;
+}) {
   const data = paper.extraction ?? {};
   const limitations = (data.limitations as Limitation[] | undefined) ?? [];
   const fields = FIELDS.filter(([key]) => typeof data[key] === "string" && data[key]);
   return (
     <>
-      <div className="cardhead">
+      <AnswerCards state={guide} paperId={paper.paper_id} onJump={onJump} onOpenGuide={onOpenGuide} />
+      <div className="cardhead" style={{ marginTop: 18 }}>
         <b>读后卡片</b>
         <button className="ghost" style={{ marginLeft: "auto" }} onClick={onMarkRead} disabled={paper.reading?.status === "read"}>
           {paper.reading?.status === "read" ? "已读" : "标记为已读"}

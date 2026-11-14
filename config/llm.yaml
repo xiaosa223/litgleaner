@@ -69,5 +69,9 @@ tasks:
   draft: { provider: main, model: demo-strong, prompt: draft }
   # 领读器的段落翻译：流式返回，按课题术语表统一译名（ADR 0004）。用便宜、快的模型即可
   translate: { provider: main, model: demo-cheap, prompt: translate }
+  # 个性化导读和三个引导问题（第 12.7 节）：打开导读时用户确认后生成并缓存，每篇一次调用
+  guide: { provider: main, model: demo-strong, prompt: guide }
+  # 回答卡片的评价：用户提交回答后调用，每次一张卡片
+  evaluate: { provider: main, model: demo-strong, prompt: evaluate }
 budget:
   daily_usd: 2.0

@@ -371,6 +371,7 @@ def test_0018_preserves_prior_facts_schema_fts_keys_triggers_and_roundtrips(tmp_
         }
         | migrations.RELATION_TRIGGERS
         | migrations.CAPTURE_TRIGGERS
+        | migrations.LEARNING_TRIGGERS
     )
     engine = create_engine(url)
     try:

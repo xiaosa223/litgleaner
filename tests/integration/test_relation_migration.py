@@ -11,6 +11,7 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.exc import IntegrityError
 from tests.integration.relation_migration_helpers import (
     CAPTURE_TRIGGERS,
+    LEARNING_TRIGGERS,
     RELATION_TRIGGERS,
     assert_legacy_preserved,
     assert_search_upgrade_triggers,
@@ -95,7 +96,10 @@ def test_0019_preserves_all_old_data_constraints_and_fts_and_matches_complete_me
         current_definitions=current_definitions,
     )
     assert_search_upgrade_triggers(triggers, current_triggers)
-    assert set(current_triggers) - set(triggers) == RELATION_TRIGGERS | CAPTURE_TRIGGERS
+    assert (
+        set(current_triggers) - set(triggers)
+        == RELATION_TRIGGERS | CAPTURE_TRIGGERS | LEARNING_TRIGGERS
+    )
     engine = create_engine(url)
     try:
         with engine.connect() as connection:

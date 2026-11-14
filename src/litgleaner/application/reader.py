@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC
 from typing import Any
 
+from litgleaner.application import corrections
 from litgleaner.application.cards import card_from_dict, tier_label
 from litgleaner.application.context import AppContext
 from litgleaner.application.documents import load_document, pdf_key
@@ -113,12 +114,14 @@ def _inbox_item(
     card = card_from_dict(data)
     state = ctx.store.reader.get_state(card.paper_id)
     topic = ctx.topics.get(topic_id)
+    fixed = ctx.store.corrections.latest((card.paper_id,)).get(card.paper_id, {})
+    authors = corrections.display_authors(fixed.get("authors"))
     return InboxItem(
         paper_id=card.paper_id,
-        title=card.title,
-        authors=card.authors,
-        venue=card.venue,
-        published_at=card.published_at,
+        title=fixed.get("title") or card.title,
+        authors=authors or card.authors,
+        venue=fixed.get("venue") or card.venue,
+        published_at=fixed.get("published_at") or card.published_at,
         doi=card.doi,
         score=card.score,
         tier_label=card.tier_label or card.tier,
@@ -133,7 +136,7 @@ def _inbox_item(
 
 def _unpushed_item(ctx: AppContext, paper_id: str, status: ReadingStatus | None) -> InboxItem:
     """没推送过、但在待读或在读里的论文：只有元数据和提取结果。"""
-    paper = _paper(ctx, paper_id)
+    paper = corrections.display(ctx, _paper(ctx, paper_id))
     aliases = {alias.scheme: alias.value for alias in ctx.store.papers.aliases_of(paper_id)}
     extraction = ctx.store.papers.get_extraction(paper_id)
     summary = extraction.data.get("summary") if extraction else None
@@ -221,7 +224,7 @@ def _labeled(
 
 
 def paper_view(ctx: AppContext, paper_id: str) -> PaperView:
-    paper = _paper(ctx, paper_id)
+    paper = corrections.display(ctx, _paper(ctx, paper_id))
     aliases = {alias.scheme: alias.value for alias in ctx.store.papers.aliases_of(paper_id)}
     fulltext = ctx.store.papers.get_fulltext(paper_id)
     extraction = ctx.store.papers.get_extraction(paper_id)

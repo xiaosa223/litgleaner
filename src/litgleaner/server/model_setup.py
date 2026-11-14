@@ -1,6 +1,6 @@
 """本地模型设置接口；密钥只接收写入，响应不回显输入或第三方错误。"""
 
-from typing import Annotated, Literal, cast
+from typing import Annotated, Literal, cast, get_args
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
@@ -27,7 +27,7 @@ class ModelBody(_Body):
     provider: str = Field(pattern=r"^[a-z][a-z0-9_-]{0,47}$")
     protocol: str = Field(min_length=1, max_length=80)
     model: str = Field(min_length=1, max_length=200, pattern=r"^\S(?:[^\r\n]*\S)?$")
-    tasks: list[ModelTask] = Field(min_length=1, max_length=9)
+    tasks: list[ModelTask] = Field(min_length=1, max_length=len(get_args(ModelTask)))
     input_price: float = Field(ge=0, le=1_000_000, allow_inf_nan=False)
     output_price: float = Field(ge=0, le=1_000_000, allow_inf_nan=False)
     api_key: SecretStr | None = Field(default=None, min_length=1, max_length=4096)

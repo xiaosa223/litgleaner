@@ -1,11 +1,13 @@
 // 模型原地配置的纯逻辑：预设、表单校验、请求体、状态摘要（第 15.4、15.5 节，docs/MODEL-SETUP.md）。
 // 预设只填协议和地址；价格变化快，不写死，由用户按官网价格页填写。
 
-export type ModelTask = "triage" | "extract" | "assess" | "translate" | "ask" | "map" | "outline" | "relate" | "draft";
+export type ModelTask = "triage" | "extract" | "assess" | "translate" | "ask" | "map" | "outline" | "relate" | "draft" | "guide" | "evaluate";
 
 export const TASKS: { task: ModelTask; label: string; hint: string }[] = [
   { task: "translate", label: "翻译", hint: "阅读时按段落翻译" },
   { task: "ask", label: "边读边问", hint: "针对论文提问，回答附原文出处" },
+  { task: "guide", label: "个性化导读", hint: "按你的知识库讲解关键概念，出三个引导问题" },
+  { task: "evaluate", label: "回答评价", hint: "评价你写的回答，指出对、漏和理解偏的地方" },
   { task: "draft", label: "起草检索词", hint: "新建课题时根据研究画像起草检索词和术语表" },
   { task: "triage", label: "每日初筛", hint: "从新论文里挑出和课题相关的" },
   { task: "extract", label: "提炼要点", hint: "整理问题、做法、结论和不足" },

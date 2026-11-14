@@ -53,14 +53,14 @@ def test_outline_budget_rejects_invalid_or_coerced_values(value):
         _app(outline={"token_budget": value})
 
 
-def test_model_settings_accept_outline_alone_or_all_nine_tasks():
+def test_model_settings_accept_outline_alone_or_all_tasks():
     for tasks in (["outline"], list(TASKS)):
         body = ModelBody(
             provider="personal", protocol="openai_chat", model="chosen", tasks=tasks,
             input_price=0, output_price=0,
         )  # fmt: skip
         assert body.draft().tasks == tuple(tasks)
-    assert len(TASKS) == 9 and TASKS[-3:] == ("outline", "relate", "draft")
+    assert len(TASKS) == 11 and TASKS[-5:] == ("outline", "relate", "draft", "guide", "evaluate")
 
 
 def test_model_settings_still_reject_unknown_tasks_and_overlong_task_lists():
@@ -100,7 +100,7 @@ def test_outline_preparation_sets_only_selected_route_and_settings_show_readines
     assert all(candidate.llm.tasks[name] == task for name, task in old_tasks.items())
     view = settings_view(candidate, NoSecrets(), protocols, {"outline"})
     assert {task.task for task in view.tasks if task.ready} == {"outline"}
-    assert len(view.tasks) == 9
+    assert len(view.tasks) == 11
 
 
 def test_old_llm_configuration_builds_without_outline_or_its_prompt(tmp_path):

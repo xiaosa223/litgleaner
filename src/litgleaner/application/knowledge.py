@@ -88,7 +88,7 @@ def _occurrence(ctx: AppContext, item: ConceptOccurrence) -> OccurrenceView:
     )
 
 
-def _summary(ctx: AppContext, item: Concept) -> ConceptSummary:
+def summary(ctx: AppContext, item: Concept) -> ConceptSummary:
     occurrences = ctx.store.knowledge.occurrences(item.id)
     candidates = [o for o in occurrences if o.verified and o.definition]
     candidates.sort(key=lambda o: (_stale(ctx, o), o.created_at, o.paper_id))
@@ -119,7 +119,7 @@ def concepts(
         raise InvalidRequest("知识库查询参数越界")
     items = ctx.store.knowledge.list(topic_id, query, limit, offset)
     return KnowledgePage(
-        tuple(_summary(ctx, item) for item in items),
+        tuple(summary(ctx, item) for item in items),
         ctx.store.knowledge.count(topic_id, query),
         limit,
         offset,

@@ -178,28 +178,10 @@ export interface NewAnnotation {
   rects?: Rect[];
 }
 
-// ---- 以下是知识库的界面数据结构（ARCHITECTURE 第 12.7 节）。
-// 掌握程度、复习等还没有接口，目前只有界面预览的示例数据使用；接口实现时以这里为约定的起点。
+// ---- 知识库（ARCHITECTURE 第 12.7 节）；导读、回答、复习的数据结构见 guidance.ts。
 
 /** 掌握程度：0 没见过，1 见过，2 能解释，3 能应用 */
 export type Mastery = 0 | 1 | 2 | 3;
 
-export interface Concept {
-  id: string;
-  name: string; // 原文术语
-  translation: string;
-  level: Mastery;
-  due: boolean; // 到了复习时间
-  papers: number;
-  definition: { quote: string; paper: string; page: number } | null;
-  answer: string | null; // 用户自己写过的回答
-  related: { kind: "前置" | "相似" | "对比"; name: string }[];
-}
-
-export interface NoteEntry {
-  id: string;
-  paper: string;
-  page: number;
-  quote: string;
-  body: string | null;
-}
+/** 知识库“笔记”：全部论文的笔记和高亮。 */
+export interface NoteView { annotation: Annotation; paper_title: string }

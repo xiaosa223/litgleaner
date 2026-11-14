@@ -6,8 +6,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from litgleaner.domain.correction import Correction
+from litgleaner.domain.guidance import AnswerCard, Evaluation, Guide
 from litgleaner.domain.identity import Alias
 from litgleaner.domain.knowledge import Concept, ConceptAlias, ConceptOccurrence
+from litgleaner.domain.mastery import MasteryEvent
 from litgleaner.domain.paper import Paper
 from litgleaner.domain.qa import Answer, Question
 from litgleaner.domain.reading import Annotation, ReadingState
@@ -37,9 +40,21 @@ class ExportConcept:
 
 
 @dataclass(frozen=True)
+class ExportLearning:
+    """导读、回答卡片（全部修订）、评价与掌握事件；与论文和概念同一事务读取。"""
+
+    guides: tuple[Guide, ...] = ()
+    cards: tuple[AnswerCard, ...] = ()
+    evaluations: tuple[Evaluation, ...] = ()
+    events: tuple[MasteryEvent, ...] = ()
+    corrections: tuple[Correction, ...] = ()  # 用户修正的元数据（ADR 0011）
+
+
+@dataclass(frozen=True)
 class ExportSnapshot:
     papers: tuple[ExportPaper, ...]
     concepts: tuple[ExportConcept, ...]
+    learning: ExportLearning = ExportLearning()
 
 
 @dataclass(frozen=True)

@@ -20,7 +20,8 @@ function Score({ item }: { item: InboxItem }) {
   return (
     <div className="pcard-score" title={item.provisional ? "只读了摘要，分数是临时的" : "阅读价值分"}>
       {item.tier_label && <span className="lvl">{item.tier_label}</span>}
-      <span className="score">{item.score}</span>
+      <span className="score">{item.score}<small className="of">/100</small></span>
+      {item.provisional && !item.tier_label && <span className="provisional">暂定</span>}
     </div>
   );
 }
@@ -45,7 +46,6 @@ export function PaperCard({ item, onChange, showTopic = true }: { item: InboxIte
       </div>
       <div className="pcard-by">{byline(item)}</div>
       {item.summary && <div style={{ marginTop: 8 }}><ModelText text={item.summary} /></div>}
-      {item.provisional && <div className="tag" style={{ marginTop: 4 }}>只读了摘要，分数是临时的</div>}
       <div className="pcard-actions">
         <button className="primary sm" onClick={() => open(item)}>{status === "reading" ? "继续读" : "去读"}</button>
         {status === "new" && <button className="ghost" onClick={() => void later()}>稍后读</button>}

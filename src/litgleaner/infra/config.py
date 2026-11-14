@@ -156,7 +156,17 @@ class LLMFile(FrozenModel):
     providers: Mapping[str, AdapterConfig] = Field(default_factory=dict)
     tasks: Mapping[
         Literal[
-            "triage", "extract", "assess", "translate", "ask", "map", "outline", "relate", "draft"
+            "triage",
+            "extract",
+            "assess",
+            "translate",
+            "ask",
+            "map",
+            "outline",
+            "relate",
+            "draft",
+            "guide",
+            "evaluate",
         ],
         LLMTask,
     ] = Field(default_factory=dict)

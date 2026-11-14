@@ -75,11 +75,6 @@ export function Modal({ children, onClose, width, title, top = false, bare = fal
   );
 }
 
-/** 后端还没接上的页面用示例数据展示界面时，必须带这条说明。 */
-export function PreviewNote({ children }: { children?: ReactNode }) {
-  return <div className="preview-note" role="note">示例数据 · {children ?? "这部分的服务还没有接上，下面的内容只用来看界面。"}</div>;
-}
-
 /** 带出处的作者原话：没有跳转目标时用（知识库、复习）。page 从 1 开始。 */
 export function SourcedQuote({ quote, paper, page }: { quote: string; paper: string; page: number }) {
   return (

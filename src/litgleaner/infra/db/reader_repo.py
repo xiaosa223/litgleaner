@@ -102,6 +102,17 @@ class SqlReaderRepo:
         )
         return tuple(_to_annotation(row) for row in rows)
 
+    def recent_annotations(self, limit: int, offset: int) -> tuple[Annotation, ...]:
+        """全部论文的笔记和高亮，最近写的在前（知识库“笔记”）。"""
+        rows = self._db.fetch(
+            select(annotation)
+            .where(annotation.c.deleted_at.is_(None))
+            .order_by(annotation.c.updated_at.desc(), annotation.c.id.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return tuple(_to_annotation(row) for row in rows)
+
     def get_annotation(self, annotation_id: str) -> Annotation | None:
         rows = self._db.fetch(
             select(annotation).where(

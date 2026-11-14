@@ -4,6 +4,7 @@ import { CardTab } from "./CardTab";
 import { GuideTab } from "./GuideTab";
 import { NotesTab } from "./NotesTab";
 import { QaTab } from "./QaTab";
+import { useGuide } from "../useGuide";
 import type { QaCitation, QaSelection } from "../qa";
 
 export type Tab = "guide" | "qa" | "notes" | "card";
@@ -23,6 +24,8 @@ export function Panel(props: {
     ["card", "读后"],
   ];
   const current = tabs.some(([key]) => key === tab) ? tab : "guide";
+  const guide = useGuide(paper.paper_id);
+  const jump = (quote: { page: number; quote: string }) => onJumpCitation({ paper_id: paper.paper_id, ...quote });
   return (
     <aside className="panel" hidden={!open} aria-label="侧栏">
       <div className="tabs" role="tablist">
@@ -34,9 +37,9 @@ export function Panel(props: {
       </div>}
       {current !== "qa" && (
           <div className="tabbody">
-            {current === "guide" && <GuideTab paper={paper} />}
+            {current === "guide" && <GuideTab paper={paper} guide={guide} onJump={jump} onChange={onChange} />}
             {current === "notes" && <NotesTab paperId={paper.paper_id} annotations={paper.annotations} onChange={onChange} onJump={onJumpNote} />}
-            {current === "card" && <CardTab paper={paper} onMarkRead={onMarkRead} />}
+            {current === "card" && <CardTab paper={paper} onMarkRead={onMarkRead} guide={guide} onJump={jump} onOpenGuide={() => onTab("guide")} />}
           </div>
         )}
     </aside>

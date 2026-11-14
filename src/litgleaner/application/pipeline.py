@@ -3,7 +3,9 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+from litgleaner.application.answers import EvaluateStage
 from litgleaner.application.context import AppContext
+from litgleaner.application.guide import GuideStage
 from litgleaner.application.job_runner import StageReport, run_stage
 from litgleaner.application.memory_admission import MemoryAdmissionStage
 from litgleaner.application.qa import AskStage
@@ -59,6 +61,8 @@ STAGE_NAMES: tuple[str, ...] = tuple(stage.name for stage in STAGES)
 # 按需阶段（第 15.1 节）：用户在领读器里确认后才有任务，没有 plan；排在后台阶段之前执行
 ON_DEMAND: tuple[Stage, ...] = (
     AskStage(),
+    GuideStage(),
+    EvaluateStage(),
     TranslatePaperStage(),
     SurveyStage(),
     TopicMapStage(),
