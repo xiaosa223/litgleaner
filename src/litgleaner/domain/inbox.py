@@ -19,6 +19,8 @@ _DOI = re.compile(r"\b(10\.\d{4,9}/[^\s\"<>]+)", re.IGNORECASE)
 _ARXIV_URL = re.compile(r"arxiv\.org/(?:abs|pdf)/(\d{4}\.\d{4,5}(?:v\d+)?)", re.IGNORECASE)
 _ARXIV_ID = re.compile(r"^(?:arxiv:\s*)?(\d{4}\.\d{4,5}(?:v\d+)?)$", re.IGNORECASE)
 _ARXIV_STAMP = re.compile(r"arxiv:\s*(\d{4}\.\d{4,5})(?:v\d+)?", re.IGNORECASE)
+# arXiv 官方页边戳“arXiv:编号v版本 [分类] 日期”：文字层常排在首页最后，按全页查找
+_ARXIV_MARGIN = re.compile(r"arxiv:(\d{4}\.\d{4,5})v\d+\s+\[[a-z][a-z.\-]*\]", re.IGNORECASE)
 _URL = re.compile(r"^https?://\S+$", re.IGNORECASE)
 FIRST_PAGE_CHARS = 3000  # 首页前段：标题、作者、摘要、页眉页脚里的 DOI 和 arXiv 戳
 
@@ -62,7 +64,7 @@ def find_identifier(first_page: str) -> Identified | None:
     head = first_page[:FIRST_PAGE_CHARS]
     if doi := _doi(head):
         return doi
-    stamp = _ARXIV_STAMP.search(head)
+    stamp = _ARXIV_STAMP.search(head) or _ARXIV_MARGIN.search(first_page)
     return _arxiv(stamp.group(1)) if stamp else None
 
 

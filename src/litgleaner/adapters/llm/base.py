@@ -136,6 +136,21 @@ def token_count(value: Any) -> int:
     return value
 
 
+def _embedded_object(text: str) -> dict[str, Any] | None:
+    """部分模型在 JSON 前后夹带标记（如 <escape>）或一句话：只接受唯一一个完整对象。"""
+    start = text.find("{")
+    if start < 0 or "[" in text[:start]:
+        return None
+    try:
+        data, end = json.JSONDecoder().raw_decode(text, start)
+    except json.JSONDecodeError:
+        return None
+    rest = text[end:]
+    if not isinstance(data, dict) or "{" in rest or "[" in rest:
+        return None
+    return data
+
+
 def parse_json_object(text: str, service: str) -> dict[str, Any]:
     stripped = text.strip()
     fenced = _FENCE.match(stripped)
@@ -144,7 +159,9 @@ def parse_json_object(text: str, service: str) -> dict[str, Any]:
     try:
         data = json.loads(stripped)
     except json.JSONDecodeError as error:
-        raise TransientError(f"{service} 返回的不是 JSON：{stripped[:80]!r}") from error
+        data = _embedded_object(stripped)
+        if data is None:
+            raise TransientError(f"{service} 返回的不是 JSON：{stripped[:80]!r}") from error
     if not isinstance(data, dict):
         raise TransientError(f"{service} 返回的 JSON 不是对象")
     return data

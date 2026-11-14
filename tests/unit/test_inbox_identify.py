@@ -42,3 +42,14 @@ def test_find_identifier_ignores_reference_list_dois():
     # 参考文献里的 DOI 不是这篇论文的：只看首页正文前段
     page = "Title\nAbstract text\n" + "x" * 5000 + "\n[1] doi:10.1000/other"
     assert find_identifier(page) is None
+
+
+def test_official_arxiv_margin_stamp_found_anywhere_on_first_page():
+    # pdf 文字层常把竖排页边戳放在首页文字最后，超过前 3000 字
+    page = "Title\n" + "body text " * 600 + "\narXiv:1602.04938v3  [cs.LG]  9 Aug 2016"
+    assert find_identifier(page) == Identified("arxiv", "1602.04938")
+
+
+def test_loose_arxiv_mentions_beyond_head_are_ignored():
+    page = "Title\n" + "body text " * 600 + "\n[3] Someone. arXiv preprint arXiv:1705.07874, 2017."
+    assert find_identifier(page) is None

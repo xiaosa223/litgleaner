@@ -40,3 +40,9 @@ test("从 PDF 首页文字找本文的标识符：先 DOI，后 arXiv 戳；不�
   assert.equal(findIdentifier("Title\n" + "x".repeat(5000) + "\n[1] doi:10.1000/other"), null);
   assert.equal(findIdentifier("no identifiers here"), null);
 });
+
+test("首页末尾的官方 arXiv 页边戳也能认出，参考文献里的松散写法不算", () => {
+  const body = "body text ".repeat(600);
+  assert.deepEqual(findIdentifier(`Title\n${body}\narXiv:1602.04938v3  [cs.LG]  9 Aug 2016`), { kind: "arxiv", value: "1602.04938" });
+  assert.equal(findIdentifier(`Title\n${body}\n[3] arXiv preprint arXiv:1705.07874, 2017.`), null);
+});
