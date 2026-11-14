@@ -114,6 +114,7 @@ litgleaner/
 │  ├─ adapters/     # 外部实现，每个外部系统一个包
 │  │  ├─ common/    # 适配器共享：HTTP 客户端、PDF 下载、游标窗口、选项解析
 │  │  ├─ sources/ fulltext/ parsers/ llm/ renderers/ blobstore/
+│  │  ├─ documents/ # 用户上传的任务书等文档 → 纯文字（PDF、DOCX、Markdown、TXT）
 │  │  ├─ feishu/    # 卡片推送 + 按钮回调
 │  │  ├─ zotero/    # 收件箱信号源 + 全文来源 + 文献库写入与读取
 │  │  └─ fakes/     # 测试和演示用的假实现
@@ -135,7 +136,8 @@ litgleaner/
 | `Source` | 按查询返回论文记录 | Crossref、OpenAlex、arXiv、PubMed、Zotero 收件箱 |
 | `FullTextProvider` | 按标识符找 PDF | Zotero、arXiv、Unpaywall、Crossref TDM |
 | `Parser` | PDF → `NormalizedDocument` | MinerU 云端、`pdf_text` |
-| `LLM` | 结构化输出和流式文本调用 | Anthropic Messages、OpenAI Chat / Responses、Gemini、本机 agent（ACP） |
+| `DocumentText` | 用户上传的文档 → 纯文字，用于推断研究画像（[ADR 0012](adr/0012-profile-from-document.md)） | 本地抽取：pypdf、DOCX XML、文本 |
+| `LLM` | 结构化输出和流式文本调用；列出提供方的可用模型（[ADR 0013](adr/0013-model-discovery-and-unpriced-models.md)） | Anthropic Messages、OpenAI Chat / Responses、Gemini、本机 agent（ACP） |
 | `Renderer` / `Publisher` | 渲染与发送 | 飞书卡片 |
 | `CardClick`（`ports/inbound.py`） | 渠道按钮回调的统一格式 | 飞书 |
 | `ReferenceLibrary` | 写入条目、附件，读取分组和标签 | Zotero 本地 API |
@@ -357,6 +359,13 @@ litgleaner topic draft example-topic    # 显式调用 LLM，花少量费用
   - 每个检索词预估能搜到多少篇（向 OpenAlex 查询计数，不花模型费用），帮助判断太宽或太窄；
   - 根据种子论文的期刊统计（代码统计，不经 LLM）给出期刊集建议。
 - 草稿不会自动生效。研究者在领读器设置页或文件里确认合并后，`topic activate` 才使用新定义。
+
+**从文档推断画像**（[ADR 0012](adr/0012-profile-from-document.md)）：新建课题时可以直接上传任务书、开题报告、比赛文档等（PDF、DOCX、Markdown、TXT，单个文件不超过 20 MB）。
+
+- 文字在本地抽取（`DocumentText` 端口），不走 `Parser`、不消耗解析额度；抽不出文字（扫描件）时明确提示，不静默降级。
+- `profile` 任务从文字推断 `name`、`background`、`content`、`goals`，结果预填到新建课题表单，用户可以修改。文档内容视为不可信数据。
+- 用户点“创建并起草检索词”后课题以未启用状态写入，进入课题页自动开始起草检索式（不再等用户点起草）；草稿出来后点“保存并启用”才启用。不点启用就不产生每日检索费用。
+- 原文件和抽取的文字都不保存。
 
 新研究画像第一次启用时，领读器引导研究者发起一次课题调研（第 7.5 节）；原先的入门清单并入调研结果里的阅读路线。
 
@@ -1169,6 +1178,7 @@ tasks:
   extract:     { provider: main, model: STRONG_MODEL, prompt: extract }
   assess:      { provider: main, model: STRONG_MODEL, prompt: assess }
   topic_draft: { provider: main, model: STRONG_MODEL, prompt: topic_draft }
+  profile:     { provider: main, model: STRONG_MODEL, prompt: profile }     # 从上传文档推断研究画像（第 7.2 节）
   map:         { provider: main, model: STRONG_MODEL, prompt: map }         # 课题地图（第 7.5 节）
   outline:     { provider: main, model: STRONG_MODEL, prompt: outline }     # 已读论文综述骨架（第 14 节）
   review:      { provider: main, model: STRONG_MODEL, prompt: review }
@@ -1181,11 +1191,18 @@ tasks:
   relate:      { provider: main, model: CHEAP_MODEL,  prompt: relate, daily_budget_usd: 0.2 }      # 核实论文间关系（第 12.9 节）
 budget:
   daily_usd: 2.0
+  daily_tokens_unpriced: 2000000   # 价格未知的模型每日 token 上限（输入加输出），0 表示禁止调用
 ```
 
 每个 `tasks.<task>` 可额外配置 `daily_budget_usd`，为非负有限数；省略或 `null` 表示仅受全局预算限制，`0` 暂停该任务的新调用。任务限额与全局限额同时生效，均沿 `llm_call` 按 UTC 自然日统计，包含已报告用量的失败响应；限额按任务名称聚合，不因更换模型或提供方而重置。调用开始前检查，单次响应可能使费用超过余额；不将未知费用当作已知费用，也不宣称预留了并发额度。
 
 任务预算耗尽抛出 `Deferred`，推迟到下一个 UTC 日界，不增加 attempts，也不受外部任务最长等待期限限制；其他任务仍可继续。预算和本地前置等待会在同一事务中清除外部连续等待的起点，恢复后的首次外部 `Deferred` 重新开始计时，真正连续的外部等待仍按原期限结束。全局预算耗尽或缺模型仍停止当前阶段，同时清除本轮剩余、属于所选范围且未被调研占用的任务的外部等待起点；不改变排定时间、失败次数或完成状态。结构化调用和流式调用使用同一规则；流式对象构造时预检，真正开始每次提供方请求前再次检查，预建或重复迭代不能绕过额度。HTTP 与 SSE 沿用 `budget_exceeded` 状态，任务预算错误同时保留任务名称。模型连接测试属于独立的 `configuration_test` 用量，只受已保存的全局预算限制，不消耗任一业务任务的限额。
+
+**模型发现与未知价格**（[ADR 0013](adr/0013-model-discovery-and-unpriced-models.md)）：
+
+- 用户填好协议、地址和密钥后，设置页调用各协议的列模型接口，模型名改为可搜索的下拉框（仍可手动输入）。列模型不计费、不写配置，失败时退回手动输入。
+- 价格只从列模型响应里明确的价格字段读取（如聚合站返回的每 token 价格），不内置价格表、不猜测。读不到时价格为**未知**。
+- `options.prices` 的条目可以缺失或为 `null`。价格未知的调用照常执行，`llm_call` 记录 token，费用记为未知，不当作 0；美元预算只统计已知费用，价格未知的调用按 `budget.daily_tokens_unpriced` 合计 token，超出后与美元预算耗尽同样推迟到下一个 UTC 日界。
 
 模型设置返回每个任务的 `daily_budget_usd`；保存草稿可通过 `task_budgets_usd` 按已选任务设置限额。未出现的键保留该任务原限额，显式 `null` 清除任务限额，未选择任务的限额不允许修改；校验拒绝布尔、字符串、非有限数及负数。只改限额不改变输入或生产者指纹，不触发任何历史重算或模型请求。
 

@@ -1,7 +1,8 @@
 // 所有请求同源发出；改变状态的请求带 CSRF 令牌（第 15.5 节）。
+import type { ProfileGuess } from "./topicProfile";
 import type { ConceptCard, ConceptCards, GuidePage, MasteryState, MergeView, MetadataField, MetadataView, Rating } from "./guidance";
 import type { Identified } from "./identify";
-import type { ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
+import type { CatalogBody, CatalogResult, ModelBody, ModelSettingsView, ProbeResult } from "./modelForm";
 import type { QaSubmission, QaView } from "./qa";
 import type { DraftPreview, DraftStatus, DraftView, QueryBody } from "./topicQuery";
 import type { BackfillPlan, ProfileBody, TopicDetail } from "./topicSettings";
@@ -104,11 +105,11 @@ async function download(path: string, body: unknown): Promise<Blob> {
   return response.blob();
 }
 
-/** 上传 PDF：请求体就是文件本身；文件名和首页找到的标识符放在请求头里。 */
-async function upload<T>(path: string, file: File, identifier: string | null): Promise<T> {
+/** 上传文件：请求体就是文件本身；文件名和首页找到的标识符放在请求头里。 */
+async function upload<T>(path: string, file: File, identifier: string | null, contentType = "application/pdf"): Promise<T> {
   const headers: Record<string, string> = {
     "X-CSRF-Token": await csrfToken(),
-    "Content-Type": "application/pdf",
+    "Content-Type": contentType,
     "X-File-Name": encodeURIComponent(file.name),
   };
   if (identifier) headers["X-Identifier"] = identifier;
@@ -236,6 +237,8 @@ export const api = {
   /** 用草稿参数实际调用一次模型：会产生很少的费用，不保存任何东西。 */
   testModel: (body: ModelBody) => send<ProbeResult>("POST", "/api/settings/models/test", body),
   saveModel: (body: ModelBody) => send<ModelSettingsView>("PUT", "/api/settings/models", body),
+  /** 按连接信息列出可用模型：只读列表接口，不计费、不保存（ADR 0013）。 */
+  listModels: (body: CatalogBody) => send<CatalogResult>("POST", "/api/settings/models/list", body),
 };
 
 const topicPath = (id: string) => `/api/topics/${encodeURIComponent(id)}`;
@@ -260,6 +263,9 @@ export const topicApi = {
   termCounts: (id: string, body: CountBody) => send<TermCounts>("POST", `${topicPath(id)}/term-counts`, body),
   /** 写入检索词和术语表，并启用课题 */
   saveQuery: (id: string, body: QueryBody) => send<{ id: string; terms: number; status: TopicSummary["status"] }>("PUT", `${topicPath(id)}/query`, body),
+  /** 上传任务书等文档，调用一次模型推断名称、背景、内容、目标；不写文件、不启用（ADR 0012） */
+  profileFromDocument: (file: File) =>
+    upload<ProfileGuess>("/api/topics/profile-from-document", file, null, "application/octet-stream"),
   /** 只写课题定义，不启用、不调用模型 */
   create: (topic: { name: string; background: string; content: string; goals: string[] }) =>
     send<{ id: string }>("POST", "/api/topics", topic),

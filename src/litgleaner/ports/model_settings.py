@@ -22,6 +22,7 @@ ModelTask = Literal[
     "draft",
     "guide",
     "evaluate",
+    "profile",
 ]
 
 
@@ -31,8 +32,8 @@ class ModelDraft:
     protocol: str
     model: str
     tasks: tuple[ModelTask, ...]
-    input_price: float
-    output_price: float
+    input_price: float | None  # None：价格未知（ADR 0013）
+    output_price: float | None
     api_key: str | None = field(default=None, repr=False)
     base_url: str | None = None
     daily_budget_usd: float = 2.0
@@ -40,6 +41,16 @@ class ModelDraft:
     structured: Literal["native", "prompt"] = "native"
     max_tokens_field: MaxTokensField | None = None
     task_budgets_usd: Mapping[ModelTask, float | None] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class CatalogDraft:
+    """列模型只需要连接信息；api_key 省略时沿用已保存提供方的密钥。"""
+
+    provider: str
+    protocol: str
+    api_key: str | None = field(default=None, repr=False)
+    base_url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -75,6 +86,10 @@ class ModelSettings(Protocol):
     def view(self) -> ModelSettingsView: ...
     def client(self, draft: ModelDraft) -> LLM:
         """临时客户端不写配置或密钥；测试请求限制输出长度。"""
+        ...
+
+    def catalog_client(self, source: CatalogDraft) -> LLM:
+        """只用于列模型的临时客户端（ADR 0013），不写配置或密钥。"""
         ...
 
     def save(self, draft: ModelDraft) -> ModelSettingsView:

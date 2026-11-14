@@ -29,7 +29,17 @@ _DRAFT: Mapping[str, Any] = {
     "exclude": [],
     "glossary": [{"term": "demo term", "translation": "演示术语", "definition": "演示释义"}],
 }
-_FIXED: Mapping[str, Mapping[str, Any]] = {"relate": {"relations": []}, "draft": _DRAFT}
+_PROFILE: Mapping[str, Any] = {
+    "name": "演示课题",
+    "background": "演示背景",
+    "content": "演示内容",
+    "goals": ["演示目标一", "演示目标二"],
+}
+_FIXED: Mapping[str, Mapping[str, Any]] = {
+    "relate": {"relations": []},
+    "draft": _DRAFT,
+    "profile": _PROFILE,
+}
 
 
 _BY_TASK = {"guide": fake_guide, "evaluate": fake_evaluate}

@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from litgleaner.ports.store import LLMCall
+from litgleaner.ports.llm import LLMCall
 from litgleaner.server.app import create_app
 from litgleaner.server.security import LocalSecurity
 from tests.e2e.conftest import Harness, extraction_answer, paper

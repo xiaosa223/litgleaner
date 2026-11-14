@@ -150,6 +150,8 @@ class LLMTask(FrozenModel):
 
 class LLMBudget(FrozenModel):
     daily_usd: float = Field(ge=0)
+    # 价格未知的模型每日 token 上限（输入加输出，ADR 0013）；0 表示禁止调用
+    daily_tokens_unpriced: int = Field(default=2_000_000, ge=0, strict=True)
 
 
 class LLMFile(FrozenModel):
@@ -167,6 +169,7 @@ class LLMFile(FrozenModel):
             "draft",
             "guide",
             "evaluate",
+            "profile",
         ],
         LLMTask,
     ] = Field(default_factory=dict)

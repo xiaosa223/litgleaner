@@ -108,6 +108,15 @@ def _assert_search_index_definition(before, current):
     assert type(rootpage) is int and rootpage >= 0
 
 
+def _assert_unpriced_cost_definition(before, current):
+    """0025 只去掉 cost_usd 的 NOT NULL（ADR 0013），不重建表、根页不变。"""
+    original, rootpage = before
+    upgraded, current_rootpage = current
+    assert original.count("cost_usd FLOAT NOT NULL") == 1
+    assert upgraded == original.replace("cost_usd FLOAT NOT NULL", "cost_usd FLOAT", 1)
+    assert current_rootpage == rootpage
+
+
 def assert_legacy_preserved(before, after, keys, current_keys, *, definitions, current_definitions):
     assert before.keys() == after.keys() == keys.keys() == current_keys.keys()
     for table in before:
@@ -116,6 +125,8 @@ def assert_legacy_preserved(before, after, keys, current_keys, *, definitions, c
             assert keys[table] == current_keys[table]
             if table == "memory_fts":
                 _assert_search_index_definition(definitions[table], current_definitions[table])
+            elif table == "llm_call":
+                _assert_unpriced_cost_definition(definitions[table], current_definitions[table])
             else:
                 assert definitions[table] == current_definitions[table]
             continue

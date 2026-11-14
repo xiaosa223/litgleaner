@@ -267,7 +267,7 @@ llm_call = Table(
     Column("prompt_version", String, nullable=False),
     Column("input_tokens", Integer, nullable=False),
     Column("output_tokens", Integer, nullable=False),
-    Column("cost_usd", Float, nullable=False),
+    Column("cost_usd", Float, nullable=True),  # NULL：价格未知（ADR 0013）
     Column("ok", Boolean, nullable=False),
     Column("created_at", String, nullable=False, index=True),
     Column("paper_id", String, nullable=True, index=True),  # 领读器的按需任务按论文计费

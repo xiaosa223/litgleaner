@@ -11,8 +11,9 @@ from litgleaner.application.survey_estimate import SurveyCounts, counts, estimat
 from litgleaner.domain.paper import SourceRecord
 from litgleaner.domain.query import HistoricalSearch
 from litgleaner.domain.survey import SurveyPreview, SurveySettings
+from litgleaner.ports.llm import LLMCall
 from litgleaner.ports.source import FetchResult
-from litgleaner.ports.store import FullTextState, LLMCall, NewAssessment, TriageResult
+from litgleaner.ports.store import FullTextState, NewAssessment, TriageResult
 from tests.e2e.conftest import Harness, paper
 
 TOPIC = "alpha-topic"

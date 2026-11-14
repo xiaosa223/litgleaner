@@ -12,8 +12,7 @@ from litgleaner.domain.errors import BudgetExceeded, ModelUsage, TransientError
 from litgleaner.infra.db.migrate import upgrade_database
 from litgleaner.infra.db.schema import llm_call
 from litgleaner.infra.db.store import SqlStore
-from litgleaner.ports.llm import LLM, LLMResponse, StreamDone, TextDelta
-from litgleaner.ports.store import LLMCall
+from litgleaner.ports.llm import LLM, LLMCall, LLMResponse, StreamDone, TextDelta
 
 
 @pytest.fixture

@@ -24,6 +24,9 @@ class Broken:
     def complete(self, request):  # pragma: no cover - 不会被调用
         raise NotImplementedError
 
+    def price(self, model):
+        return (1.0, 1.0)
+
     def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
         yield TextDelta("半句")
         error = TransientError("连接中断")

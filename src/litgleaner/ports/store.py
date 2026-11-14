@@ -17,6 +17,7 @@ from litgleaner.ports.citation import CitationRepo
 from litgleaner.ports.export import ExportSnapshot, TopicExportQuery, TopicExportSnapshot
 from litgleaner.ports.knowledge import KnowledgeRepo
 from litgleaner.ports.learning import LearningRepo
+from litgleaner.ports.llm import LLMCall
 from litgleaner.ports.qa import QARepo
 from litgleaner.ports.reextract import ReextractStore
 from litgleaner.ports.search import SearchRepo
@@ -191,19 +192,6 @@ class LibraryRecord:
     warnings: tuple[str, ...] = ()
 
 
-@dataclass(frozen=True)
-class LLMCall:
-    task: str
-    model: str
-    prompt_version: str
-    input_tokens: int
-    output_tokens: int
-    cost_usd: float
-    ok: bool
-    paper_id: str | None = None
-    scope_id: str | None = None
-
-
 class PaperRepo(Protocol):
     def find_ids_by_aliases(self, aliases: Iterable[Alias]) -> frozenset[str]: ...
     def find_by_title_key(self, key: str) -> tuple[Paper, ...]: ...
@@ -346,6 +334,7 @@ class InboxRepo(Protocol):
 class RunRepo(Protocol):
     def record_llm_call(self, call: LLMCall, now: str) -> None: ...
     def llm_cost_since(self, since: str, *, task: str | None = None) -> float: ...
+    def llm_unpriced_tokens_since(self, since: str) -> int: ...  # 价格未知的 token，ADR 0013
     def llm_cost_for_paper(self, paper_id: str) -> float: ...
     def llm_cost_for_scope(self, scope_id: str) -> float: ...
     def llm_call_count(self, task: str | None = None) -> int: ...

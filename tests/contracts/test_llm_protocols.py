@@ -277,11 +277,15 @@ def test_without_key_no_auth_header_is_sent():
     assert "authorization" not in router.requests[-1].headers
 
 
-def test_check_model_requires_a_price_so_budget_works():
-    llm = OpenAIChatLLM("main", {"prices": {"m1": [0, 0]}}, KEY)
-    llm.check_model("m1")
-    with pytest.raises(ConfigError, match="prices"):
-        llm.check_model("m2")
+def test_model_without_price_is_allowed_and_billed_as_unknown():
+    """ADR 0013：缺价格或价格为 null 表示未知，照常调用，费用记为 None 而不是 0。"""
+    for prices in ({}, {"m1": None}):
+        router = Router().reply("/chat/completions", json_body=CASES["chat"][2])
+        llm = OpenAIChatLLM("main", {"prices": prices}, KEY, transport=router.transport)
+        assert llm.price("m1") is None
+        response = llm.complete(REQUEST)
+        assert response.cost_usd is None
+        assert response.input_tokens > 0
 
 
 def test_invalid_options_fail_at_startup():

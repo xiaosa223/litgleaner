@@ -60,7 +60,14 @@ def test_model_settings_accept_outline_alone_or_all_tasks():
             input_price=0, output_price=0,
         )  # fmt: skip
         assert body.draft().tasks == tuple(tasks)
-    assert len(TASKS) == 11 and TASKS[-5:] == ("outline", "relate", "draft", "guide", "evaluate")
+    assert len(TASKS) == 12 and TASKS[-6:] == (
+        "outline",
+        "relate",
+        "draft",
+        "guide",
+        "evaluate",
+        "profile",
+    )
 
 
 def test_model_settings_still_reject_unknown_tasks_and_overlong_task_lists():
@@ -100,7 +107,7 @@ def test_outline_preparation_sets_only_selected_route_and_settings_show_readines
     assert all(candidate.llm.tasks[name] == task for name, task in old_tasks.items())
     view = settings_view(candidate, NoSecrets(), protocols, {"outline"})
     assert {task.task for task in view.tasks if task.ready} == {"outline"}
-    assert len(view.tasks) == 11
+    assert len(view.tasks) == 12
 
 
 def test_old_llm_configuration_builds_without_outline_or_its_prompt(tmp_path):

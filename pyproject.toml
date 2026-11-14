@@ -126,6 +126,7 @@ name = "适配器之间互相独立"
 type = "independence"
 modules = [
   "litgleaner.adapters.blobstore",
+  "litgleaner.adapters.documents",
   "litgleaner.adapters.embeddings",
   "litgleaner.adapters.fakes",
   "litgleaner.adapters.feishu",

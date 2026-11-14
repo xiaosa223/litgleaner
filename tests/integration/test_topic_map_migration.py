@@ -25,7 +25,8 @@ from litgleaner.infra.db.migrate import alembic_config, upgrade_database
 from litgleaner.infra.db.schema import metadata
 from litgleaner.infra.db.schema_rules import FTS_TABLES, include_schema_object
 from litgleaner.infra.db.store import SqlStore
-from litgleaner.ports.store import JobSpec, LLMCall
+from litgleaner.ports.llm import LLMCall
+from litgleaner.ports.store import JobSpec
 
 
 def _legacy_survey(path):

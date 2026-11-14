@@ -9,7 +9,8 @@ from sqlalchemy.sql import ColumnElement
 
 from litgleaner.infra.db.database import Database
 from litgleaner.infra.db.schema import job, llm_call
-from litgleaner.ports.store import Job, JobSpec, JobStatus, LLMCall
+from litgleaner.ports.llm import LLMCall
+from litgleaner.ports.store import Job, JobSpec, JobStatus
 
 _RETRY_DEAD = """
 WITH eligible AS MATERIALIZED (
@@ -226,6 +227,17 @@ class SqlRunRepo:
         if task is not None:
             statement = statement.where(llm_call.c.task == task)
         return float(self._db.fetch(statement)[0].total)
+
+    def llm_unpriced_tokens_since(self, since: str) -> int:
+        total = func.coalesce(
+            func.sum(llm_call.c.input_tokens + llm_call.c.output_tokens), 0
+        ).label("total")
+        statement = select(total).where(
+            llm_call.c.cost_usd.is_(None),
+            llm_call.c.created_at >= func.date(func.substr(literal(since), 1, 10), "-2 days"),
+            _utc_stamp(llm_call.c.created_at) >= _utc_stamp(literal(since)),
+        )
+        return int(self._db.fetch(statement)[0].total)
 
     def llm_cost_for_paper(self, paper_id: str) -> float:
         rows = self._db.fetch(

@@ -39,6 +39,7 @@ from litgleaner.infra.topic_files import TopicFiles
 from litgleaner.ports.inbound import CardClick
 from litgleaner.ports.llm import LLM
 from litgleaner.ports.model_settings import (
+    CatalogDraft,
     ModelDraft,
     ModelSettingsView,
     probe_output_tokens,
@@ -86,6 +87,12 @@ class ModelRuntime:
             return build_model_client(
                 candidate, draft.provider, SecretOverlay(self._file.secrets, name, draft.api_key)
             )
+
+    def catalog_client(self, source: CatalogDraft) -> LLM:
+        with self._lock:
+            candidate, name = self._file.catalog(source, self._protocols)
+            secrets = SecretOverlay(self._file.secrets, name, source.api_key)
+            return build_model_client(candidate, source.provider, secrets)
 
     def save(self, draft: ModelDraft) -> ModelSettingsView:
         with self._lock:

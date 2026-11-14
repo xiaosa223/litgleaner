@@ -19,6 +19,7 @@ from litgleaner.domain.survey import SurveySettings
 from litgleaner.domain.topic import Topic
 from litgleaner.domain.topic_map import TopicMapSettings
 from litgleaner.ports.blobstore import BlobStore
+from litgleaner.ports.document_text import DocumentText
 from litgleaner.ports.embedder import Embedder
 from litgleaner.ports.fulltext import FullTextProvider
 from litgleaner.ports.library import ReferenceLibrary
@@ -76,6 +77,7 @@ class AppContext:
     routes: tuple[Route, ...]
     library: ReferenceLibrary | None = None
     embedder: Embedder | None = None
+    documents: DocumentText | None = None  # 上传文档的文字抽取（ADR 0012）
     source_capture: SourceCapture | None = None
     topic_drafts: TopicDraftStore | None = None  # 检索式草稿写在主题文件旁边（第 7.2 节）
 

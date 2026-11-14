@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { applyPreset, probeCeiling, emptyForm, formFromSettings, probeText, taskSummary, toBody, type ModelSettingsView } from "./modelForm.ts";
+import { applyPreset, catalogSource, chooseModel, probeCeiling, emptyForm, formFromSettings, probeText, taskSummary, toBody, type ModelSettingsView } from "./modelForm.ts";
 
 const filled = () => ({
   ...applyPreset(emptyForm(), "deepseek"),
@@ -10,7 +10,7 @@ const filled = () => ({
   outputPrice: "1.2",
 });
 
-test("预设只填协议、地址和结构化方式，价格必须用户按官网填写", () => {
+test("预设只填协议、地址和结构化方式；价格留空表示未知（ADR 0013）", () => {
   const form = applyPreset(emptyForm(), "deepseek");
   assert.equal(form.protocol, "openai_chat");
   assert.equal(form.baseUrl, "https://api.deepseek.com/v1");
@@ -19,8 +19,16 @@ test("预设只填协议、地址和结构化方式，价格必须用户按官�
   assert.equal(form.model, "deepseek-chat");
   assert.equal(applyPreset(form, "custom").model, "");
   const result = toBody({ ...form, model: "deepseek-chat", apiKey: "k" });
+  assert.ok(result.ok);
+  if (!result.ok) return;
+  assert.equal(result.body.input_price, null);
+  assert.equal(result.body.output_price, null);
+});
+
+test("只填一个价格被拒绝：要么都填，要么都留空", () => {
+  const result = toBody({ ...filled(), outputPrice: "" });
   assert.equal(result.ok, false);
-  if (!result.ok) assert.match(result.error, /价格/);
+  if (!result.ok) assert.match(result.error, /都填/);
 });
 
 test("合法表单转成接口请求体：去空白、数字化，默认所有任务用同一个模型", () => {
@@ -32,7 +40,7 @@ test("合法表单转成接口请求体：去空白、数字化，默认所有�
   assert.equal(result.body.api_key, "sk-test-1234");
   assert.equal(result.body.input_price, 0.3);
   assert.equal(result.body.daily_budget_usd, 2);
-  assert.equal(result.body.tasks.length, 11);
+  assert.equal(result.body.tasks.length, 12);
   assert.equal(result.body.base_url, "https://api.deepseek.com/v1");
   assert.equal(result.body.max_tokens_field, "max_tokens");
 });
@@ -121,4 +129,46 @@ test("测试费用上限按两次调用、输出不超过 1024 token 计算；�
   assert.equal(probeCeiling({ ...filled(), inputPrice: "1", outputPrice: "10" }), 2 * (128 + 10240) / 1e6);
   assert.equal(probeCeiling({ ...filled(), inputPrice: "1", outputPrice: "10", maxOutputTokens: "300" }), 2 * (128 + 3000) / 1e6);
   assert.equal(probeCeiling({ ...filled(), inputPrice: "" }), null);
+});
+
+const CATALOG = [
+  { id: "labs/gpt-6-luna", input_price: 0.1, output_price: 0.5 },
+  { id: "no-price", input_price: null, output_price: null },
+];
+
+test("选中列表里带价格的模型时自动填价格；不带价格时清空为未知", () => {
+  const priced = chooseModel({ ...filled(), inputPrice: "9", outputPrice: "9" }, CATALOG, "labs/gpt-6-luna");
+  assert.equal(priced.model, "labs/gpt-6-luna");
+  assert.equal(priced.inputPrice, "0.1");
+  assert.equal(priced.outputPrice, "0.5");
+  const unknown = chooseModel(priced, CATALOG, "no-price");
+  assert.equal(unknown.inputPrice, "");
+  assert.equal(unknown.outputPrice, "");
+  const typed = chooseModel({ ...filled(), inputPrice: "3", outputPrice: "4" }, CATALOG, "typed-by-hand");
+  assert.equal(typed.model, "typed-by-hand");
+  assert.equal(typed.inputPrice, "3", "列表外手填的模型保留用户填的价格");
+});
+
+test("只有连接信息齐全时才去拉模型列表", () => {
+  const deepseek = applyPreset(emptyForm(), "deepseek");
+  assert.equal(catalogSource(deepseek), null, "缺 key");
+  assert.deepEqual(catalogSource({ ...deepseek, apiKey: " sk " }), {
+    provider: "deepseek", protocol: "openai_chat", api_key: "sk", base_url: "https://api.deepseek.com/v1",
+  });
+  assert.deepEqual(catalogSource({ ...deepseek, keySaved: true }), {
+    provider: "deepseek", protocol: "openai_chat", base_url: "https://api.deepseek.com/v1",
+  });
+  const custom = applyPreset(emptyForm(), "custom");
+  assert.equal(catalogSource(custom), null, "本地网关缺地址");
+  assert.equal(catalogSource({ ...custom, baseUrl: "not a url" }), null);
+  assert.deepEqual(catalogSource({ ...custom, baseUrl: "http://127.0.0.1:3425/v1" }), {
+    provider: "custom", protocol: "openai_chat", base_url: "http://127.0.0.1:3425/v1",
+  });
+});
+
+test("价格未知时测试费用显示为未知，不显示 $0", () => {
+  assert.equal(probeCeiling({ ...filled(), inputPrice: "", outputPrice: "" }), null);
+  const text = probeText({ ok: true, capabilities: ["structured"], cost_usd: null, estimated_usd: null });
+  assert.match(text, /未知/);
+  assert.doesNotMatch(text, /\$0/);
 });

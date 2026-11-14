@@ -3,8 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "./api";
 import {
-  applyPreset, formFromSettings, preset, PRESETS, probeCeiling, probeText, taskLabel, TASKS, toBody,
-  type ModelForm, type ModelSettingsView, type ModelTask, type PresetId,
+  applyPreset, catalogSource, chooseModel, formFromSettings, preset, PRESETS, probeCeiling, probeText, taskLabel, TASKS, toBody,
+  type CatalogModel, type ModelForm, type ModelSettingsView, type ModelTask, type PresetId,
 } from "./modelForm";
 import { Modal } from "./ui";
 
@@ -31,8 +31,25 @@ export function ModelSetupForm({ focusTask, onSaved, onCancel }: {
   const [busy, setBusy] = useState<"test" | "save" | null>(null);
   const [status, setStatus] = useState<{ text: string; bad: boolean } | null>(null);
   const [failedProbe, setFailedProbe] = useState(false);
+  const [catalog, setCatalog] = useState<{ models: CatalogModel[]; state: "idle" | "loading" | "ok" | "failed" }>({ models: [], state: "idle" });
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
+
+  // 地址和 key 齐全后自动拉模型列表；输入停顿半秒再请求，旧请求的结果丢弃
+  const source = form ? catalogSource(form) : null;
+  const sourceKey = source ? JSON.stringify(source) : "";
+  useEffect(() => {
+    if (!sourceKey) { setCatalog({ models: [], state: "idle" }); return; }
+    let alive = true;
+    setCatalog((current) => ({ ...current, state: "loading" }));
+    const timer = window.setTimeout(() => {
+      api.listModels(JSON.parse(sourceKey)).then(
+        (result) => alive && setCatalog({ models: result.models, state: result.code || result.models.length === 0 ? "failed" : "ok" }),
+        () => alive && setCatalog({ models: [], state: "failed" }),
+      );
+    }, 500);
+    return () => { alive = false; window.clearTimeout(timer); };
+  }, [sourceKey]);
 
   useEffect(() => {
     let alive = true;
@@ -103,18 +120,30 @@ export function ModelSetupForm({ focusTask, onSaved, onCancel }: {
         <input id="ms-key" aria-describedby="ms-key-hint" className="field" type="password" autoComplete="off" value={form.apiKey}
           placeholder={form.keySaved ? "••••（已保存）" : ""} onChange={(e) => update({ apiKey: e.target.value })} />
       </Field>
-      <Field id="ms-model" label="模型名" hint={item.modelHint}>
-        <input id="ms-model" aria-describedby="ms-model-hint" className="field" value={form.model} onChange={(e) => update({ model: e.target.value })} />
+      <Field id="ms-model" label="模型" hint={
+        catalog.state === "loading" ? "正在读取可用模型…" :
+        catalog.state === "ok" ? `已读到 ${catalog.models.length} 个可用模型，点输入框选择，也可以输入名字搜索` :
+        catalog.state === "failed" ? `没读到模型列表，请手动填写模型名。${item.modelHint}` :
+        `填好${item.id === "custom" ? "接口地址和 " : ""}API key 后会自动列出可用模型。${item.modelHint}`}>
+        <input id="ms-model" aria-describedby="ms-model-hint" className="field" list="ms-model-list" autoComplete="off"
+          value={form.model} onChange={(e) => { setForm(chooseModel(form, catalog.models, e.target.value)); setStatus(null); setFailedProbe(false); }} />
+        <datalist id="ms-model-list">
+          {catalog.models.map((m) => <option key={m.id} value={m.id} />)}
+        </datalist>
       </Field>
       <div className="form-pair">
-        <Field id="ms-in" label="输入价格（美元/百万 token）">
+        <Field id="ms-in" label="输入价格（美元/百万 token，可不填）">
           <input id="ms-in" className="field" inputMode="decimal" value={form.inputPrice} onChange={(e) => update({ inputPrice: e.target.value })} />
         </Field>
-        <Field id="ms-out" label="输出价格（美元/百万 token）">
+        <Field id="ms-out" label="输出价格（美元/百万 token，可不填）">
           <input id="ms-out" className="field" inputMode="decimal" value={form.outputPrice} onChange={(e) => update({ outputPrice: e.target.value })} />
         </Field>
       </div>
-      <div className="tag" style={{ margin: "-6px 0 12px" }}>用来估算和限制花费。{item.priceUrl ? <>按 <Link href={item.priceUrl}>官网价格页</Link> 填写；</> : null}免费模型填 0；官网按人民币标价时除以汇率换成美元。</div>
+      <div className="tag" style={{ margin: "-6px 0 12px" }}>
+        {!form.inputPrice.trim() && !form.outputPrice.trim()
+          ? <>价格未知：照常可用，按每天的 token 上限控制用量。知道价格可以填上{item.priceUrl ? <>（见 <Link href={item.priceUrl}>官网价格页</Link>）</> : null}，用来估算和限制花费。</>
+          : <>用来估算和限制花费。免费模型填 0；官网按人民币标价时除以汇率换成美元。</>}
+      </div>
       <Field id="ms-budget" label="每天最多花（美元）" hint="当天花到这个数后，用到模型的操作暂停到第二天（按 UTC 日界），不会多扣钱。">
         <input id="ms-budget" aria-describedby="ms-budget-hint" className="field" inputMode="decimal" value={form.dailyBudget} onChange={(e) => update({ dailyBudget: e.target.value })} />
       </Field>

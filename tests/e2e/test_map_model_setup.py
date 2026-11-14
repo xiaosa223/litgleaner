@@ -20,6 +20,7 @@ TASKS = {
     "draft",
     "guide",
     "evaluate",
+    "profile",
 }
 
 

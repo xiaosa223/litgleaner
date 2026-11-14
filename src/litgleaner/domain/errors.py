@@ -10,7 +10,7 @@ class ModelUsage:
     model: str
     input_tokens: int
     output_tokens: int
-    cost_usd: float
+    cost_usd: float | None  # None：价格未知（ADR 0013）
 
 
 class LitGleanerError(Exception):

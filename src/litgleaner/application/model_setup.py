@@ -6,15 +6,24 @@ from dataclasses import dataclass
 from jsonschema import Draft202012Validator
 
 from litgleaner.application.context import AppContext
-from litgleaner.domain.errors import BudgetExceeded, LitGleanerError
-from litgleaner.ports.llm import LLM, LLMRequest, StreamDone, TextDelta, TextRequest
+from litgleaner.domain.errors import BudgetExceeded, InvalidRequest, LitGleanerError
+from litgleaner.ports.llm import (
+    LLM,
+    LLMCall,
+    LLMRequest,
+    ModelCatalog,
+    ModelInfo,
+    StreamDone,
+    TextDelta,
+    TextRequest,
+)
 from litgleaner.ports.model_settings import (
+    CatalogDraft,
     ModelDraft,
     ModelSettings,
     ModelSettingsView,
     probe_output_tokens,
 )
-from litgleaner.ports.store import LLMCall
 
 _SCHEMA = {
     "type": "object",
@@ -29,8 +38,8 @@ _TASK = "configuration_test"
 class ProbeResult:
     ok: bool
     capabilities: tuple[str, ...]
-    cost_usd: float
-    estimated_usd: float
+    cost_usd: float | None  # None：有调用价格未知（ADR 0013）
+    estimated_usd: float | None  # None：草稿没有价格
     code: str | None = None
 
 
@@ -46,10 +55,10 @@ def _record(
     ctx: AppContext,
     model: str,
     tokens: tuple[int, int],
-    cost: float,
+    cost: float | None,
     ok: bool,
     *,
-    costs: list[float],
+    costs: list[float | None],
 ) -> None:
     costs.append(cost)
     ctx.store.runs.record_llm_call(
@@ -57,7 +66,7 @@ def _record(
     )
 
 
-def _structured(ctx: AppContext, llm: LLM, draft: ModelDraft, costs: list[float]) -> None:
+def _structured(ctx: AppContext, llm: LLM, draft: ModelDraft, costs: list[float | None]) -> None:
     ctx.llm.check_budget()
     result = llm.complete(
         LLMRequest(_TASK, draft.model, 'Return {"ok":true}.', "Connection test.", _SCHEMA)
@@ -75,7 +84,7 @@ def _structured(ctx: AppContext, llm: LLM, draft: ModelDraft, costs: list[float]
         raise ValueError("probe_schema_invalid")
 
 
-def _stream(ctx: AppContext, llm: LLM, draft: ModelDraft, costs: list[float]) -> None:
+def _stream(ctx: AppContext, llm: LLM, draft: ModelDraft, costs: list[float | None]) -> None:
     ctx.llm.check_budget()
     content = False
     done = False
@@ -96,13 +105,36 @@ def _stream(ctx: AppContext, llm: LLM, draft: ModelDraft, costs: list[float]) ->
         raise ValueError("probe_stream_invalid")
 
 
+def _estimate(draft: ModelDraft) -> float | None:
+    """上限估计：最多两次调用，每次输出不超过测试上限；价格未知时无法估计。"""
+    if draft.input_price is None or draft.output_price is None:
+        return None
+    tokens = probe_output_tokens(draft)
+    return 2 * (128 * draft.input_price + tokens * draft.output_price) / 1_000_000
+
+
+def _total(costs: list[float | None]) -> float | None:
+    known = [cost for cost in costs if cost is not None]
+    return None if len(known) < len(costs) else sum(known)
+
+
+def list_models(settings: ModelSettings, source: CatalogDraft) -> tuple[ModelInfo, ...]:
+    """按草稿的协议、地址、密钥列出可用模型（ADR 0013）。不计费、不写配置。"""
+    client = settings.catalog_client(source)
+    try:
+        if not isinstance(client, ModelCatalog):
+            raise InvalidRequest("model_list_unsupported")
+        return client.list_models()
+    finally:
+        with suppress(Exception):
+            client.close()
+
+
 def probe(ctx: AppContext, settings: ModelSettings, draft: ModelDraft) -> ProbeResult:
     ctx.llm.check_budget()
     capabilities: list[str] = []
-    costs: list[float] = []
-    # 上限估计：最多两次调用，每次输出不超过测试上限
-    tokens = probe_output_tokens(draft)
-    estimated = 2 * (128 * draft.input_price + tokens * draft.output_price) / 1_000_000
+    costs: list[float | None] = []
+    estimated = _estimate(draft)
     llm: LLM | None = None
     try:
         llm = settings.client(draft)
@@ -112,7 +144,7 @@ def probe(ctx: AppContext, settings: ModelSettings, draft: ModelDraft) -> ProbeR
         if "translate" in draft.tasks:
             _stream(ctx, llm, draft, costs)
             capabilities.append("stream")
-        return ProbeResult(True, tuple(capabilities), sum(costs), estimated)
+        return ProbeResult(True, tuple(capabilities), _total(costs), estimated)
     except BudgetExceeded:
         raise
     except Exception as error:
@@ -127,7 +159,7 @@ def probe(ctx: AppContext, settings: ModelSettings, draft: ModelDraft) -> ProbeR
             )
         # 提供方错误可能回显认证头或请求体；界面只收到固定错误码。
         return ProbeResult(
-            False, tuple(capabilities), sum(costs), estimated, "model_connection_failed"
+            False, tuple(capabilities), _total(costs), estimated, "model_connection_failed"
         )
     finally:
         if llm is not None:

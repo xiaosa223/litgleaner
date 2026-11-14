@@ -10,7 +10,8 @@
 #   base_url 写到 /v1（Gemini 写到 /v1beta）为止。
 #
 # 通用 options：
-#   prices              必填。美元 / 百万 token，[输入, 输出]。tasks 用到的模型缺价格时启动报错，否则每日预算无效
+#   prices              美元 / 百万 token，[输入, 输出]。缺失或 null 表示价格未知：照常调用，按 budget.daily_tokens_unpriced 限量
+#                       （ADR 0013）。领读器设置页能从提供方的模型列表自动读取价格
 #   base_url            省略时用官方地址；中转站或本地服务改这里
 #   max_output_tokens   默认 4000，含思考 token。推理模型（响应里带 reasoning_content 的）思考很长，评估任务建议 16000
 #   max_tokens_field    请求体里输出上限的字段名，默认按协议；部分兼容接口只认 max_tokens
@@ -72,5 +73,8 @@ tasks:
   guide: { provider: compat, model: labs/gpt-6-luna, prompt: guide }
   # 回答卡片的评价：用户提交回答后调用，每次一张卡片
   evaluate: { provider: compat, model: labs/gpt-6-luna, prompt: evaluate }
+  # 上传任务书等文档时推断课题的背景、内容和目标（ADR 0012），每次上传一次调用
+  profile: { provider: compat, model: labs/gpt-6-luna, prompt: profile }
 budget:
   daily_usd: 2.0
+  daily_tokens_unpriced: 2000000  # 价格未知的模型每日 token 上限（输入加输出），0 表示禁止调用

@@ -306,3 +306,14 @@ def test_connection_drop_mid_stream_is_transient():
     router = Router().on("/chat/completions", handler)
     with pytest.raises(TransientError):
         list(_make(OpenAIChatLLM, router).stream(REQUEST))
+
+
+@pytest.mark.parametrize("name", CASES)
+def test_stream_with_unknown_price_reports_tokens_and_unknown_cost(name: str):
+    """ADR 0013：价格未知时照样流式输出，用量照报，费用为 None。"""
+    cls, path, body = CASES[name]
+    router = Router().reply(path, body=body(), headers=SSE)
+    llm = cls("main", {"prices": {}}, KEY, transport=router.transport)
+    _deltas, done = _run(llm)
+    assert (done.input_tokens, done.output_tokens) == (1000, 500)
+    assert done.cost_usd is None

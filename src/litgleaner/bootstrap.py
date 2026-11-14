@@ -8,6 +8,7 @@ from pathlib import Path
 from litgleaner import bootstrap_args
 from litgleaner.adapters.blobstore.local import LocalBlobStore
 from litgleaner.adapters.common.source_capture import DurableSourceCapture
+from litgleaner.adapters.documents.local import LocalDocumentText
 from litgleaner.adapters.embeddings.fastembed import LocalEmbedder
 from litgleaner.adapters.fakes.fulltext import FakeFullText
 from litgleaner.adapters.fakes.library import FakeLibrary
@@ -27,7 +28,6 @@ from litgleaner.adapters.fulltext.openalex import OpenAlexFullText
 from litgleaner.adapters.fulltext.semantic_scholar import SemanticScholarFullText
 from litgleaner.adapters.fulltext.unpaywall import UnpaywallFullText
 from litgleaner.adapters.llm.anthropic import AnthropicMessagesLLM
-from litgleaner.adapters.llm.base import HttpLLM
 from litgleaner.adapters.llm.gemini import GeminiLLM
 from litgleaner.adapters.llm.openai import OpenAIChatLLM, OpenAIResponsesLLM
 from litgleaner.adapters.parsers.mineru_cloud import MinerUCloudParser
@@ -215,9 +215,6 @@ def build_llm(
     for task, setting in config.llm.tasks.items():
         if setting.provider not in providers:
             raise ConfigError(f"LLM 任务 {task} 引用了未启用的提供方：{setting.provider}")
-        llm = providers[setting.provider]
-        if isinstance(llm, HttpLLM):
-            llm.check_model(setting.model)
         routes[task] = TaskRoute(
             providers[setting.provider],
             setting.model,
@@ -231,7 +228,14 @@ def build_llm(
             ),
             daily_budget_usd=setting.daily_budget_usd,
         )
-    return LLMGateway(routes, store.runs, config.llm.budget.daily_usd, clock)
+    budget = config.llm.budget
+    return LLMGateway(
+        routes,
+        store.runs,
+        budget.daily_usd,
+        clock,
+        daily_tokens_unpriced=budget.daily_tokens_unpriced,
+    )
 
 
 def _build_channels(config: LoadedConfig) -> dict[str, ChannelBinding]:
@@ -372,6 +376,7 @@ def build_context(config: LoadedConfig, clock: Callable[[], datetime] | None = N
         channels=_build_channels(config),
         library=build_library(config),
         embedder=build_embedder(config),
+        documents=LocalDocumentText(),
         blobs=blobs,
         archive=LocalBlobStore(config.path(config.app.archive_dir)),
         clock=now,

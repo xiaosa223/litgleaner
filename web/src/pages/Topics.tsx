@@ -1,9 +1,11 @@
 // 课题：列表、新建，以及每个课题一页（调研进度、阅读路线、课题地图、检索词、论文、课题设置）。第 7.5、12.8 节。
 import { useEffect, useState } from "react";
-import { ApiError, topicApi } from "../api";
+import { ApiError, missingModel, topicApi } from "../api";
+import { useModelSetup } from "../ModelSetup";
 import { mergeLibrary } from "../library";
 import { PaperCard } from "../PaperCard";
 import { navigate, paths } from "../router";
+import { DOCUMENT_ACCEPT, documentError, documentProblem, markAutoDraft, profileForm } from "../topicProfile";
 import { topicStatus, type TopicSummary } from "../topicView";
 import type { Inbox } from "../types";
 import { Modal } from "../ui";
@@ -19,8 +21,44 @@ function createError(error: unknown): string {
   return error instanceof Error ? error.message : "创建失败";
 }
 
+/** 拖入或选择任务书、开题报告、比赛文档，推断画像后预填表单（ADR 0012）。 */
+function DocumentDrop({ onGuess }: { onGuess: (form: ReturnType<typeof profileForm>, name: string) => void }) {
+  const requireModel = useModelSetup();
+  const [state, setState] = useState<{ busy: boolean; text: string | null; bad: boolean }>({ busy: false, text: null, bad: false });
+  const [over, setOver] = useState(false);
+  const read = async (file: File) => {
+    const problem = documentProblem(file);
+    if (problem) { setState({ busy: false, text: problem, bad: true }); return; }
+    setState({ busy: true, text: `正在读取“${file.name}”并整理研究画像，通常十几秒到一分钟…`, bad: false });
+    try {
+      const guess = await topicApi.profileFromDocument(file);
+      onGuess(profileForm(guess), file.name);
+      setState({ busy: false, text: `已根据“${file.name}”填好下面的内容，看一眼没问题就可以创建。`, bad: false });
+    } catch (error) {
+      const task = missingModel(error);
+      if (task !== null) { setState({ busy: false, text: null, bad: false }); requireModel(task || "profile", () => void read(file)); return; }
+      const code = error instanceof ApiError ? error.message : "";
+      setState({ busy: false, text: documentError(code), bad: true });
+    }
+  };
+  const pick = (files: FileList | null) => { if (files?.[0] && !state.busy) void read(files[0]); };
+  return (
+    <div className="form-row">
+      <label htmlFor="t-doc" className={`drop${over ? " over" : ""}`} style={{ display: "block", border: "1px dashed var(--line, #ccc)", borderRadius: 8, padding: "14px 12px", textAlign: "center", cursor: state.busy ? "progress" : "pointer" }}
+        onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+        onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files); }}>
+        <b>{state.busy ? "正在读取…" : "把任务书、开题报告或比赛文档拖到这里"}</b>
+        <div className="tag">也可以点这里选择文件。支持 PDF、Word（.docx）、Markdown、纯文本，不超过 20 MB；会调用一次模型。</div>
+      </label>
+      <input id="t-doc" type="file" accept={DOCUMENT_ACCEPT} hidden disabled={state.busy} onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
+      {state.text && <div className={`hint-line${state.bad ? " bad" : " ok"}`} role={state.bad ? "alert" : "status"}>{state.text}</div>}
+    </div>
+  );
+}
+
 function NewTopic({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ name: "", background: "", content: "", goals: "" });
+  const [fromDocument, setFromDocument] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const goals = form.goals.split("\n").map((g) => g.trim()).filter(Boolean);
@@ -31,6 +69,7 @@ function NewTopic({ onClose }: { onClose: () => void }) {
     setMessage(null);
     try {
       const created = await topicApi.create({ name: form.name.trim(), background: form.background.trim(), content: form.content.trim(), goals });
+      if (fromDocument) markAutoDraft(created.id); // 进入课题页后自动起草检索词
       onClose();
       navigate(paths.topic(created.id));
     } catch (error) {
@@ -41,7 +80,8 @@ function NewTopic({ onClose }: { onClose: () => void }) {
   };
   return (
     <Modal onClose={onClose} title="新建课题" width={560}>
-      <p className="tag" style={{ margin: "-6px 0 12px", fontSize: 12 }}>用你自己的话写就行。系统会据此起草检索式，并逐个解释为什么选这些词。</p>
+      <p className="tag" style={{ margin: "-6px 0 12px", fontSize: 12 }}>用你自己的话写就行，或者直接放入现成的文档自动填写。系统会据此起草检索式，并逐个解释为什么选这些词。</p>
+      <DocumentDrop onGuess={(guess) => { setForm(guess); setFromDocument(true); setMessage(null); }} />
       <div className="form-row"><label htmlFor="t-name">课题名称</label>
         <input id="t-name" className="field" autoFocus value={form.name} onChange={set("name")} placeholder="例如：脑电基础模型" /></div>
       <div className="form-row"><label htmlFor="t-bg">研究背景</label>
@@ -53,7 +93,7 @@ function NewTopic({ onClose }: { onClose: () => void }) {
       <div className={`hint-line${message ? " bad" : ""}`} role="status">{message}</div>
       <div className="dialog-actions">
         <button className="ghost" onClick={onClose}>取消</button>
-        <button className="primary" disabled={!ready || busy} onClick={() => void submit()}>{busy ? "正在创建…" : "创建课题"}</button>
+        <button className="primary" disabled={!ready || busy} onClick={() => void submit()}>{busy ? "正在创建…" : fromDocument ? "创建并起草检索词" : "创建课题"}</button>
       </div>
     </Modal>
   );

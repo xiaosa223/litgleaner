@@ -1,18 +1,22 @@
 """课题：新建、列表、阅读路线和调研接口。"""
 
 from typing import Annotated, cast
+from urllib.parse import unquote
 
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from litgleaner.application.reading_route import ReadingRoute, reading_route
 from litgleaner.application.survey import SurveyStatus, get_preview, preview, queue, status
 from litgleaner.application.survey_plan import require_topic
+from litgleaner.application.topic_profile import ProfileGuess, infer_profile
 from litgleaner.application.topic_setup import MAX_GOALS, MAX_NAME, TopicSummary, topic_summaries
 from litgleaner.domain.errors import ConfigError, InvalidRequest
 from litgleaner.domain.survey import SurveyPreview, SurveyRound
 from litgleaner.ports.topic_settings import TopicFields, TopicSettings
 from litgleaner.server.runtime import Context
+from litgleaner.server.security import DOCUMENT_PATH
 from litgleaner.server.topic_drafts import install_topic_draft_routes
 from litgleaner.server.topic_maps import install_topic_map_routes
 from litgleaner.server.topic_settings import install_topic_settings_routes
@@ -55,7 +59,17 @@ def _topic_settings(request: Request) -> TopicSettings:
     return settings
 
 
+def _install_document_route(app: FastAPI) -> None:
+    @app.post(DOCUMENT_PATH)
+    async def profile_from_document(ctx: Context, request: Request) -> ProfileGuess:
+        """上传任务书等文档，推断研究画像供新建课题表单预填；不写文件、不启用（ADR 0012）。"""
+        name = unquote(request.headers.get("x-file-name", ""))[:255] or "document"
+        content = await request.body()
+        return await run_in_threadpool(infer_profile, ctx, name, content)
+
+
 def install_topic_routes(app: FastAPI) -> None:
+    _install_document_route(app)
     install_topic_map_routes(app)
     install_topic_draft_routes(app)
     install_topic_settings_routes(app)

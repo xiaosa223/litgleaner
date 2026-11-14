@@ -19,6 +19,7 @@ from litgleaner.domain.evidence import wrap_untrusted
 from litgleaner.domain.hashing import stable_hash
 from litgleaner.ports.llm import (
     LLM,
+    LLMCall,
     LLMRequest,
     LLMResponse,
     StreamDone,
@@ -26,7 +27,7 @@ from litgleaner.ports.llm import (
     TextRequest,
     Thinking,
 )
-from litgleaner.ports.store import LLMCall, RunRepo
+from litgleaner.ports.store import RunRepo
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,8 @@ class LLMGateway:
     daily_budget_usd: float
     clock: Callable[[], datetime]
     scope_id: str | None = None
+    # 价格未知的模型每日 token 上限（输入加输出，ADR 0013）；0 表示禁止调用
+    daily_tokens_unpriced: int = 2_000_000
 
     def require_route(self, task: str) -> TaskRoute:
         route = self.routes.get(task)
@@ -195,6 +198,12 @@ class LLMGateway:
         spent = self.runs.llm_cost_since(day_start.isoformat())
         if spent >= self.daily_budget_usd:
             raise BudgetExceeded(f"今日 LLM 费用 {spent:.4f} 已达预算 {self.daily_budget_usd}")
+        if route is not None and route.llm.price(route.model) is None:
+            used = self.runs.llm_unpriced_tokens_since(day_start.isoformat())
+            if used >= self.daily_tokens_unpriced:
+                raise BudgetExceeded(
+                    f"今日价格未知模型已用 {used} token，达到上限 {self.daily_tokens_unpriced}"
+                )
         if task is not None and route is not None and route.daily_budget_usd is not None:
             spent = self.runs.llm_cost_since(day_start.isoformat(), task=task)
             if spent >= route.daily_budget_usd:

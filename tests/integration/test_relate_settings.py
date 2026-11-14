@@ -40,6 +40,7 @@ def test_new_relate_task_gets_default_daily_cap_without_changing_other_tasks(con
         "relate",
         "guide",
         "evaluate",
+        "profile",
         "draft",
     }
     assert all(updated.llm.tasks[key] == value for key, value in original.llm.tasks.items())

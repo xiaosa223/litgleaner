@@ -1,13 +1,14 @@
 // 模型原地配置的纯逻辑：预设、表单校验、请求体、状态摘要（第 15.4、15.5 节，docs/MODEL-SETUP.md）。
-// 预设只填协议和地址；价格变化快，不写死，由用户按官网价格页填写。
+// 预设只填协议和地址；模型名从提供方的列表里选，价格能从列表读到就自动填，读不到就留空记为未知（ADR 0013）。
 
-export type ModelTask = "triage" | "extract" | "assess" | "translate" | "ask" | "map" | "outline" | "relate" | "draft" | "guide" | "evaluate";
+export type ModelTask = "triage" | "extract" | "assess" | "translate" | "ask" | "map" | "outline" | "relate" | "draft" | "guide" | "evaluate" | "profile";
 
 export const TASKS: { task: ModelTask; label: string; hint: string }[] = [
   { task: "translate", label: "翻译", hint: "阅读时按段落翻译" },
   { task: "ask", label: "边读边问", hint: "针对论文提问，回答附原文出处" },
   { task: "guide", label: "个性化导读", hint: "按你的知识库讲解关键概念，出三个引导问题" },
   { task: "evaluate", label: "回答评价", hint: "评价你写的回答，指出对、漏和理解偏的地方" },
+  { task: "profile", label: "从文档填写课题", hint: "上传任务书等文档时推断课题的背景、内容和目标" },
   { task: "draft", label: "起草检索词", hint: "新建课题时根据研究画像起草检索词和术语表" },
   { task: "triage", label: "每日初筛", hint: "从新论文里挑出和课题相关的" },
   { task: "extract", label: "提炼要点", hint: "整理问题、做法、结论和不足" },
@@ -115,11 +116,17 @@ export interface ModelTaskView {
 export interface ModelSettingsView {
   providers: ModelProviderView[]; tasks: ModelTaskView[]; protocols: string[]; daily_budget_usd: number;
 }
-export interface ProbeResult { ok: boolean; capabilities: string[]; cost_usd: number; estimated_usd: number; code?: string | null }
+// cost_usd / estimated_usd 为 null：价格未知
+export interface ProbeResult { ok: boolean; capabilities: string[]; cost_usd: number | null; estimated_usd: number | null; code?: string | null }
+
+/** 提供方列出的模型；价格单位美元/百万 token，null 表示读不到（未知）。 */
+export interface CatalogModel { id: string; input_price: number | null; output_price: number | null }
+export interface CatalogResult { models: CatalogModel[]; code?: string | null }
+export interface CatalogBody { provider: string; protocol: string; api_key?: string; base_url?: string }
 
 export interface ModelBody {
   provider: string; protocol: string; model: string; tasks: ModelTask[];
-  input_price: number; output_price: number; api_key?: string; base_url?: string;
+  input_price: number | null; output_price: number | null; api_key?: string; base_url?: string;
   daily_budget_usd: number; max_output_tokens: number; structured: "native" | "prompt";
   max_tokens_field?: "max_tokens" | "max_completion_tokens";
 }
@@ -183,15 +190,17 @@ export function toBody(form: ModelForm): BodyResult {
   const model = form.model.trim();
   const key = form.apiKey.trim();
   const url = form.baseUrl.trim();
-  const inputPrice = number(form.inputPrice);
-  const outputPrice = number(form.outputPrice);
+  const unpriced = !form.inputPrice.trim() && !form.outputPrice.trim();
+  const inputPrice = unpriced ? null : number(form.inputPrice);
+  const outputPrice = unpriced ? null : number(form.outputPrice);
   const budget = number(form.dailyBudget);
   const tokens = number(form.maxOutputTokens, 200_000);
   if (!model) return { ok: false, error: "请填写模型名" };
   if (item.needsKey && !key && !form.keySaved) return { ok: false, error: "请填写 API key" };
   if (url && !validUrl(url)) return { ok: false, error: "接口地址要以 http:// 或 https:// 开头，不能带账号密码或 ? # 后缀" };
   if (!url && form.preset === "custom") return { ok: false, error: "请填写接口地址，例如 http://127.0.0.1:8000/v1" };
-  if (inputPrice === null || outputPrice === null) return { ok: false, error: "请按官网填写输入和输出价格（美元/百万 token，不超过 1000000），免费模型填 0" };
+  if (!unpriced && (!form.inputPrice.trim() || !form.outputPrice.trim())) return { ok: false, error: "输入和输出价格要么都填，要么都留空（留空表示价格未知）" };
+  if (!unpriced && (inputPrice === null || outputPrice === null)) return { ok: false, error: "价格要填不小于 0 的数（美元/百万 token，不超过 1000000），免费模型填 0" };
   if (budget === null) return { ok: false, error: "每日上限要填一个不小于 0 的数" };
   if (tokens === null || tokens < 128 || !Number.isInteger(tokens)) return { ok: false, error: "单次输出上限要填 128 到 200000 之间的整数" };
   if (form.tasks.length === 0) return { ok: false, error: "至少选一项用到模型的功能" };
@@ -230,7 +239,30 @@ const usd = (value: number) => `$${value < 0.01 ? value.toFixed(4) : value.toFix
 
 export function probeText(result: ProbeResult): string {
   const abilities = result.capabilities.map((name) => (name === "structured" ? "结构化输出" : name === "stream" ? "流式输出" : name));
-  if (result.ok) return `连接成功${abilities.length ? `，支持${abilities.join("、")}` : ""}。本次测试花费 ${usd(result.cost_usd)}。`;
+  const cost = result.cost_usd === null ? "本次测试花费未知（价格未知）。" : `本次测试花费 ${usd(result.cost_usd)}。`;
+  if (result.ok) return `连接成功${abilities.length ? `，支持${abilities.join("、")}` : ""}。${cost}`;
   return "连接失败：请检查 API key、模型名和接口地址是否正确，账户是否有余额。" +
-    (result.cost_usd > 0 ? `本次测试花费 ${usd(result.cost_usd)}。` : "");
+    (result.cost_usd === null || result.cost_usd > 0 ? cost : "");
+}
+
+/** 连接信息齐全时返回列模型的请求体，否则 null（不去请求）。 */
+export function catalogSource(form: ModelForm): CatalogBody | null {
+  const item = preset(form.preset);
+  const key = form.apiKey.trim();
+  const url = form.baseUrl.trim();
+  if (item.needsKey && !key && !form.keySaved) return null;
+  if (url ? !validUrl(url) : form.preset === "custom") return null;
+  const body: CatalogBody = { provider: form.provider, protocol: form.protocol };
+  if (key) body.api_key = key;
+  if (url) body.base_url = url;
+  return body;
+}
+
+const priceText = (value: number | null) => (value === null ? "" : String(value));
+
+/** 改模型名：命中列表时用列表里的价格（读不到就清空为未知）；列表外手填的保留用户填的价格。 */
+export function chooseModel(form: ModelForm, catalog: CatalogModel[], id: string): ModelForm {
+  const found = catalog.find((item) => item.id === id.trim());
+  if (!found) return { ...form, model: id };
+  return { ...form, model: id, inputPrice: priceText(found.input_price), outputPrice: priceText(found.output_price) };
 }

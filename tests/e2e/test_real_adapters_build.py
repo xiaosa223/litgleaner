@@ -130,14 +130,17 @@ def test_task_on_real_provider_builds_when_model_has_price(config: Path):
     assert isinstance(ctx.llm.routes["triage"].llm, HttpLLM)
 
 
-def test_task_model_without_price_is_a_config_error(config: Path):
+def test_task_model_without_price_builds_with_unknown_price(config: Path):
+    """ADR 0013：价格未知不再是配置错误，路由照常构建，价格查询返回 None。"""
+
     def route(data: dict) -> None:
         _enable_llms(data)
         data["tasks"]["assess"] = {"provider": "openai", "model": "some-model", "prompt": "assess"}
 
     _edit_llm(config, route)
-    with pytest.raises(ConfigError, match="prices"):
-        build_context(load_config(config))
+    ctx = build_context(load_config(config))
+    assess = ctx.llm.routes["assess"]
+    assert assess.llm.price(assess.model) is None
 
 
 def test_declared_llm_key_missing_is_a_config_error(config: Path, monkeypatch):

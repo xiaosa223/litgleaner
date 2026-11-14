@@ -1,0 +1,47 @@
+{
+ "object": "list",
+ "data": [
+  {
+   "id": "auto/gpt-5.6-luna",
+   "object": "model",
+   "owned_by": "labs",
+   "display_name": "GPT-5.6 Luna",
+   "pricing": {
+    "completion": "0.0000012",
+    "input_cache_read": "0.00000002",
+    "input_cache_write": "0.00000025",
+    "prompt": "0.0000002"
+   },
+   "context_length": 512000
+  },
+  {
+   "id": "labs/gpt-6-luna",
+   "object": "model",
+   "owned_by": "labs",
+   "display_name": "GPT-6 Luna",
+   "pricing": {
+    "completion": "0.0000005",
+    "input_cache_read": "0.00000001",
+    "input_cache_write": "0.000000125",
+    "prompt": "0.0000001"
+   },
+   "context_length": 512000
+  },
+  {
+   "id": "auto/deepseek-v4.1-flash",
+   "object": "model",
+   "owned_by": "labs",
+   "display_name": "DeepSeek V4.1 Flash",
+   "context_length": 1000000
+  },
+  {
+   "id": "workbuddy-ai/hy3",
+   "object": "model",
+   "owned_by": "workbuddy-ai",
+   "pricing": {
+    "completion": "0",
+    "prompt": "0"
+   }
+  }
+ ]
+}

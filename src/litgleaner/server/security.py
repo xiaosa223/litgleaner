@@ -21,6 +21,8 @@ _LOOPBACK_NAMES = ("127.0.0.1", "localhost")
 MAX_BODY_BYTES = 64 * 1024  # 批注上限 2 万字，UTF-8 下也远小于这个值
 UPLOAD_PATH = "/api/inbox/files"
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024  # 用户上传的 PDF（第 12.8 节）
+DOCUMENT_PATH = "/api/topics/profile-from-document"
+MAX_DOCUMENT_BYTES = 20 * 1024 * 1024  # 推断研究画像的任务书等文档（ADR 0012）
 _MAX_SESSIONS = 64
 _IDLE_SECONDS = 30 * 24 * 3600
 # 模型输出一律按纯文本渲染，页面不需要内联脚本；PDF 引擎的 worker、wasm 和字体来自本站。
@@ -121,7 +123,8 @@ def _body_problem(request: Request) -> Response | None:
         if "transfer-encoding" in request.headers:
             return _deny(request, 411, "需要 Content-Length")
         return None
-    limit = MAX_UPLOAD_BYTES if request.url.path == UPLOAD_PATH else MAX_BODY_BYTES
+    limits = {UPLOAD_PATH: MAX_UPLOAD_BYTES, DOCUMENT_PATH: MAX_DOCUMENT_BYTES}
+    limit = limits.get(request.url.path, MAX_BODY_BYTES)
     if not length.isdigit() or int(length) > limit:
         return _deny(request, 413, "请求内容过大")
     return None

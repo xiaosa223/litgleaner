@@ -15,11 +15,11 @@ from pydantic import Field
 
 from litgleaner.adapters.common.http import HttpClient
 from litgleaner.adapters.common.options import parse_options
+from litgleaner.adapters.llm.catalog import read_catalog
 from litgleaner.adapters.llm.sse import iter_sse
 from litgleaner.domain.base import FrozenModel
 from litgleaner.domain.chunker import estimate_tokens
 from litgleaner.domain.errors import (
-    ConfigError,
     LitGleanerError,
     ModelUsage,
     PermanentError,
@@ -29,6 +29,7 @@ from litgleaner.domain.errors import (
 from litgleaner.ports.llm import (
     LLMRequest,
     LLMResponse,
+    ModelInfo,
     StreamDone,
     StreamEvent,
     TextDelta,
@@ -57,8 +58,9 @@ Price = Annotated[float, Field(ge=0)]
 
 class LLMOptions(FrozenModel):
     base_url: str | None = None
-    # 美元 / 百万 token（输入, 输出）。每个用到的模型都必须有价格，否则每日预算形同虚设。
-    prices: Mapping[str, tuple[Price, Price]] = Field(default_factory=dict)
+    # 美元 / 百万 token（输入, 输出）。缺失或 null 表示价格未知（ADR 0013）：费用记为未知，
+    # 由网关按每日 token 上限控制。
+    prices: Mapping[str, tuple[Price, Price] | None] = Field(default_factory=dict)
     max_output_tokens: int = Field(default=4000, gt=0)
     # 请求体里输出上限的字段名，默认按协议。部分兼容接口只认 max_tokens。
     max_tokens_field: str | None = None
@@ -204,12 +206,13 @@ class HttpLLM:
         found = self._options.prices.get(model)
         return None if found is None else (float(found[0]), float(found[1]))
 
-    def check_model(self, model: str) -> None:
-        if model not in self._options.prices:
-            raise ConfigError(f"{self.service} 的 options.prices 缺少模型 {model} 的价格")
+    def _cost(self, model: str, tokens_in: int, tokens_out: int) -> float | None:
+        price = self.price(model)
+        if price is None:
+            return None
+        return (tokens_in * price[0] + tokens_out * price[1]) / _PER_MILLION
 
     def complete(self, request: LLMRequest) -> LLMResponse:
-        self.check_model(request.model)
         native = self._options.structured == "native"
         system = request.system if native else request.system + schema_instruction(request.schema)
         body = self._body(request, system, relax_schema(request.schema) if native else None)
@@ -234,8 +237,7 @@ class HttpLLM:
             raise SchemaChanged(
                 f"{self.service} 返回的结构与预期不符：{type(error).__name__} {error}"
             ) from error
-        price_in, price_out = self._options.prices[model]
-        cost = (reply.input_tokens * price_in + reply.output_tokens * price_out) / _PER_MILLION
+        cost = self._cost(model, reply.input_tokens, reply.output_tokens)
         return LLMResponse(
             data=parse_json_object(reply.text, self.service),
             model=reply.model or model,
@@ -250,12 +252,11 @@ class HttpLLM:
             tokens_in, tokens_out = token_count(tokens_in), token_count(tokens_out)
         except (KeyError, IndexError, TypeError, AttributeError, ValueError):
             return None
-        price_in, price_out = self._options.prices[model]
         return ModelUsage(
             reported_model if isinstance(reported_model, str) and reported_model else model,
             tokens_in,
             tokens_out,
-            (tokens_in * price_in + tokens_out * price_out) / _PER_MILLION,
+            self._cost(model, tokens_in, tokens_out),
         )
 
     def stream(self, request: TextRequest) -> Iterator[StreamEvent]:
@@ -263,7 +264,6 @@ class HttpLLM:
 
         最后一个事件是 StreamDone；出错时先给出 StreamDone（带已知用量）再抛出。
         """
-        self.check_model(request.model)
         as_request = LLMRequest(request.task, request.model, request.system, request.user, {})
         body = self._stream_body(as_request)
         field_name = self._options.max_tokens_field or self.default_max_tokens_field
@@ -315,16 +315,19 @@ class HttpLLM:
         if estimated:
             tokens_in = tokens_in or estimate_tokens(request.system + request.user)
             tokens_out = tokens_out or estimate_tokens("".join(state.text))
-        price_in, price_out = self._options.prices[request.model]
         tokens_in, tokens_out = tokens_in or 0, tokens_out or 0
         return StreamDone(
             model=state.model or request.model,
             input_tokens=tokens_in,
             output_tokens=tokens_out,
-            cost_usd=(tokens_in * price_in + tokens_out * price_out) / _PER_MILLION,
+            cost_usd=self._cost(request.model, tokens_in, tokens_out),
             estimated=estimated,
             error=error,
         )
+
+    def list_models(self) -> tuple[ModelInfo, ...]:
+        """列出提供方的可用模型（ADR 0013）。只读列表接口，不调用生成接口、不计费。"""
+        return read_catalog(self.protocol, self._http.get_json)
 
     def close(self) -> None:
         self._http.close()

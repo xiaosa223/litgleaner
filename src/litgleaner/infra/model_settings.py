@@ -13,8 +13,9 @@ import yaml
 from pydantic import ValidationError
 
 from litgleaner.domain.errors import ConfigError, InvalidRequest
-from litgleaner.infra.config import AdapterConfig, LLMBudget, LLMTask, LoadedConfig
+from litgleaner.infra.config import AdapterConfig, LLMTask, LoadedConfig
 from litgleaner.ports.model_settings import (
+    CatalogDraft,
     ModelDraft,
     ModelProviderView,
     ModelSettingsView,
@@ -35,6 +36,7 @@ TASKS: tuple[ModelTask, ...] = (
     "draft",
     "guide",
     "evaluate",
+    "profile",
 )
 
 
@@ -127,9 +129,10 @@ def _provider_options(old: AdapterConfig | None, draft: ModelDraft) -> dict[str,
     same_protocol = old is not None and old.adapter == draft.protocol
     options = dict(old.options) if old and same_protocol else {}
     prices = dict(options.get("prices", {}))
-    requested_prices = [draft.input_price, draft.output_price]
-    if prices.get(draft.model) != requested_prices:
-        prices[draft.model] = requested_prices
+    unknown = draft.input_price is None or draft.output_price is None
+    requested_prices = None if unknown else [draft.input_price, draft.output_price]
+    if draft.model not in prices or prices.get(draft.model) != requested_prices:
+        prices[draft.model] = requested_prices  # None：价格未知（ADR 0013）
     options["prices"] = prices
     for name, default, value in (
         ("max_output_tokens", 4000, draft.max_output_tokens),
@@ -173,8 +176,28 @@ def prepare(
         update={
             "providers": providers,
             "tasks": tasks,
-            "budget": LLMBudget(daily_usd=draft.daily_budget_usd),
+            "budget": config.llm.budget.model_copy(update={"daily_usd": draft.daily_budget_usd}),
         }
+    )
+    return replace(config, llm=settings), credential
+
+
+def catalog_candidate(
+    config: LoadedConfig, source: CatalogDraft, protocols: tuple[str, ...]
+) -> tuple[LoadedConfig, str | None]:
+    """只为列模型构建一个临时提供方：沿用已保存的密钥引用，或用草稿里的新密钥。"""
+    if source.protocol not in protocols:
+        raise InvalidRequest("model_settings_invalid")
+    old = config.llm.providers.get(source.provider)
+    credential = f"LITGLEANER_MODEL_{uuid.uuid4().hex.upper()}" if source.api_key else None
+    credentials = (credential,) if credential else (old.credentials_env if old else ())
+    options = dict(old.options) if old and old.adapter == source.protocol else {}
+    options = {key: options[key] for key in ("base_url", "headers") if key in options}
+    if source.base_url:
+        options["base_url"] = source.base_url
+    provider = AdapterConfig(adapter=source.protocol, credentials_env=credentials, options=options)
+    settings = config.llm.model_copy(
+        update={"providers": {**config.llm.providers, source.provider: provider}}
     )
     return replace(config, llm=settings), credential
 
@@ -221,3 +244,8 @@ class ModelConfigFile:
                     self.secrets.delete(name)
             raise ConfigError("model_settings_save_failed") from None
         self._expected, self.config = content, candidate
+
+    def catalog(
+        self, source: CatalogDraft, protocols: tuple[str, ...]
+    ) -> tuple[LoadedConfig, str | None]:
+        return catalog_candidate(self.config, source, protocols)

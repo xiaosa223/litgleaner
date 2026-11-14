@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, missingModel, topicApi } from "../api";
 import { useModelSetup } from "../ModelSetup";
+import { takeAutoDraft } from "../topicProfile";
 import { money, jobText } from "../topicView";
 import { draftEditor, editorFrom, queryBody, queryError, reasonFor, type DraftPreview, type DraftStatus, type DraftView, type Editor, type QueryDraft } from "../topicQuery";
 import { Modal, useToast } from "../ui";
@@ -182,6 +183,16 @@ export function QueryTab({ topicId, active, onSaved }: { topicId: string; active
       else setStartError(cause instanceof Error ? queryError(cause.message) : "提交失败");
     } finally { setBusy(null); }
   };
+  // 用上传的文档新建的课题：进来后直接起草，不用再点“让模型起草”（ADR 0012）
+  useEffect(() => {
+    if (!takeAutoDraft(topicId)) return;
+    setBusy("preview");
+    topicApi.previewDraft(topicId).then(
+      (chosen) => { setBusy(null); void start(chosen); },
+      (cause: unknown) => { setBusy(null); setError(cause instanceof Error ? queryError(cause.message) : "起草失败"); },
+    );
+  // 只在进入页面时检查一次；标记用过即删，严格模式下第二次执行拿不到标记
+  }, [topicId]);
   const save = async () => {
     if (!editor) return;
     const { body, error: invalid } = queryBody(editor);
